@@ -3,7 +3,6 @@ import psycopg2
 import psycopg2.extras
 from flask import current_app, g
 
-
 def get_db():
     if 'db' not in g:
         # Railway provides DATABASE_URL directly
