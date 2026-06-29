@@ -12,7 +12,7 @@ Parcel management SaaS for condominium juristic offices.
 
 ```
 condofront/
-├── run.py                  # Entry point
+├── wsgi.py                  # Entry point
 ├── config.py               # Dev/prod config
 ├── requirements.txt
 ├── .env.example            # Copy to .env and fill in
