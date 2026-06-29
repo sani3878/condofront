@@ -115,10 +115,12 @@ def register():
 
             # 3. Record chosen package against customer
             #    (subscription links to property, created when property is added)
+            # 3. Record chosen package against customer
+            # 3. Package stored at property setup step
             cur.execute("""
-                INSERT INTO tblsetting
-                    (property_id, setting_key, setting_value)
-                VALUES (NULL, %s, %s)
+            INSERT INTO tblsetting
+            (property_id, setting_key, setting_value)
+            VALUES (NULL, %s, %s)
             """, [f'customer_{customer_id}_package', str(package_id)])
 
             db.commit()
