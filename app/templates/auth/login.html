@@ -26,8 +26,9 @@
             padding: 1rem;
         }
         .login-brand {
+            background: #fff;
             text-align: center;
-            margin-bottom: 2rem;
+            padding-bottom: .8rem;
         }
         .login-brand-icon {
             background: var(--cf-navy);
@@ -50,7 +51,7 @@
         }
         .login-brand h1 span { color: var(--cf-orange); }
         .login-brand p {
-            color: #64748b;
+            color: #000;
             font-size: .88rem;
             margin: .25rem 0 0;
         }
@@ -62,9 +63,9 @@
             border: 1px solid #e2e8f0;
         }
         .form-label {
-            font-weight: 500;
-            font-size: .88rem;
-            color: #374151;
+            font-weight: 600;
+            font-size: 1.0rem;
+            color: #000;
             margin-bottom: .35rem;
         }
         .form-control {
@@ -110,7 +111,7 @@
         }
         .divider {
             text-align: center;
-            color: #94a3b8;
+            color: #999;
             font-size: .82rem;
             margin: 1rem 0;
             position: relative;
@@ -126,29 +127,39 @@
         .divider::before { left: 0; }
         .divider::after  { right: 0; }
         .forgot-link {
-            color: #64748b;
-            font-size: .82rem;
+            color: #de6f0e;
+            font-size: .9rem;
+            font-weight: 600;
             text-decoration: none;
         }
-        .forgot-link:hover { color: var(--cf-navy); }
+        .forgot-link:hover { color:#f97316; }
         .version-tag {
             text-align: center;
             color: #94a3b8;
             font-size: .75rem;
             margin-top: 1.5rem;
         }
+
+        .login-card{
+    border:none;
+    border-radius:18px;
+    padding:42px;
+    box-shadow:0 4px 20px rgba(0,0,0,.05);
+    }
+
+    .login-logo{
+    max-width:320px;
+    }
+
+    .form-control::placeholder{ color:#a9a9a9;  opacity:1;}
     </style>
 </head>
 <body>
 <div class="login-wrap">
 
     <!-- Brand -->
-    <div class="login-brand">
-        <div class="login-brand-icon">
-            <i class="bi bi-box-seam"></i>
-        </div>
-        <h1>Condo<span>Front</span></h1>
-        <p>Parcel Management System</p>
+    <div class="login-brand">       
+        <img class="login-logo" src="{{ url_for('static', filename='img/logo-horizontal.png') }}" alt="CondoFront">
     </div>
 
     <!-- Flash messages -->
@@ -177,14 +188,14 @@
                     <a href="{{ url_for('auth.forgot_password') }}" class="forgot-link">Forgot password?</a>
                 </div>
                 <input type="password" name="password" class="form-control mt-1"
-                       placeholder="••••••••" required>
+                       placeholder="รหัสผ่านของคุณ" required>
             </div>
             <button type="submit" class="btn-login mt-1">
                 <i class="bi bi-box-arrow-in-right me-1"></i> Login
             </button>
         </form>
 
-        <div class="divider">or</div>
+        <div class="divider">────────────</div>
 
         <a href="{{ url_for('auth.register') }}" class="btn-register">
             <i class="bi bi-building-add me-1"></i> Register your property
