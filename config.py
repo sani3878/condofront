@@ -4,16 +4,17 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    DB_HOST = os.environ.get('DB_HOST', 'localhost')
-    DB_NAME = os.environ.get('DB_NAME', 'condofront')
-    DB_USER = os.environ.get('DB_USER', 'postgres')
-    DB_PASS = os.environ.get('DB_PASS', '')
-    DB_PORT = int(os.environ.get('DB_PORT', 5432))
+    # Railway uses PG* variables, local dev uses DB_*
+    DB_HOST = os.environ.get('PGHOST') or os.environ.get('DB_HOST', 'localhost')
+    DB_NAME = os.environ.get('PGDATABASE') or os.environ.get('DB_NAME', 'condofront')
+    DB_USER = os.environ.get('PGUSER') or os.environ.get('DB_USER', 'postgres')
+    DB_PASS = os.environ.get('PGPASSWORD') or os.environ.get('DB_PASS', '')
+    DB_PORT = int(os.environ.get('PGPORT') or os.environ.get('DB_PORT', 5432))
     SESSION_PERMANENT = False
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    SECRET_KEY = os.urandom(24)  # random every restart is fine for dev
+    SECRET_KEY = os.urandom(24)
 
 class ProductionConfig(Config):
     DEBUG = False
