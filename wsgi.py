@@ -1,6 +1,5 @@
 import os
 
-print("=== app.py loaded ===")
 from app import create_app
 
 env = os.environ.get('FLASK_ENV', 'development')
