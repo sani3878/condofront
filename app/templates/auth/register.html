@@ -1,0 +1,258 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+
+<style>
+body { background: #f4f7fb; }
+
+.register-card {
+    border: none;
+    border-radius: 18px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.05);
+    padding: 40px;
+    background: white;
+}
+
+.register-logo { max-width: 280px; }
+
+.section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #1e3a5f;
+    margin: 1.25rem 0 .6rem;
+    padding-bottom: .4rem;
+    border-bottom: 2px solid #ff7a00;
+    display: inline-block;
+}
+
+.form-control, .form-select {
+    border-radius: 10px;
+    padding: 11px 14px;
+    border: 1.5px solid #e2e8f0;
+    font-size: .93rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #1e3a5f;
+    box-shadow: 0 0 0 3px rgba(30,58,95,.1);
+}
+
+/* Package cards */
+.package-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: .6rem;
+    margin-top: .5rem;
+}
+
+.package-card {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: .9rem .75rem;
+    cursor: pointer;
+    transition: all .15s;
+    text-align: center;
+    position: relative;
+}
+
+.package-card:hover { border-color: #1e3a5f; }
+
+.package-card input[type=radio] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+}
+
+.package-card.selected {
+    border-color: #1e3a5f;
+    background: #f0f4f8;
+}
+
+.pkg-name {
+    font-weight: 700;
+    font-size: .95rem;
+    color: #1e3a5f;
+}
+
+.pkg-price {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #ff7a00;
+    margin: .25rem 0;
+}
+
+.pkg-price small {
+    font-size: .7rem;
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+.pkg-detail {
+    font-size: .72rem;
+    color: #64748b;
+    line-height: 1.7;
+    margin-top: .25rem;
+}
+
+.pkg-free-badge {
+    background: #d1fae5;
+    color: #065f46;
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: .2rem;
+}
+
+.btn-register {
+    background: #ff7a00;
+    border: none;
+    color: white;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 13px;
+    width: 100%;
+    font-size: 1rem;
+    margin-top: 1.5rem;
+    transition: background .15s;
+}
+
+.btn-register:hover { background: #eb6d00; color: white; }
+
+.login-link {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 13px;
+    color: #999;
+}
+
+.login-link a {
+    color: #ff7a00;
+    font-weight: 600;
+    text-decoration: none;
+}
+</style>
+
+<div class="container">
+<div class="row justify-content-center py-4">
+<div class="col-lg-6 col-md-8">
+
+    <!-- Logo -->
+    <div class="text-center mb-4">
+        <img class="register-logo"
+             src="{{ url_for('static', filename='img/logo-horizontal.png') }}">
+    </div>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="register-card">
+
+        <form method="POST" action="{{ url_for('auth.register') }}">
+
+            <!-- Company info -->
+            <div class="section-label">Company / Organization</div>
+            <div class="mb-3">
+                <label class="form-label">Company or juristic name <span class="text-danger">*</span></label>
+                <input type="text" name="customer_name" class="form-control"
+                       placeholder="e.g. Supali Property Co.,Ltd" required>
+            </div>
+
+            <!-- Account info -->
+            <div class="section-label">Your account</div>
+            <div class="mb-3">
+                <label class="form-label">Full name <span class="text-danger">*</span></label>
+                <input type="text" name="fullname" class="form-control"
+                       placeholder="Your full name" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Email address <span class="text-danger">*</span></label>
+                <input type="email" name="email" class="form-control"
+                       placeholder="you@example.com" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Mobile number</label>
+                <input type="tel" name="mobile" class="form-control"
+                       placeholder="08x-xxx-xxxx">
+            </div>
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <label class="form-label">Password <span class="text-danger">*</span></label>
+                    <input type="password" name="password" class="form-control"
+                           placeholder="Min 8 characters" minlength="8" required>
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label">Confirm password <span class="text-danger">*</span></label>
+                    <input type="password" name="confirm_password" class="form-control"
+                           placeholder="Repeat password" required>
+                </div>
+            </div>
+
+            <!-- Choose package -->
+            <div class="section-label" style="margin-top:1.25rem">Choose your plan</div>
+            <div class="package-grid">
+                {% for pkg in packages %}
+                <label class="package-card {% if loop.first %}selected{% endif %}"
+                       onclick="selectPkg(this)">
+                    <input type="radio" name="package_id"
+                           value="{{ pkg.idno }}"
+                           {% if loop.first %}checked{% endif %}>
+                    {% if pkg.monthly_fee == 0 %}
+                    <div class="pkg-free-badge">FREE</div>
+                    {% endif %}
+                    <div class="pkg-name">{{ pkg.package_name }}</div>
+                    <div class="pkg-price">
+                        {% if pkg.monthly_fee == 0 %}฿0
+                        {% else %}฿{{ pkg.monthly_fee | int }}{% endif %}
+                        <small>/mo</small>
+                    </div>
+                    <div class="pkg-detail">
+                        {{ pkg.max_room }} rooms<br>
+                        {{ pkg.max_user }} users<br>
+                        {% if pkg.max_parcel >= 99999 %}
+                            Unlimited parcels
+                        {% else %}
+                            {{ pkg.max_parcel }} parcels
+                        {% endif %}
+                    </div>
+                </label>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="btn btn-register">
+                Create Account
+            </button>
+
+        </form>
+
+        <div class="login-link">
+            Already have an account?
+            <a href="{{ url_for('auth.login') }}">Login here</a>
+        </div>
+
+    </div>
+</div>
+</div>
+</div>
+
+<script>
+function selectPkg(label) {
+    document.querySelectorAll('.package-card').forEach(c => c.classList.remove('selected'));
+    label.classList.add('selected');
+    label.querySelector('input[type=radio]').checked = true;
+}
+</script>
+
+{% endblock %}

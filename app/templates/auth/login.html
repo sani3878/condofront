@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — CondoFront</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --cf-navy:   #1e3a5f;
+            --cf-orange: #f97316;
+            --cf-bg:     #f0f4f8;
+        }
+        body {
+            background: var(--cf-bg);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-wrap {
+            width: 100%;
+            max-width: 420px;
+            padding: 1rem;
+        }
+        .login-brand {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .login-brand-icon {
+            background: var(--cf-navy);
+            color: #fff;
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            margin-bottom: .75rem;
+        }
+        .login-brand h1 {
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: var(--cf-navy);
+            margin: 0;
+            letter-spacing: -.5px;
+        }
+        .login-brand h1 span { color: var(--cf-orange); }
+        .login-brand p {
+            color: #64748b;
+            font-size: .88rem;
+            margin: .25rem 0 0;
+        }
+        .login-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 24px rgba(0,0,0,.08);
+            border: 1px solid #e2e8f0;
+        }
+        .form-label {
+            font-weight: 500;
+            font-size: .88rem;
+            color: #374151;
+            margin-bottom: .35rem;
+        }
+        .form-control {
+            border-radius: 8px;
+            border: 1.5px solid #e2e8f0;
+            padding: .6rem .9rem;
+            font-size: .95rem;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .form-control:focus {
+            border-color: var(--cf-navy);
+            box-shadow: 0 0 0 3px rgba(30,58,95,.1);
+        }
+        .btn-login {
+            background: var(--cf-navy);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            width: 100%;
+            padding: .7rem;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background .15s;
+        }
+        .btn-login:hover { background: #152d4a; color: #fff; }
+        .btn-register {
+            background: transparent;
+            color: var(--cf-navy);
+            border: 1.5px solid var(--cf-navy);
+            border-radius: 8px;
+            width: 100%;
+            padding: .65rem;
+            font-size: .95rem;
+            font-weight: 500;
+            transition: all .15s;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+        }
+        .btn-register:hover {
+            background: var(--cf-navy);
+            color: #fff;
+        }
+        .divider {
+            text-align: center;
+            color: #94a3b8;
+            font-size: .82rem;
+            margin: 1rem 0;
+            position: relative;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 42%;
+            height: 1px;
+            background: #e2e8f0;
+        }
+        .divider::before { left: 0; }
+        .divider::after  { right: 0; }
+        .forgot-link {
+            color: #64748b;
+            font-size: .82rem;
+            text-decoration: none;
+        }
+        .forgot-link:hover { color: var(--cf-navy); }
+        .version-tag {
+            text-align: center;
+            color: #94a3b8;
+            font-size: .75rem;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+<div class="login-wrap">
+
+    <!-- Brand -->
+    <div class="login-brand">
+        <div class="login-brand-icon">
+            <i class="bi bi-box-seam"></i>
+        </div>
+        <h1>Condo<span>Front</span></h1>
+        <p>Parcel Management System</p>
+    </div>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show mb-3" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Login card -->
+    <div class="login-card">
+        <form method="POST" action="{{ url_for('auth.login') }}">
+            <div class="mb-3">
+                <label class="form-label">Email address</label>
+                <input type="email" name="email" class="form-control"
+                       placeholder="you@example.com" required autofocus>
+            </div>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <label class="form-label mb-0">Password</label>
+                    <a href="{{ url_for('auth.forgot_password') }}" class="forgot-link">Forgot password?</a>
+                </div>
+                <input type="password" name="password" class="form-control mt-1"
+                       placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn-login mt-1">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Login
+            </button>
+        </form>
+
+        <div class="divider">or</div>
+
+        <a href="{{ url_for('auth.register') }}" class="btn-register">
+            <i class="bi bi-building-add me-1"></i> Register your property
+        </a>
+    </div>
+
+    <div class="version-tag">CondoFront v1.0 — RC1</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

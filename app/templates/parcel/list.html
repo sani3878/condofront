@@ -1,0 +1,410 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; color: #1a1a1a; }
+
+
+
+
+
+
+
+
+.main-wrap {
+    padding: 1rem;
+    max-width: 768px;
+    margin: 0 auto;
+}
+
+/* ── SEARCH BAR ── */
+.search-wrap {
+    background: white;
+    border-radius: 14px;
+    padding: .75rem;
+    margin-bottom: .85rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+}
+
+.search-input {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 1rem;
+    flex: 1;
+    color: #1a1a1a;
+    outline: none;
+}
+.search-input:focus { border-color: #1e3a5f; }
+
+.btn-search {
+    background: #1e3a5f;
+    border: none;
+    color: white;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 11px 18px;
+    font-size: .95rem;
+    white-space: nowrap;
+}
+.btn-search:hover { background: #152d4a; color: white; }
+
+/* ── STATUS TABS ── */
+.status-tabs {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .85rem;
+    overflow-x: auto;
+    padding-bottom: .25rem;
+}
+
+.status-tab {
+    background: white;
+    border: 1.5px solid #e2e8f0;
+    color: #1a1a1a;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: .4rem .9rem;
+    font-size: .85rem;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: .15s;
+}
+.status-tab:hover { border-color: #1e3a5f; color: #1e3a5f; }
+.status-tab.active {
+    background: #1e3a5f;
+    border-color: #1e3a5f;
+    color: white;
+}
+.status-tab .cnt {
+    background: rgba(255,255,255,.25);
+    border-radius: 20px;
+    padding: 1px 7px;
+    font-size: .75rem;
+    margin-left: .3rem;
+}
+.status-tab:not(.active) .cnt {
+    background: #f0f4f8;
+    color: #666;
+}
+
+/* ── SUMMARY BAR ── */
+.summary-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .6rem;
+    margin-bottom: .85rem;
+}
+.summary-box {
+    background: white;
+    border-radius: 12px;
+    padding: .75rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+.summary-num {
+    font-size: 1.6rem;
+    font-weight: 900;
+    line-height: 1;
+}
+.summary-label {
+    font-size: .72rem;
+    color: #444;
+    font-weight: 600;
+    margin-top: .2rem;
+}
+
+/* ── PARCEL CARDS ── */
+.parcel-card {
+    background: white;
+    border-radius: 14px;
+    padding: 1rem;
+    margin-bottom: .6rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    border-left: 5px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+}
+
+.parcel-card.waiting  { border-left-color: #f59e0b; }
+.parcel-card.picked   { border-left-color: #22c55e; }
+.parcel-card.returned { border-left-color: #3b82f6; }
+.parcel-card.lost     { border-left-color: #ef4444; }
+.parcel-card.overdue  { border-left-color: #dc2626; background: #fff5f5; }
+
+.parcel-room {
+    background: #1e3a5f;
+    color: #ff7a00;
+    font-weight: 900;
+    font-size: 1.3rem;
+    border-radius: 10px;
+    padding: .4rem .7rem;
+    min-width: 70px;
+    text-align: center;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+}
+
+.parcel-info { flex: 1; min-width: 0; }
+
+.parcel-courier {
+    font-size: .92rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.parcel-meta {
+    font-size: .78rem;
+    color: #444;
+    margin-top: .2rem;
+}
+
+.parcel-tracking {
+    font-size: .75rem;
+    color: #666;
+    margin-top: .15rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Waiting time badge */
+.wait-badge {
+    font-size: .72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-top: .2rem;
+}
+.wait-badge.ok      { background: #dcfce7; color: #166534; }
+.wait-badge.warning { background: #fef3c7; color: #92400e; }
+.wait-badge.overdue { background: #fee2e2; color: #991b1b; }
+
+/* Status badge */
+.status-badge {
+    font-size: .72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+.status-waiting  { background: #fef3c7; color: #92400e; }
+.status-picked   { background: #dcfce7; color: #166534; }
+.status-returned { background: #dbeafe; color: #1e40af; }
+.status-lost     { background: #fee2e2; color: #991b1b; }
+.status-damaged  { background: #ffe4e6; color: #9f1239; }
+.status-disposed { background: #f1f5f9; color: #475569; }
+
+/* Pickup button */
+.btn-pickup {
+    background: #ff7a00;
+    border: none;
+    color: white;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: .5rem .7rem;
+    font-size: .8rem;
+    text-decoration: none;
+    display: block;
+    text-align: center;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: .15s;
+}
+.btn-pickup:hover { background: #eb6d00; color: white; }
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #444;
+}
+.empty-state .empty-icon { font-size: 3rem; margin-bottom: .75rem; }
+.empty-state .empty-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: .4rem;
+}
+.empty-state .empty-desc { font-size: .9rem; color: #444; }
+</style>
+
+<!-- Navbar -->
+<div class="main-wrap">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                        alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Search -->
+    <form method="GET" action="{{ url_for('parcel.list_parcels') }}">
+        <div class="search-wrap">
+            <input type="text"
+                   name="q"
+                   class="search-input"
+                   placeholder="🔍 ค้นหาห้อง หรือ Tracking..."
+                   value="{{ search or '' }}"
+                   autocomplete="off">
+            <button type="submit" class="btn btn-search">ค้นหา</button>
+            {% if search %}
+            <a href="{{ url_for('parcel.list_parcels') }}"
+               style="color:#666; font-size:.85rem; text-decoration:none;
+                      white-space:nowrap;">
+                ✕ ล้าง
+            </a>
+            {% endif %}
+        </div>
+    </form>
+
+    <!-- Summary -->
+    <div class="summary-bar">
+        <div class="summary-box">
+            <div class="summary-num" style="color:#f59e0b;">
+                {{ counts.waiting or 0 }}
+            </div>
+            <div class="summary-label">รอรับ</div>
+        </div>
+        <div class="summary-box">
+            <div class="summary-num" style="color:#22c55e;">
+                {{ counts.today or 0 }}
+            </div>
+            <div class="summary-label">รับวันนี้</div>
+        </div>
+        <div class="summary-box">
+            <div class="summary-num" style="color:#dc2626;">
+                {{ counts.overdue or 0 }}
+            </div>
+            <div class="summary-label">เกิน 3 วัน</div>
+        </div>
+    </div>
+
+    <!-- Status tabs -->
+    {% if not search %}
+    <div class="status-tabs">
+        <a href="{{ url_for('parcel.list_parcels', status=0) }}"
+           class="status-tab {% if current_status == 0 %}active{% endif %}">
+            รอรับ
+            <span class="cnt">{{ counts.waiting or 0 }}</span>
+        </a>
+        <a href="{{ url_for('parcel.list_parcels', status=1) }}"
+           class="status-tab {% if current_status == 1 %}active{% endif %}">
+            รับแล้ว
+        </a>
+        <a href="{{ url_for('parcel.list_parcels', status=2) }}"
+           class="status-tab {% if current_status == 2 %}active{% endif %}">
+            ส่งคืน
+        </a>
+        <a href="{{ url_for('parcel.list_parcels', status=99) }}"
+           class="status-tab {% if current_status == 99 %}active{% endif %}">
+            ทั้งหมด
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Parcel list -->
+    {% if parcels %}
+        {% for p in parcels %}
+        {% set days_waiting = ((now - p.received_at).days) if p.received_at else 0 %}
+        <div class="parcel-card
+            {% if p.status_id == 0 and days_waiting >= 3 %}overdue
+            {% elif p.status_id == 0 %}waiting
+            {% elif p.status_id == 1 %}picked
+            {% elif p.status_id == 2 %}returned
+            {% elif p.status_id == 3 %}lost
+            {% endif %}">
+
+            <!-- Room number -->
+            <div class="parcel-room">
+                {{ p.building or '' }}{{ p.room_no }}
+            </div>
+
+            <!-- Info -->
+            <div class="parcel-info">
+                <div class="parcel-courier">
+                    {{ p.courier_name or 'ไม่ระบุผู้ส่ง' }}
+                </div>
+                <div class="parcel-meta">
+                    {{ p.received_at.strftime('%d/%m/%Y %H:%M') if p.received_at else '' }}
+                    · #CF-{{ '%06d' % p.idno }}
+                </div>
+                {% if p.tracking_no %}
+                <div class="parcel-tracking">
+                    📦 {{ p.tracking_no }}
+                </div>
+                {% endif %}
+
+                <!-- Waiting time -->
+                {% if p.status_id == 0 %}
+                    {% if days_waiting == 0 %}
+                    <span class="wait-badge ok">วันนี้</span>
+                    {% elif days_waiting == 1 %}
+                    <span class="wait-badge ok">เมื่อวาน</span>
+                    {% elif days_waiting == 2 %}
+                    <span class="wait-badge warning">{{ days_waiting }} วันแล้ว</span>
+                    {% else %}
+                    <span class="wait-badge overdue">⚠️ {{ days_waiting }} วันแล้ว</span>
+                    {% endif %}
+                {% else %}
+                <span class="status-badge
+                    {% if p.status_id == 1 %}status-picked
+                    {% elif p.status_id == 2 %}status-returned
+                    {% elif p.status_id == 3 %}status-lost
+                    {% elif p.status_id == 4 %}status-damaged
+                    {% elif p.status_id == 5 %}status-disposed
+                    {% endif %}">
+                    {{ p.status_name }}
+                </span>
+                {% endif %}
+            </div>
+
+            <!-- Pickup button (waiting only) -->
+            {% if p.status_id == 0 %}
+            <a href="{{ url_for('parcel.pickup', parcel_id=p.idno) }}"
+               class="btn-pickup">
+                ✓ รับของ
+            </a>
+            {% endif %}
+
+        </div>
+        {% endfor %}
+
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <div class="empty-title">
+                {% if search %}
+                    ไม่พบพัสดุที่ค้นหา
+                {% else %}
+                    ยังไม่มีพัสดุ
+                {% endif %}
+            </div>
+            <div class="empty-desc">
+                {% if search %}
+                    ลองค้นหาด้วยคำอื่น หรือ
+                    <a href="{{ url_for('parcel.list_parcels') }}">ดูทั้งหมด</a>
+                {% else %}
+                    พัสดุที่รับเข้ามาจะแสดงที่นี่
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

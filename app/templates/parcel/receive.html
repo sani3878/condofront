@@ -1,0 +1,525 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+
+
+
+
+
+
+
+.main-wrap {
+    padding: 1rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* ── ROOM DISPLAY ── */
+.room-display {
+    background: #1e3a5f;
+    border-radius: 16px;
+    padding: 1.25rem;
+    text-align: center;
+    margin-bottom: 1rem;
+    min-height: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.room-display.empty { background: #e2e8f0; }
+.room-display.empty .room-placeholder {
+    color: #94a3b8;
+    font-size: 1rem;
+    font-weight: 500;
+}
+.room-display.tracking {
+    background: #1e3a5f;
+}
+.room-tracking-label {
+    color: rgba(0,0,0,0);
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.room-tracking-no {
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: .2rem 0;
+    word-break: break-all;
+}
+.room-number-big {
+    color: #ff7a00;
+    font-size: 5rem;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: 4px;
+}
+.room-building-label {
+    color: rgba(0,0,0,0);
+    font-size: .85rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+.room-floor-label {
+    color: rgba(0,0,0,0);
+    font-size: .78rem;
+    margin-top: .2rem;
+}
+
+/* ── PREFIX BUTTONS ── */
+.prefix-wrap {
+    display: none;
+    gap: .6rem;
+    flex-wrap: wrap;
+    margin-top: .75rem;
+    justify-content: center;
+}
+.prefix-wrap.show { display: flex; }
+.prefix-btn {
+    background: rgba(0,0,0,0);
+    border: 2px solid rgba(0,0,0,0);
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 900;
+    border-radius: 10px;
+    padding: .4rem 1rem;
+    cursor: pointer;
+    transition: .15s;
+    min-width: 60px;
+    text-align: center;
+}
+.prefix-btn:hover, .prefix-btn:active {
+    background: #ff7a00;
+    border-color: #ff7a00;
+}
+
+/* ── CARDS ── */
+.cf-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05);
+}
+.cf-card-title {
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    color: #000;
+    margin-bottom: .75rem;
+}
+
+/* ── FORM ── */
+.form-control, .form-select {
+    border-radius: 10px;
+    padding: 13px 14px;
+    border: 1.5px solid #e2e8f0;
+    font-size: 1rem;
+    width: 100%;
+    color: #1e293b;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #1e3a5f;
+    box-shadow: 0 0 0 3px rgba(30,58,95,.1);
+    outline: none;
+}
+
+/* ── BUTTONS ── */
+.btn-save {
+    background: #ff7a00;
+    border: none;
+    color: white;
+    font-weight: 800;
+    border-radius: 12px;
+    padding: 16px;
+    width: 100%;
+    font-size: 1.15rem;
+    letter-spacing: .5px;
+    transition: background .15s;
+    margin-bottom: .6rem;
+}
+.btn-save:hover, .btn-save:active { background: #eb6d00; color: white; }
+.btn-clear {
+    background: #f1f5f9;
+    border: none;
+    color: #000;
+    font-weight: 600;
+    border-radius: 12px;
+    padding: 13px;
+    width: 100%;
+    font-size: .95rem;
+}
+.btn-clear:hover { background: #e2e8f0; }
+
+/* ── STATS ── */
+.stats-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .75rem;
+    margin-bottom: 1rem;
+}
+.stat-box {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+.stat-num {
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 1;
+}
+.stat-label {
+    font-size: .72rem;
+    color: #000;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-top: .25rem;
+}
+
+/* ── RECENT ── */
+.recent-item {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .65rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+.recent-item:last-child { border-bottom: none; }
+.recent-room {
+    background: #1e3a5f;
+    color: #ff7a00;
+    font-weight: 900;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    padding: .3rem .7rem;
+    min-width: 64px;
+    text-align: center;
+    letter-spacing: 1px;
+}
+.recent-info { flex: 1; }
+.recent-courier { font-size: .85rem; font-weight: 600; color: #1e3a5f; }
+.recent-time { font-size: .75rem; color: #94a3b8; }
+</style>
+
+<!-- Navbar -->
+<div class="main-wrap">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                        alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Stats -->
+    <div class="stats-bar">
+        <div class="stat-box">
+            <div class="stat-num" style="color:#ff7a00;">{{ today_count or 0 }}</div>
+            <div class="stat-label">Today</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-num" style="color:#e11d48;">{{ waiting_count or 0 }}</div>
+            <div class="stat-label">Waiting</div>
+        </div>
+    </div>
+
+    <!-- Room display -->
+    <div class="room-display empty" id="roomDisplay">
+        <div class="room-placeholder">📦 Please Scan Parcel Tracking...</div>
+        <!-- Prefix buttons shown here when needed -->
+        <div class="prefix-wrap" id="prefixWrap"></div>
+    </div>
+
+    <!-- Form -->
+    <form method="POST" action="{{ url_for('parcel.receive') }}"
+          id="receiveForm">
+
+        <!-- Tracking -->
+        <div class="cf-card">
+            <div class="cf-card-title">Tracking No.</div>
+            <input type="text"
+                   name="tracking_no"
+                   id="trackingNo"
+                   class="form-control"
+                   placeholder="Scan or type tracking number"
+                   autocomplete="off"
+                   autofocus>
+        </div>
+
+        <!-- Room -->
+        <div class="cf-card" id="roomCard"
+             onclick="document.getElementById('roomSearch').focus()"
+             style="cursor:pointer;">
+            <div class="cf-card-title">Room Number *</div>
+            <input type="text"
+                   id="roomSearch"
+                   class="form-control"
+                   placeholder="Type room number e.g. A101, ก101"
+                   autocomplete="off"
+                   inputmode="text"
+                   style="font-size:1.2rem; font-weight:700; color:#1e293b;">
+            <input type="hidden" name="room_id" id="roomId">
+        </div>
+
+        <!-- Courier -->
+        <div class="cf-card">
+            <div class="cf-card-title">Courier</div>
+            <select name="courier_id" class="form-select">
+                <option value="">-- Select --</option>
+                {% for c in couriers %}
+                <option value="{{ c.idno }}">{{ c.courier_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Note -->
+        <div class="cf-card">
+            <div class="cf-card-title">Note (optional)</div>
+            <input type="text" name="note" class="form-control"
+                   placeholder="e.g. Fragile, Large box">
+        </div>
+
+        <button type="submit" class="btn btn-save">
+            💾 &nbsp; SAVE & PRINT LABEL
+        </button>
+        <button type="button" class="btn btn-clear" onclick="clearForm()">
+            ✕ &nbsp; Clear
+        </button>
+
+    </form>
+
+    <!-- Recent -->
+    {% if recent %}
+    <div class="cf-card" style="margin-top:.5rem;">
+        <div class="cf-card-title">Recent entries today</div>
+        {% for p in recent %}
+        <div class="recent-item">
+            <div class="recent-room">
+                {{ p.building or '' }}{{ p.room_no }}
+            </div>
+            <div class="recent-info">
+                <div class="recent-courier">{{ p.courier_name or 'Unknown' }}</div>
+                <div class="recent-time">
+                    {{ p.received_at.strftime('%H:%M') if p.received_at else '' }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+const trackingEl  = document.getElementById('trackingNo');
+const roomSearch  = document.getElementById('roomSearch');
+const roomIdInput = document.getElementById('roomId');
+const roomDisplay = document.getElementById('roomDisplay');
+const prefixWrap  = document.getElementById('prefixWrap');
+
+let searchTimer;
+let currentMatches = [];
+let selectedRoomNo = '';
+
+// ── TRACKING ──────────────────────────────────────────────
+trackingEl.addEventListener('change', function() {
+    const val = this.value.trim();
+    if (val) {
+        setDisplayTracking(val);
+        setTimeout(() => roomSearch.focus(), 150);
+    }
+});
+
+function setDisplayTracking(tracking) {
+    roomDisplay.className = 'room-display tracking';
+    roomDisplay.innerHTML = `
+        <div class="room-tracking-label">Tracking</div>
+        <div class="room-tracking-no">${tracking}</div>
+        <div class="room-placeholder" style="color:rgba(255,255,255,.5);
+             font-size:.85rem; margin-top:.5rem;">
+            Now enter room number ↓
+        </div>
+        <div class="prefix-wrap" id="prefixWrap"></div>`;
+}
+
+// ── ROOM SEARCH ───────────────────────────────────────────
+roomSearch.addEventListener('input', function() {
+    clearTimeout(searchTimer);
+    const q = this.value.trim();
+
+    // Hide prefix buttons while typing
+    hidePrefixButtons();
+
+    if (!q) {
+        resetToTracking();
+        return;
+    }
+    searchTimer = setTimeout(() => searchRooms(q), 200);
+});
+
+async function searchRooms(q) {
+    try {
+        const res  = await fetch(`/parcel/api/rooms?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        currentMatches = data;
+
+        if (!data.length) {
+            showNoResult();
+            return;
+        }
+
+        if (data.length === 1) {
+            // Only one match → auto-confirm
+            autoConfirm(data[0]);
+            return;
+        }
+
+        // Check if all matches have same room_no but different building
+        const uniqueRoomNos = [...new Set(data.map(r => r.room_no))];
+
+        if (uniqueRoomNos.length === 1) {
+            // Same room number, different buildings → show prefix buttons
+            showPrefixButtons(data);
+        } else {
+            // Different room numbers → show as dropdown list
+            showDropdown(data);
+        }
+
+    } catch(e) { console.error(e); }
+}
+
+function autoConfirm(room) {
+    confirmRoom(room);
+}
+
+function showPrefixButtons(rooms) {
+    // Build prefix buttons inside room display
+    const trackingVal = trackingEl.value.trim();
+    const roomNo      = rooms[0].room_no;
+
+    roomDisplay.className = 'room-display tracking';
+    roomDisplay.innerHTML = `
+        ${trackingVal
+            ? `<div class="room-tracking-label">Tracking</div>
+               <div class="room-tracking-no">${trackingVal}</div>`
+            : ''}
+        <div style="color:rgba(255,255,255,.7); font-size:.85rem;
+                    margin:.5rem 0 .4rem;">
+            Select building for room <strong style="color:#ff7a00">${roomNo}</strong>
+        </div>
+        <div class="prefix-wrap show" id="prefixWrap">
+            ${rooms.map(r => `
+                <div class="prefix-btn"
+                     onclick="confirmRoom({
+                         idno: ${r.idno},
+                         room_no: '${r.room_no}',
+                         building: '${r.building || ''}',
+                         floor: ${r.floor || 0}
+                     })">
+                    ${r.building || '?'}
+                </div>`).join('')}
+        </div>`;
+}
+
+function showDropdown(rooms) {
+    // For mixed results show a simple list below room input
+    // (reuse prefix buttons but show room+building)
+    const trackingVal = trackingEl.value.trim();
+    roomDisplay.className = 'room-display tracking';
+    roomDisplay.innerHTML = `
+        ${trackingVal
+            ? `<div class="room-tracking-label">Tracking</div>
+               <div class="room-tracking-no">${trackingVal}</div>`
+            : ''}
+        <div class="prefix-wrap show" style="display:flex; margin-top:.5rem;">
+            ${rooms.slice(0,6).map(r => `
+                <div class="prefix-btn"
+                     style="font-size:1rem; min-width:70px;"
+                     onclick="confirmRoom({
+                         idno: ${r.idno},
+                         room_no: '${r.room_no}',
+                         building: '${r.building || ''}',
+                         floor: ${r.floor || 0}
+                     })">
+                    ${r.building ? r.building : ''}${r.room_no}
+                </div>`).join('')}
+        </div>`;
+}
+
+function confirmRoom(room) {
+    roomIdInput.value = room.idno;
+    roomSearch.value  = (room.building || '') + room.room_no;
+
+    // Show big room display
+    roomDisplay.className = 'room-display';
+    roomDisplay.innerHTML = `
+        ${room.building
+            ? `<div class="room-building-label">Building ${room.building}</div>`
+            : ''}
+        <div class="room-number-big">
+            ${room.building || ''}${room.room_no}
+        </div>
+        ${room.floor
+            ? `<div class="room-floor-label">Floor ${room.floor}</div>`
+            : ''}`;
+}
+
+function showNoResult() {
+    roomDisplay.className = 'room-display tracking';
+    roomDisplay.innerHTML = `
+        <div style="color:rgba(255,255,255,.5); font-size:.9rem;">
+            ❌ Room not found
+        </div>`;
+}
+
+function hidePrefixButtons() {
+    const pw = document.getElementById('prefixWrap');
+    if (pw) pw.classList.remove('show');
+}
+
+function resetToTracking() {
+    const val = trackingEl.value.trim();
+    if (val) {
+        setDisplayTracking(val);
+    } else {
+        roomDisplay.className = 'room-display empty';
+        roomDisplay.innerHTML = '<div class="room-placeholder">📦 Please Scan Parcel Tracking...</div>';
+    }
+    roomIdInput.value = '';
+}
+
+function clearForm() {
+    document.getElementById('receiveForm').reset();
+    roomIdInput.value = '';
+    roomSearch.value  = '';
+    roomDisplay.className = 'room-display empty';
+    roomDisplay.innerHTML = '<div class="room-placeholder">📦 Please Scan Parcel Tracking...</div>';
+    trackingEl.focus();
+}
+
+// Prevent form submit if no room selected
+document.getElementById('receiveForm').addEventListener('submit', function(e) {
+    if (!roomIdInput.value) {
+        e.preventDefault();
+        roomSearch.focus();
+        roomSearch.style.borderColor = '#e11d48';
+        setTimeout(() => roomSearch.style.borderColor = '', 1500);
+    }
+});
+</script>
+
+{% endblock %}

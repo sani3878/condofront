@@ -1,0 +1,324 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; color: #1a1a1a; }
+
+
+
+
+
+
+.main-wrap {
+    padding: 1.25rem;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+/* Welcome banner */
+.welcome-banner {
+    background: #1e3a5f;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+    color: #fff;
+}
+.welcome-banner h2 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin: 0 0 .3rem;
+    color: #fff;
+}
+.welcome-banner p {
+    font-size: .95rem;
+    color: rgba(255,255,255,.8);
+    margin: 0;
+}
+
+/* Progress bar */
+.progress-wrap {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05);
+}
+.progress-title {
+    font-size: .85rem;
+    font-weight: 700;
+    color: #444;
+    margin-bottom: .75rem;
+}
+.progress {
+    height: 10px;
+    border-radius: 10px;
+    background: #e2e8f0;
+    margin-bottom: .5rem;
+}
+.progress-bar {
+    background: #ff7a00;
+    border-radius: 10px;
+    transition: width .4s ease;
+}
+.progress-label {
+    font-size: .82rem;
+    color: #444;
+    font-weight: 600;
+}
+
+/* Step cards */
+.step-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: .85rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05);
+    border-left: 5px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-decoration: none;
+    color: #1a1a1a;
+    transition: .15s;
+}
+.step-card:hover { transform: translateX(3px); color: #1a1a1a; }
+.step-card.done { border-left-color: #22c55e; }
+.step-card.active { border-left-color: #ff7a00; }
+.step-card.locked { border-left-color: #e2e8f0; opacity: .6; pointer-events: none; }
+
+.step-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+.step-icon.done    { background: #dcfce7; }
+.step-icon.active  { background: #fff3e0; }
+.step-icon.locked  { background: #f1f5f9; }
+
+.step-body { flex: 1; }
+.step-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: .2rem;
+}
+.step-desc {
+    font-size: .85rem;
+    color: #444;
+    line-height: 1.5;
+}
+.step-status {
+    font-size: .78rem;
+    font-weight: 700;
+    margin-top: .3rem;
+}
+.step-status.done   { color: #16a34a; }
+.step-status.active { color: #ff7a00; }
+
+.step-arrow {
+    color: #ff7a00;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+/* All done banner */
+.alldone-banner {
+    background: #22c55e;
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    color: #fff;
+    margin-bottom: 1.25rem;
+}
+.alldone-banner h3 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin: 0 0 .5rem;
+    color: #fff;
+}
+.alldone-banner p {
+    font-size: .9rem;
+    margin: 0 0 1rem;
+    color: rgba(255,255,255,.9);
+}
+.btn-start {
+    background: #fff;
+    color: #16a34a;
+    font-weight: 800;
+    font-size: 1rem;
+    border: none;
+    border-radius: 10px;
+    padding: .75rem 2rem;
+    text-decoration: none;
+    display: inline-block;
+    transition: .15s;
+}
+.btn-start:hover { background: #f0fdf4; color: #16a34a; }
+
+.logout-wrap {
+    text-align: center;
+    margin-top: 1rem;
+}
+.logout-link {
+    color: #666;
+    font-size: .85rem;
+    text-decoration: none;
+}
+.logout-link:hover { color: #1e3a5f; }
+</style>
+
+<!-- Navbar -->
+<div class="main-wrap">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                        alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Welcome -->
+    <div class="welcome-banner">
+        <h2>ยินดีต้อนรับ, {{ current_user.fullname }}! 👋</h2>
+        <p>มาเริ่มต้นตั้งค่าระบบของคุณกันเลย ใช้เวลาไม่นาน</p>
+    </div>
+
+    {% set steps_done = [status.has_property, status.has_rooms, status.has_staff] | select | list | length %}
+    {% set total_steps = 3 %}
+    {% set pct = (steps_done / total_steps * 100) | int %}
+
+    <!-- Progress -->
+    <div class="progress-wrap">
+        <div class="progress-title">ความคืบหน้าการตั้งค่า</div>
+        <div class="progress">
+            <div class="progress-bar" style="width: {{ pct }}%"></div>
+        </div>
+        <div class="progress-label">
+            เสร็จแล้ว {{ steps_done }} จาก {{ total_steps }} ขั้นตอน
+            {% if pct == 100 %} 🎉{% endif %}
+        </div>
+    </div>
+
+    <!-- All done banner -->
+    {% if steps_done == total_steps %}
+    <div class="alldone-banner">
+        <h3>🎉 ตั้งค่าครบแล้ว! พร้อมใช้งาน</h3>
+        <p>ระบบพร้อมรับพัสดุแล้ว กดปุ่มด้านล่างเพื่อเริ่มงาน</p>
+        <a href="{{ url_for('parcel.receive') }}" class="btn-start">
+            เริ่มรับพัสดุ →
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Step 1: Property -->
+    {% if status.has_property %}
+    <div class="step-card done">
+        <div class="step-icon done">✅</div>
+        <div class="step-body">
+            <div class="step-title">ขั้นตอนที่ 1 — ข้อมูลโครงการ</div>
+            <div class="step-desc">{{ status.property.property_name }}</div>
+            <div class="step-status done">✓ เสร็จเรียบร้อย</div>
+        </div>
+    </div>
+    {% else %}
+    <a href="{{ url_for('property.setup') }}" class="step-card active">
+        <div class="step-icon active">🏢</div>
+        <div class="step-body">
+            <div class="step-title">ขั้นตอนที่ 1 — ข้อมูลโครงการ</div>
+            <div class="step-desc">
+                กรอกชื่อโครงการ / คอนโดมิเนียม<br>
+                เพื่อเริ่มต้นใช้งานระบบ
+            </div>
+            <div class="step-status active">⬤ รอดำเนินการ — กดที่นี่</div>
+        </div>
+        <div class="step-arrow">›</div>
+    </a>
+    {% endif %}
+
+    <!-- Step 2: Rooms -->
+    {% if status.has_rooms %}
+    <a href="{{ url_for('property.rooms') }}" class="step-card done">
+        <div class="step-icon done">✅</div>
+        <div class="step-body">
+            <div class="step-title">ขั้นตอนที่ 2 — ห้องพัก</div>
+            <div class="step-desc">มีข้อมูลห้องพักแล้ว {{ status.room_count }} ห้อง</div>
+            <div class="step-status done">✓ เสร็จเรียบร้อย — กดเพื่อจัดการ</div>
+        </div>
+        <div class="step-arrow" style="color:#22c55e;">›</div>
+    </a>
+    {% elif status.has_property %}
+    <a href="{{ url_for('property.rooms') }}" class="step-card active">
+        <div class="step-icon active">🚪</div>
+        <div class="step-body">
+            <div class="step-title">ขั้นตอนที่ 2 — ห้องพัก</div>
+            <div class="step-desc">
+                เพิ่มรายชื่อห้องพักในโครงการ<br>
+                รองรับการนำเข้าจาก Excel ได้เลย!
+            </div>
+            <div class="step-status active">⬤ รอดำเนินการ — กดที่นี่</div>
+        </div>
+        <div class="step-arrow">›</div>
+    </a>
+    {% else %}
+    <div class="step-card locked">
+        <div class="step-icon locked">🚪</div>
+        <div class="step-body">
+            <div class="step-title">ขั้นตอนที่ 2 — ห้องพัก</div>
+            <div class="step-desc">กรุณาทำขั้นตอนที่ 1 ก่อน</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Step 3: Staff -->
+    {% if status.has_staff %}
+    <a href="{{ url_for('property.users') }}" class="step-card done">
+        <div class="step-icon done">✅</div>
+        <div class="step-body">
+            <div class="step-title">ขั้นตอนที่ 3 — ผู้ใช้งาน / เจ้าหน้าที่</div>
+            <div class="step-desc">มีเจ้าหน้าที่ในระบบแล้ว {{ status.staff_count }} คน</div>
+            <div class="step-status done">✓ เสร็จเรียบร้อย — กดเพื่อจัดการ</div>
+        </div>
+        <div class="step-arrow" style="color:#22c55e;">›</div>
+    </a>
+    {% elif status.has_rooms %}
+    <a href="{{ url_for('property.users') }}" class="step-card active">
+        <div class="step-icon active">👥</div>
+        <div class="step-body">
+            <div class="step-title">ขั้นตอนที่ 3 — ผู้ใช้งาน / เจ้าหน้าที่</div>
+            <div class="step-desc">
+                เพิ่มเจ้าหน้าที่ที่จะใช้งานระบบ<br>
+                กำหนดสิทธิ์ได้ตามบทบาท
+            </div>
+            <div class="step-status active">⬤ รอดำเนินการ — กดที่นี่</div>
+        </div>
+        <div class="step-arrow">›</div>
+    </a>
+    {% else %}
+    <div class="step-card locked">
+        <div class="step-icon locked">👥</div>
+        <div class="step-body">
+            <div class="step-title">ขั้นตอนที่ 3 — ผู้ใช้งาน / เจ้าหน้าที่</div>
+            <div class="step-desc">กรุณาทำขั้นตอนที่ 2 ก่อน</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="logout-wrap">
+        <a href="{{ url_for('auth.logout') }}" class="logout-link">
+            ออกจากระบบ
+        </a>
+    </div>
+
+</div>
+{% endblock %}

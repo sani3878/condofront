@@ -1,0 +1,204 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; color: #1a1a1a; }
+
+.cf-navbar {
+    background: #1e3a5f;
+    padding: .6rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+}
+.cf-navbar img { height: 32px; }
+.cf-nav-btn {
+    color: rgba(255,255,255,.9);
+    text-decoration: none;
+    font-size: .85rem;
+    padding: .35rem .7rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,.25);
+}
+
+.main-wrap {
+    padding: 1.25rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.page-header {
+    background: #1e3a5f;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    color: #fff;
+}
+.page-header h2 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin: 0 0 .3rem;
+    color: #fff;
+}
+.page-header p {
+    font-size: .9rem;
+    color: rgba(255,255,255,.85);
+    margin: 0;
+}
+
+.cf-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05);
+}
+
+.form-label {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: .3rem;
+    display: block;
+}
+
+.form-hint {
+    font-size: .85rem;
+    color: #444;
+    margin-bottom: .5rem;
+}
+
+.form-control {
+    border-radius: 10px;
+    padding: 13px 14px;
+    border: 1.5px solid #e2e8f0;
+    font-size: 1rem;
+    width: 100%;
+    color: #1a1a1a;
+}
+.form-control:focus {
+    border-color: #1e3a5f;
+    box-shadow: 0 0 0 3px rgba(30,58,95,.1);
+    outline: none;
+}
+
+.btn-save {
+    background: #ff7a00;
+    border: none;
+    color: white;
+    font-weight: 800;
+    border-radius: 12px;
+    padding: 15px;
+    width: 100%;
+    font-size: 1.1rem;
+    transition: background .15s;
+}
+.btn-save:hover { background: #eb6d00; color: white; }
+
+.btn-back {
+    background: #f1f5f9;
+    border: none;
+    color: #1a1a1a;
+    font-weight: 600;
+    border-radius: 12px;
+    padding: 13px;
+    width: 100%;
+    font-size: .95rem;
+    text-decoration: none;
+    display: block;
+    text-align: center;
+    margin-top: .6rem;
+}
+.btn-back:hover { background: #e2e8f0; color: #1a1a1a; }
+
+.required-note {
+    font-size: .82rem;
+    color: #666;
+    margin-bottom: 1rem;
+}
+</style>
+
+<nav class="cf-navbar">
+    <img src="{{ url_for('static', filename='img/logo-white.png') }}">
+    <a href="{{ url_for('property.dashboard') }}" class="cf-nav-btn">← กลับ</a>
+</nav>
+
+<div class="main-wrap">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                        alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="page-header">
+        <h2>🏢 ขั้นตอนที่ 1 — ข้อมูลโครงการ</h2>
+        <p>กรอกข้อมูลโครงการหรือคอนโดมิเนียมของคุณ<br>
+           สามารถแก้ไขได้ภายหลัง</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('property.setup') }}">
+
+        <div class="cf-card">
+            <p class="required-note">* จำเป็นต้องกรอก</p>
+
+            <div class="mb-4">
+                <label class="form-label">
+                    ชื่อโครงการ / คอนโดมิเนียม *
+                </label>
+                <div class="form-hint">
+                    เช่น ศุภาลัย ริเวอร์ไซด์, ลุมพินี พาร์ค
+                </div>
+                <input type="text"
+                       name="property_name"
+                       class="form-control"
+                       placeholder="กรอกชื่อโครงการ"
+                       required
+                       autofocus>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">รหัสโครงการ</label>
+                <div class="form-hint">
+                    รหัสย่อสำหรับอ้างอิง (ไม่บังคับ) เช่น SPR-RV, LPN-PK
+                </div>
+                <input type="text"
+                       name="property_code"
+                       class="form-control"
+                       placeholder="เช่น SPR-RV (ไม่บังคับ)">
+            </div>
+
+            <div class="mb-2">
+                <label class="form-label">ที่อยู่โครงการ</label>
+                <div class="form-hint">
+                    ที่อยู่เต็มของโครงการ (ไม่บังคับ)
+                </div>
+                <textarea name="address"
+                          class="form-control"
+                          rows="3"
+                          placeholder="กรอกที่อยู่โครงการ (ไม่บังคับ)"></textarea>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-save">
+            บันทึกและดำเนินการต่อ →
+        </button>
+
+        <a href="{{ url_for('property.dashboard') }}" class="btn-back">
+            ← ยกเลิก กลับหน้าหลัก
+        </a>
+
+    </form>
+</div>
+{% endblock %}

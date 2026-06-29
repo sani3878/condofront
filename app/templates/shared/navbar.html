@@ -1,0 +1,278 @@
+{#
+  CondoFront shared navbar
+  - active_page: 'receive' | 'list' | 'report' | 'staff' | 'settings'
+  - lang: 'th' | 'en'  (set in base.html from session)
+#}
+
+{# ── LABELS ── #}
+{% if lang == 'en' %}
+  {% set lbl_receive  = "📥 Receive" %}
+  {% set lbl_list     = "📋 Parcel List" %}
+  {% set lbl_report   = "📊 Reports" %}
+  {% set lbl_staff    = "👥 Staff" %}
+  {% set lbl_settings = "⚙️ Settings" %}
+  {% set lbl_logout   = "Logout" %}
+{% else %}
+  {% set lbl_receive  = "📥 รับพัสดุ" %}
+  {% set lbl_list     = "📋 รายการพัสดุ" %}
+  {% set lbl_report   = "📊 รายงาน" %}
+  {% set lbl_staff    = "👥 พนักงาน" %}
+  {% set lbl_settings = "⚙️ ตั้งค่า" %}
+  {% set lbl_logout   = "ออกจากระบบ" %}
+{% endif %}
+
+{% set ap = active_page | default('') %}
+
+<style>
+.cf-navbar {
+    background: #1e3a5f;
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    min-height: 54px;
+}
+.cf-navbar-logo img { height: 30px; display: block; }
+
+.cf-nav-links {
+    display: flex;
+    align-items: center;
+    gap: .2rem;
+    height: 54px;
+}
+.cf-nav-link {
+    color: rgba(255,255,255,.8);
+    text-decoration: none;
+    font-size: .88rem;
+    font-weight: 600;
+    padding: .35rem .75rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    white-space: nowrap;
+    transition: .15s;
+    border: 1.5px solid transparent;
+}
+.cf-nav-link:hover { background: rgba(255,255,255,.12); color: #fff; }
+.cf-nav-link.active { background: #ff7a00; border-color: #ff7a00; color: #fff; }
+
+.cf-nav-divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(255,255,255,.2);
+    margin: 0 .3rem;
+}
+
+/* Language toggle */
+.cf-lang-toggle {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,.1);
+    border-radius: 20px;
+    padding: 2px;
+    gap: 1px;
+}
+.cf-lang-btn {
+    color: rgba(255,255,255,.6);
+    text-decoration: none;
+    font-size: .75rem;
+    font-weight: 700;
+    padding: .2rem .55rem;
+    border-radius: 20px;
+    transition: .15s;
+    letter-spacing: .5px;
+}
+.cf-lang-btn:hover { color: #fff; }
+.cf-lang-btn.active {
+    background: #ff7a00;
+    color: #fff;
+}
+
+.cf-nav-right {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+}
+.cf-nav-user {
+    color: rgba(255,255,255,.6);
+    font-size: .78rem;
+    white-space: nowrap;
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.cf-nav-logout {
+    color: rgba(255,255,255,.7);
+    text-decoration: none;
+    font-size: .82rem;
+    padding: .3rem .65rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,.2);
+    white-space: nowrap;
+    transition: .15s;
+}
+.cf-nav-logout:hover { background: rgba(255,255,255,.12); color: #fff; }
+
+.cf-hamburger {
+    display: none;
+    background: none;
+    border: 1.5px solid rgba(255,255,255,.3);
+    border-radius: 8px;
+    color: white;
+    padding: .3rem .55rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    line-height: 1;
+}
+
+/* Mobile drawer */
+.cf-mobile-menu {
+    display: none;
+    flex-direction: column;
+    background: #162d4a;
+    padding: .5rem .75rem .75rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,.3);
+}
+.cf-mobile-menu.open { display: flex; }
+.cf-mobile-link {
+    color: rgba(255,255,255,.85);
+    text-decoration: none;
+    font-size: .95rem;
+    font-weight: 600;
+    padding: .65rem .75rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    transition: .15s;
+}
+.cf-mobile-link:hover { background: rgba(255,255,255,.1); color: #fff; }
+.cf-mobile-link.active { background: #ff7a00; color: #fff; }
+.cf-mobile-divider {
+    height: 1px;
+    background: rgba(255,255,255,.12);
+    margin: .3rem 0;
+}
+.cf-mobile-lang {
+    display: flex;
+    gap: .5rem;
+    padding: .5rem .75rem;
+}
+.cf-mobile-lang a {
+    color: rgba(255,255,255,.6);
+    text-decoration: none;
+    font-size: .85rem;
+    font-weight: 700;
+    padding: .3rem .75rem;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,.2);
+}
+.cf-mobile-lang a.active { background: #ff7a00; color: #fff; border-color: #ff7a00; }
+
+@media (max-width: 700px) {
+    .cf-nav-links { display: none; }
+    .cf-nav-user  { display: none; }
+    .cf-hamburger { display: block; }
+    .cf-lang-toggle { display: none; }
+}
+</style>
+
+<!-- Top bar -->
+<nav class="cf-navbar">
+    <a href="{{ url_for('parcel.receive') }}" class="cf-navbar-logo">
+        <img src="{{ url_for('static', filename='img/logo-white.png') }}" alt="CondoFront">
+    </a>
+
+    <!-- Desktop links -->
+    <div class="cf-nav-links">
+        <a href="{{ url_for('parcel.receive') }}"
+           class="cf-nav-link {% if ap == 'receive' %}active{% endif %}">
+            {{ lbl_receive }}
+        </a>
+        <a href="{{ url_for('parcel.list_parcels') }}"
+           class="cf-nav-link {% if ap == 'list' %}active{% endif %}">
+            {{ lbl_list }}
+        </a>
+        <a href="{{ url_for('report.dashboard') }}"
+           class="cf-nav-link {% if ap == 'report' %}active{% endif %}">
+            {{ lbl_report }}
+        </a>
+        <div class="cf-nav-divider"></div>
+        <a href="{{ url_for('property.users') }}"
+           class="cf-nav-link {% if ap == 'staff' %}active{% endif %}">
+            {{ lbl_staff }}
+        </a>
+        <a href="{{ url_for('property.dashboard') }}"
+           class="cf-nav-link {% if ap == 'settings' %}active{% endif %}">
+            {{ lbl_settings }}
+        </a>
+    </div>
+
+    <!-- Right side -->
+    <div class="cf-nav-right">
+        <!-- Language toggle -->
+        <div class="cf-lang-toggle">
+            <a href="{{ url_for('auth.set_language', lang='th') }}"
+               class="cf-lang-btn {% if lang != 'en' %}active{% endif %}">TH</a>
+            <a href="{{ url_for('auth.set_language', lang='en') }}"
+               class="cf-lang-btn {% if lang == 'en' %}active{% endif %}">EN</a>
+        </div>
+
+        <span class="cf-nav-user">{{ current_user.fullname }}</span>
+        <a href="{{ url_for('auth.logout') }}" class="cf-nav-logout">{{ lbl_logout }}</a>
+        <button class="cf-hamburger" onclick="toggleMobileMenu()" aria-label="menu">☰</button>
+    </div>
+</nav>
+
+<!-- Mobile drawer -->
+<div class="cf-mobile-menu" id="cfMobileMenu">
+    <a href="{{ url_for('parcel.receive') }}"
+       class="cf-mobile-link {% if ap == 'receive' %}active{% endif %}">
+        {{ lbl_receive }}
+    </a>
+    <a href="{{ url_for('parcel.list_parcels') }}"
+       class="cf-mobile-link {% if ap == 'list' %}active{% endif %}">
+        {{ lbl_list }}
+    </a>
+    <a href="{{ url_for('report.dashboard') }}"
+       class="cf-mobile-link {% if ap == 'report' %}active{% endif %}">
+        {{ lbl_report }}
+    </a>
+    <div class="cf-mobile-divider"></div>
+    <a href="{{ url_for('property.users') }}"
+       class="cf-mobile-link {% if ap == 'staff' %}active{% endif %}">
+        {{ lbl_staff }}
+    </a>
+    <a href="{{ url_for('property.dashboard') }}"
+       class="cf-mobile-link {% if ap == 'settings' %}active{% endif %}">
+        {{ lbl_settings }}
+    </a>
+    <div class="cf-mobile-divider"></div>
+    <!-- Language in mobile -->
+    <div class="cf-mobile-lang">
+        <a href="{{ url_for('auth.set_language', lang='th') }}"
+           class="{% if lang != 'en' %}active{% endif %}">🇹🇭 ภาษาไทย</a>
+        <a href="{{ url_for('auth.set_language', lang='en') }}"
+           class="{% if lang == 'en' %}active{% endif %}">🇬🇧 English</a>
+    </div>
+    <div class="cf-mobile-divider"></div>
+    <a href="{{ url_for('auth.logout') }}" class="cf-mobile-link">
+        🚪 {{ lbl_logout }}
+    </a>
+</div>
+
+<script>
+function toggleMobileMenu() {
+    document.getElementById('cfMobileMenu').classList.toggle('open');
+}
+document.querySelectorAll('.cf-mobile-link').forEach(function(el) {
+    el.addEventListener('click', function() {
+        document.getElementById('cfMobileMenu').classList.remove('open');
+    });
+});
+</script>
