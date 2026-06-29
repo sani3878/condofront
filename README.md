@@ -51,7 +51,7 @@ cp .env.example .env
 # Edit .env with your database URL and secret key
 
 pip install -r requirements.txt
-python run.py
+python app.py
 ```
 
 ## Role IDs (from tblrole)
