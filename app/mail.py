@@ -1,24 +1,46 @@
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import urllib.request
+import urllib.error
+import json
 from flask import current_app
 
 
+def _send(to_email, subject, body):
+    """Core Resend API sender. Returns (success, error)."""
+    api_key  = current_app.config.get('re_WdGydpV4_8WEfes16D3LVvB8K5aZyoQNQ', '')
+    from_addr = current_app.config.get('MAIL_FROM', 'CondoFront <onboarding@resend.dev>')
+
+    if not api_key:
+        return False, 'RESEND_API_KEY not configured'
+
+    payload = json.dumps({
+        'from':    from_addr,
+        'to':      [to_email],
+        'subject': subject,
+        'text':    body,
+    }).encode('utf-8')
+
+    req = urllib.request.Request(
+        'https://api.resend.com/emails',
+        data=payload,
+        headers={
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type':  'application/json',
+        },
+        method='POST'
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return True, None
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode('utf-8', errors='ignore')
+        return False, f'HTTP {e.code}: {error_body}'
+    except Exception as e:
+        return False, str(e)
+
+
 def send_verification_email(to_email, fullname, verify_url):
-    """Send a welcome email with an email-verification link.
-
-    Returns (success: bool, error_message: str|None)
-    """
-    smtp_host = current_app.config.get('SMTP_HOST')
-    smtp_port = current_app.config.get('SMTP_PORT')
-    smtp_user = current_app.config.get('SMTP_USER')
-    smtp_pass = current_app.config.get('SMTP_PASS')
-
-    if not smtp_user or not smtp_pass:
-        return False, 'ระบบอีเมลยังไม่ได้ตั้งค่า (SMTP not configured)'
-
     subject = 'ยืนยันอีเมลของคุณ — CondoFront'
-
     body = f"""สวัสดีคุณ {fullname},
 
 ขอบคุณที่สมัครใช้งาน CondoFront!
@@ -33,39 +55,17 @@ def send_verification_email(to_email, fullname, verify_url):
 
 ทีมงาน CondoFront
 """
-
-    msg = MIMEMultipart()
-    msg['From']    = smtp_user
-    msg['To']      = to_email
-    msg['Subject'] = subject
-    msg.attach(MIMEText(body, 'plain', 'utf-8'))
-
-    try:
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
-            server.starttls()
-            server.login(smtp_user, smtp_pass)
-            server.sendmail(smtp_user, [to_email], msg.as_string())
-        return True, None
-    except Exception as e:
-        return False, str(e)
+    return _send(to_email, subject, body)
 
 
 def send_contact_email(name, email, mobile, message, customer_name=None, property_name=None):
-    """Send a contact/feedback message to the support inbox via SMTP.
+    to_email = current_app.config.get('CONTACT_TO_EMAIL') or \
+               current_app.config.get('SMTP_USER', '')
 
-    Returns (success: bool, error_message: str|None)
-    """
-    smtp_host = current_app.config.get('SMTP_HOST')
-    smtp_port = current_app.config.get('SMTP_PORT')
-    smtp_user = current_app.config.get('SMTP_USER')
-    smtp_pass = current_app.config.get('SMTP_PASS')
-    to_email  = current_app.config.get('CONTACT_TO_EMAIL') or smtp_user
-
-    if not smtp_user or not smtp_pass or not to_email:
-        return False, 'ระบบอีเมลยังไม่ได้ตั้งค่า (SMTP not configured)'
+    if not to_email:
+        return False, 'CONTACT_TO_EMAIL not configured'
 
     subject = f'[CondoFront] ข้อความใหม่จาก {name}'
-
     body = f"""มีข้อความใหม่จากผู้ใช้งาน CondoFront
 
 ชื่อ: {name}
@@ -77,19 +77,4 @@ def send_contact_email(name, email, mobile, message, customer_name=None, propert
 ข้อความ:
 {message}
 """
-
-    msg = MIMEMultipart()
-    msg['From']    = smtp_user
-    msg['To']      = to_email
-    msg['Reply-To'] = email
-    msg['Subject'] = subject
-    msg.attach(MIMEText(body, 'plain', 'utf-8'))
-
-    try:
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
-            server.starttls()
-            server.login(smtp_user, smtp_pass)
-            server.sendmail(smtp_user, [to_email], msg.as_string())
-        return True, None
-    except Exception as e:
-        return False, str(e)
+    return _send(to_email, subject, body)
