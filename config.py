@@ -12,6 +12,15 @@ class Config:
     DB_PORT = int(os.environ.get('PGPORT') or os.environ.get('DB_PORT', 5432))
     SESSION_PERMANENT = False
 
+    # SMTP — provider-agnostic, swap via env vars only
+    # Gmail:   SMTP_HOST=smtp.gmail.com    SMTP_PORT=587
+    # Outlook: SMTP_HOST=smtp.office365.com SMTP_PORT=587
+    SMTP_HOST = os.environ.get('SMTP_HOST',  'mail.ijsiam.com')
+    SMTP_PORT = int(os.environ.get('SMTP_PORT', 587))
+    SMTP_USER = os.environ.get('SMTP_USER', 'dashboard@ijsiam.com')
+    SMTP_PASS = os.environ.get('EMAIL_PASS', 'Email3878@786')
+    CONTACT_TO_EMAIL = os.environ.get('CONTACT_TO_EMAIL', 'dashboard@ijsiam.com')
+
 class DevelopmentConfig(Config):
     DEBUG = True
     SECRET_KEY = os.urandom(24)

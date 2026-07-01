@@ -18,78 +18,70 @@ body { background: #f0f4f8; color: #1a1a1a; }
     margin: 0 auto;
 }
 
-/* ── SEARCH BAR ── */
-.search-wrap {
-    background: white;
-    border-radius: 14px;
-    padding: .75rem;
-    margin-bottom: .85rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,.05);
+/* ── COMPACT FILTER ROW ── */
+.filter-row {
     display: flex;
     gap: .5rem;
+    margin-bottom: .6rem;
     align-items: center;
 }
-
-.search-input {
-    border: 1.5px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 11px 14px;
-    font-size: 1rem;
+.filter-search {
     flex: 1;
-    color: #1a1a1a;
-    outline: none;
-}
-.search-input:focus { border-color: #1e3a5f; }
-
-.btn-search {
-    background: #1e3a5f;
-    border: none;
-    color: white;
-    font-weight: 700;
-    border-radius: 10px;
-    padding: 11px 18px;
-    font-size: .95rem;
-    white-space: nowrap;
-}
-.btn-search:hover { background: #152d4a; color: white; }
-
-/* ── STATUS TABS ── */
-.status-tabs {
-    display: flex;
-    gap: .4rem;
-    margin-bottom: .85rem;
-    overflow-x: auto;
-    padding-bottom: .25rem;
-}
-
-.status-tab {
-    background: white;
+    min-width: 0;
+    border-radius: 12px;
     border: 1.5px solid #e2e8f0;
+    padding: .55rem .75rem;
+    font-size: .9rem;
     color: #1a1a1a;
-    font-weight: 600;
-    border-radius: 20px;
-    padding: .4rem .9rem;
+    background: white;
+}
+.filter-search:focus { outline: none; border-color: #1e3a5f; }
+.filter-select {
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    padding: .55rem .5rem;
     font-size: .85rem;
-    text-decoration: none;
-    white-space: nowrap;
-    transition: .15s;
+    color: #1a1a1a;
+    background: white;
+    flex-shrink: 0;
 }
-.status-tab:hover { border-color: #1e3a5f; color: #1e3a5f; }
-.status-tab.active {
+.filter-select:focus { outline: none; border-color: #1e3a5f; }
+.filter-go {
     background: #1e3a5f;
-    border-color: #1e3a5f;
     color: white;
+    border: none;
+    border-radius: 12px;
+    padding: .55rem .9rem;
+    font-size: .85rem;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
 }
-.status-tab .cnt {
-    background: rgba(255,255,255,.25);
-    border-radius: 20px;
-    padding: 1px 7px;
-    font-size: .75rem;
-    margin-left: .3rem;
+.filter-go:hover { background: #152d4a; }
+
+.custom-range-row {
+    display: none;
+    gap: .4rem;
+    align-items: center;
+    margin-bottom: .85rem;
+    background: white;
+    border-radius: 12px;
+    padding: .5rem .7rem;
+    border: 1.5px solid #ff7a00;
 }
-.status-tab:not(.active) .cnt {
-    background: #f0f4f8;
-    color: #666;
+.custom-range-row.show { display: flex; }
+.custom-range-row input[type="date"] {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    padding: .35rem .5rem;
+    font-size: .8rem;
+    color: #1a1a1a;
+    flex: 1;
+}
+
+@media (max-width: 480px) {
+    .filter-row { flex-wrap: wrap; }
+    .filter-search { flex: 1 1 100%; }
 }
 
 /* ── SUMMARY BAR ── */
@@ -253,26 +245,6 @@ body { background: #f0f4f8; color: #1a1a1a; }
         {% endif %}
     {% endwith %}
 
-    <!-- Search -->
-    <form method="GET" action="{{ url_for('parcel.list_parcels') }}">
-        <div class="search-wrap">
-            <input type="text"
-                   name="q"
-                   class="search-input"
-                   placeholder="🔍 ค้นหาห้อง หรือ Tracking..."
-                   value="{{ search or '' }}"
-                   autocomplete="off">
-            <button type="submit" class="btn btn-search">ค้นหา</button>
-            {% if search %}
-            <a href="{{ url_for('parcel.list_parcels') }}"
-               style="color:#666; font-size:.85rem; text-decoration:none;
-                      white-space:nowrap;">
-                ✕ ล้าง
-            </a>
-            {% endif %}
-        </div>
-    </form>
-
     <!-- Summary -->
     <div class="summary-bar">
         <div class="summary-box">
@@ -295,28 +267,54 @@ body { background: #f0f4f8; color: #1a1a1a; }
         </div>
     </div>
 
-    <!-- Status tabs -->
-    {% if not search %}
-    <div class="status-tabs">
-        <a href="{{ url_for('parcel.list_parcels', status=0) }}"
-           class="status-tab {% if current_status == 0 %}active{% endif %}">
-            รอรับ
-            <span class="cnt">{{ counts.waiting or 0 }}</span>
-        </a>
-        <a href="{{ url_for('parcel.list_parcels', status=1) }}"
-           class="status-tab {% if current_status == 1 %}active{% endif %}">
-            รับแล้ว
-        </a>
-        <a href="{{ url_for('parcel.list_parcels', status=2) }}"
-           class="status-tab {% if current_status == 2 %}active{% endif %}">
-            ส่งคืน
-        </a>
-        <a href="{{ url_for('parcel.list_parcels', status=99) }}"
-           class="status-tab {% if current_status == 99 %}active{% endif %}">
-            ทั้งหมด
-        </a>
+    <!-- Compact filter row -->
+    <form method="GET" action="{{ url_for('parcel.list_parcels') }}"
+          class="filter-row" id="filterForm">
+        <input type="text"
+               name="q"
+               class="filter-search"
+               placeholder="🔍 ห้อง หรือ Tracking..."
+               value="{{ search or '' }}"
+               autocomplete="off">
+
+        <select name="status" class="filter-select" onchange="document.getElementById('filterForm').submit()">
+            <option value="0"  {% if current_status == 0  %}selected{% endif %}>รอรับ</option>
+            <option value="1"  {% if current_status == 1  %}selected{% endif %}>รับแล้ว</option>
+            <option value="2"  {% if current_status == 2  %}selected{% endif %}>ส่งคืน</option>
+            <option value="99" {% if current_status == 99 %}selected{% endif %}>ทุกสถานะ</option>
+        </select>
+
+        <select name="range" id="rangeSelect" class="filter-select"
+                onchange="handleRangeChange(this.value)">
+            <option value=""          {% if not date_range %}selected{% endif %}>ทุกวันที่</option>
+            <option value="today"     {% if date_range == 'today' %}selected{% endif %}>วันนี้</option>
+            <option value="yesterday" {% if date_range == 'yesterday' %}selected{% endif %}>เมื่อวาน</option>
+            <option value="week"      {% if date_range == 'week' %}selected{% endif %}>7 วันล่าสุด</option>
+            <option value="custom"    {% if date_range == 'custom' %}selected{% endif %}>กำหนดเอง...</option>
+        </select>
+
+        <button type="submit" class="filter-go">ไป</button>
+    </form>
+
+    <!-- Custom date range — only shown when "กำหนดเอง" selected -->
+    <div class="custom-range-row {% if date_range == 'custom' %}show{% endif %}" id="customRangeRow">
+        <input type="date" name="from" form="filterForm" value="{{ date_from or '' }}">
+        <span style="color:#94a3b8; font-size:.78rem;">–</span>
+        <input type="date" name="to" form="filterForm" value="{{ date_to or '' }}">
+        <button type="submit" form="filterForm" class="filter-go">ดู</button>
     </div>
-    {% endif %}
+
+    <script>
+    function handleRangeChange(val) {
+        const row = document.getElementById('customRangeRow');
+        if (val === 'custom') {
+            row.classList.add('show');
+        } else {
+            row.classList.remove('show');
+            document.getElementById('filterForm').submit();
+        }
+    }
+    </script>
 
     <!-- Parcel list -->
     {% if parcels %}

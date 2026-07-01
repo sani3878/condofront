@@ -9,17 +9,44 @@ from ..helpers import query_one, query_all, get_db
 @login_required
 def receive():
     if request.method == 'POST':
-        room_id    = request.form.get('room_id')
-        courier_id = request.form.get('courier_id')
-        tracking   = request.form.get('tracking_no', '').strip()
-        note       = request.form.get('note', '').strip()
+        room_id      = request.form.get('room_id')
+        courier_id   = request.form.get('courier_id')
+        courier_other = request.form.get('courier_other', '').strip()
+        tracking     = request.form.get('tracking_no', '').strip()
+        note         = request.form.get('note', '').strip()
 
         if not room_id:
             flash('กรุณาเลือกห้อง', 'danger')
             return redirect(url_for('parcel.receive'))
 
+        if not courier_id:
+            flash('กรุณาเลือกขนส่ง', 'danger')
+            return redirect(url_for('parcel.receive'))
+
         db  = get_db()
         cur = db.cursor()
+
+        # Handle "other" courier — find existing or create new courier record
+        if courier_id == 'other':
+            if not courier_other:
+                flash('กรุณาระบุชื่อขนส่ง', 'danger')
+                return redirect(url_for('parcel.receive'))
+
+            existing = query_one("""
+                SELECT idno FROM tblcourier
+                WHERE courier_name = %s
+            """, [courier_other])
+
+            if existing:
+                courier_id = existing['idno']
+            else:
+                cur.execute("""
+                    INSERT INTO tblcourier (courier_name, is_active)
+                    VALUES (%s, TRUE)
+                    RETURNING idno
+                """, [courier_other])
+                courier_id = cur.fetchone()['idno']
+
         cur.execute("""
             INSERT INTO tblparcel
                 (property_id, room_id, courier_id, tracking_no,
@@ -101,8 +128,11 @@ def print_label(parcel_id):
 @parcel_bp.route('/list')
 @login_required
 def list_parcels():
-    status_id = request.args.get('status', 0, type=int)
-    search    = request.args.get('q', '').strip()
+    status_id  = request.args.get('status', 0, type=int)
+    search     = request.args.get('q', '').strip()
+    date_range = request.args.get('range', '').strip()   # today | yesterday | week | custom | '' (all)
+    date_from  = request.args.get('from', '').strip()
+    date_to    = request.args.get('to', '').strip()
 
     # Build query
     sql = """
@@ -132,6 +162,17 @@ def list_parcels():
     else:
         sql += " AND p.status_id = %s"
         params.append(status_id)
+
+    # ── Date filter ──────────────────────────────────────────
+    if date_range == 'today':
+        sql += " AND DATE(p.received_at) = CURRENT_DATE"
+    elif date_range == 'yesterday':
+        sql += " AND DATE(p.received_at) = CURRENT_DATE - INTERVAL '1 day'"
+    elif date_range == 'week':
+        sql += " AND p.received_at >= CURRENT_DATE - INTERVAL '7 days'"
+    elif date_range == 'custom' and date_from and date_to:
+        sql += " AND DATE(p.received_at) BETWEEN %s AND %s"
+        params += [date_from, date_to]
 
     sql += " ORDER BY p.received_at DESC LIMIT 200"
 
@@ -168,6 +209,9 @@ def list_parcels():
                            statuses=statuses,
                            current_status=status_id,
                            search=search,
+                           date_range=date_range,
+                           date_from=date_from,
+                           date_to=date_to,
                            counts=counts,
                            now=datetime.now())
 

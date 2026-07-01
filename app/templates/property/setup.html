@@ -5,26 +5,9 @@
 * { box-sizing: border-box; }
 body { background: #f0f4f8; color: #1a1a1a; }
 
-.cf-navbar {
-    background: #1e3a5f;
-    padding: .6rem 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 2px 8px rgba(0,0,0,.2);
-}
-.cf-navbar img { height: 32px; }
-.cf-nav-btn {
-    color: rgba(255,255,255,.9);
-    text-decoration: none;
-    font-size: .85rem;
-    padding: .35rem .7rem;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,.25);
-}
+
+
+
 
 .main-wrap {
     padding: 1.25rem;
@@ -123,11 +106,6 @@ body { background: #f0f4f8; color: #1a1a1a; }
 }
 </style>
 
-<nav class="cf-navbar">
-    <img src="{{ url_for('static', filename='img/logo-white.png') }}">
-    <a href="{{ url_for('property.dashboard') }}" class="cf-nav-btn">← กลับ</a>
-</nav>
-
 <div class="main-wrap">
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -164,6 +142,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
                        name="property_name"
                        class="form-control"
                        placeholder="กรอกชื่อโครงการ"
+                       value="{{ property.property_name if property else '' }}"
                        required
                        autofocus>
             </div>
@@ -176,6 +155,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
                 <input type="text"
                        name="property_code"
                        class="form-control"
+                       value="{{ property.property_code if property else '' }}"
                        placeholder="เช่น SPR-RV (ไม่บังคับ)">
             </div>
 
@@ -187,7 +167,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
                 <textarea name="address"
                           class="form-control"
                           rows="3"
-                          placeholder="กรอกที่อยู่โครงการ (ไม่บังคับ)"></textarea>
+                          placeholder="กรอกที่อยู่โครงการ (ไม่บังคับ)">{{ property.address if property else '' }}</textarea>
             </div>
         </div>
 

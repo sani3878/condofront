@@ -1,0 +1,130 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; color: #1a1a1a; }
+
+.main-wrap {
+    padding: 1.25rem;
+    max-width: 520px;
+    margin: 0 auto;
+}
+
+.page-header {
+    background: #1e3a5f;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    color: #fff;
+    text-align: center;
+}
+.page-header h2 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin: 0 0 .3rem;
+    color: #fff;
+}
+.page-header p {
+    font-size: .88rem;
+    color: rgba(255,255,255,.85);
+    margin: 0;
+}
+
+.cf-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05);
+}
+
+.form-label {
+    font-size: .85rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: .35rem;
+    display: block;
+}
+.form-control {
+    border-radius: 10px;
+    padding: 11px 13px;
+    border: 1.5px solid #e2e8f0;
+    font-size: .95rem;
+    width: 100%;
+    color: #1e293b;
+    margin-bottom: 1rem;
+}
+.form-control:focus {
+    border-color: #1e3a5f;
+    box-shadow: 0 0 0 3px rgba(30,58,95,.1);
+    outline: none;
+}
+textarea.form-control { resize: vertical; min-height: 110px; }
+
+.btn-send {
+    background: #ff7a00;
+    border: none;
+    color: white;
+    font-weight: 800;
+    border-radius: 12px;
+    padding: 13px;
+    width: 100%;
+    font-size: 1rem;
+}
+.btn-send:hover { background: #eb6d00; color: white; }
+
+.alt-contact {
+    margin-top: 1.25rem;
+    text-align: center;
+    font-size: .82rem;
+    color: #64748b;
+}
+</style>
+
+<div class="main-wrap">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                        alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="page-header">
+        <h2>💬 ติดต่อเรา</h2>
+        <p>มีคำถาม ข้อเสนอแนะ หรือต้องการความช่วยเหลือ? ส่งข้อความถึงเราได้เลย</p>
+    </div>
+
+    <div class="cf-card">
+        <form method="POST" action="{{ url_for('auth.contact') }}">
+            <label class="form-label">ชื่อของคุณ *</label>
+            <input type="text" name="name" class="form-control"
+                   value="{{ prefill_name }}" placeholder="ชื่อ-นามสกุล" required>
+
+            <label class="form-label">อีเมล *</label>
+            <input type="email" name="email" class="form-control"
+                   value="{{ prefill_email }}" placeholder="email@example.com" required>
+
+            <label class="form-label">เบอร์โทร</label>
+            <input type="text" name="mobile" class="form-control"
+                   value="{{ prefill_mobile }}" placeholder="08x-xxx-xxxx (ไม่บังคับ)">
+
+            <label class="form-label">ข้อความ *</label>
+            <textarea name="message" class="form-control"
+                      placeholder="พิมพ์คำถามหรือข้อเสนอแนะของคุณที่นี่..." required></textarea>
+
+            <button type="submit" class="btn-send">📨 ส่งข้อความ</button>
+        </form>
+    </div>
+
+    <div class="alt-contact">
+        หรือพูดคุยกับเราโดยตรงทาง LINE / โทรศัพท์
+    </div>
+
+</div>
+{% endblock %}

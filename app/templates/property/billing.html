@@ -1,0 +1,307 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; color: #1a1a1a; }
+
+.main-wrap {
+    padding: 1.25rem;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.page-header {
+    background: #1e3a5f;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    color: #fff;
+}
+.page-header h2 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin: 0 0 .3rem;
+    color: #fff;
+}
+.page-header p {
+    font-size: .9rem;
+    color: rgba(255,255,255,.85);
+    margin: 0;
+}
+
+.cf-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05);
+}
+.card-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: .9rem;
+}
+
+/* ── CURRENT PLAN ── */
+.current-plan-card {
+    background: linear-gradient(135deg, #1e3a5f 0%, #15294a 100%);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    color: white;
+}
+.plan-name-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: .25rem;
+}
+.plan-name {
+    font-size: 1.4rem;
+    font-weight: 900;
+}
+.plan-price {
+    font-size: .95rem;
+    color: rgba(255,255,255,.8);
+}
+.plan-price strong { color: #ff7a00; font-size: 1.1rem; }
+.plan-active-badge {
+    background: rgba(34,197,94,.2);
+    color: #4ade80;
+    font-size: .72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+/* ── USAGE BARS ── */
+.usage-row {
+    margin-top: 1.1rem;
+}
+.usage-item { margin-bottom: .8rem; }
+.usage-item:last-child { margin-bottom: 0; }
+.usage-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: .82rem;
+    margin-bottom: .3rem;
+    color: rgba(255,255,255,.85);
+}
+.usage-label strong { color: white; }
+.usage-track {
+    background: rgba(255,255,255,.15);
+    border-radius: 20px;
+    height: 8px;
+    overflow: hidden;
+}
+.usage-fill {
+    background: #ff7a00;
+    height: 100%;
+    border-radius: 20px;
+    transition: width .3s;
+}
+.usage-fill.full { background: #ef4444; }
+.usage-fill.warn { background: #f59e0b; }
+
+/* ── PACKAGE GRID ── */
+.pkg-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .85rem;
+}
+.pkg-card {
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 1.1rem;
+    position: relative;
+}
+.pkg-card.current {
+    border-color: #1e3a5f;
+    background: #f8fafc;
+}
+.pkg-current-tag {
+    position: absolute;
+    top: -10px;
+    right: 14px;
+    background: #1e3a5f;
+    color: white;
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 20px;
+}
+.pkg-name {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #1a1a1a;
+}
+.pkg-price {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #ff7a00;
+    margin: .25rem 0 .6rem;
+}
+.pkg-price span { font-size: .8rem; color: #64748b; font-weight: 600; }
+.pkg-features {
+    font-size: .85rem;
+    color: #475569;
+    line-height: 1.8;
+}
+.pkg-features li { list-style: none; padding-left: 1.4rem; position: relative; }
+.pkg-features li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: #22c55e;
+    font-weight: 800;
+}
+.btn-upgrade {
+    background: #ff7a00;
+    border: none;
+    color: white;
+    font-weight: 800;
+    border-radius: 10px;
+    padding: 11px;
+    width: 100%;
+    font-size: .92rem;
+    margin-top: .9rem;
+    text-decoration: none;
+    text-align: center;
+    display: block;
+}
+.btn-upgrade:hover { background: #eb6d00; color: white; }
+.btn-upgrade.disabled {
+    background: #e2e8f0;
+    color: #94a3b8;
+    cursor: default;
+}
+</style>
+
+<div class="main-wrap">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                        alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="page-header">
+        <h2>💳 แพ็กเกจของคุณ</h2>
+        <p>ดูแพ็กเกจปัจจุบันและตัวเลือกอัปเกรด</p>
+    </div>
+
+    {% if current_sub %}
+    <!-- Current plan card -->
+    <div class="current-plan-card">
+        <div class="plan-name-row">
+            <div class="plan-name">{{ current_sub.package_name }}</div>
+            <span class="plan-active-badge">✓ ใช้งานอยู่</span>
+        </div>
+        <div class="plan-price">
+            {% if current_sub.monthly_fee and current_sub.monthly_fee > 0 %}
+                <strong>฿{{ '%.0f'|format(current_sub.monthly_fee) }}</strong> / เดือน
+            {% else %}
+                <strong>ฟรี</strong>
+            {% endif %}
+        </div>
+
+        <div class="usage-row">
+            <div class="usage-item">
+                <div class="usage-label">
+                    <span>ห้อง</span>
+                    <strong>{{ usage.room }} / {{ current_sub.max_room or '∞' }}</strong>
+                </div>
+                {% if current_sub.max_room %}
+                {% set pct = (usage.room / current_sub.max_room * 100) | round(0, 'floor') %}
+                <div class="usage-track">
+                    <div class="usage-fill {% if pct >= 100 %}full{% elif pct >= 80 %}warn{% endif %}"
+                         style="width:{{ pct if pct <= 100 else 100 }}%;"></div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="usage-item">
+                <div class="usage-label">
+                    <span>พนักงาน</span>
+                    <strong>{{ usage.user }} / {{ current_sub.max_user or '∞' }}</strong>
+                </div>
+                {% if current_sub.max_user %}
+                {% set pct = (usage.user / current_sub.max_user * 100) | round(0, 'floor') %}
+                <div class="usage-track">
+                    <div class="usage-fill {% if pct >= 100 %}full{% elif pct >= 80 %}warn{% endif %}"
+                         style="width:{{ pct if pct <= 100 else 100 }}%;"></div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="usage-item">
+                <div class="usage-label">
+                    <span>พัสดุทั้งหมด</span>
+                    <strong>{{ usage.parcel }} / {{ current_sub.max_parcel or '∞' }}</strong>
+                </div>
+                {% if current_sub.max_parcel %}
+                {% set pct = (usage.parcel / current_sub.max_parcel * 100) | round(0, 'floor') %}
+                <div class="usage-track">
+                    <div class="usage-fill {% if pct >= 100 %}full{% elif pct >= 80 %}warn{% endif %}"
+                         style="width:{{ pct if pct <= 100 else 100 }}%;"></div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="cf-card">
+        <p style="color:#64748b; text-align:center; margin:0;">
+            ยังไม่มีแพ็กเกจที่ใช้งานอยู่ — กรุณาตั้งค่าโครงการก่อน
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Available packages -->
+    <div class="cf-card">
+        <div class="card-title">แพ็กเกจทั้งหมด</div>
+        <div class="pkg-grid">
+            {% for pkg in all_packages %}
+            <div class="pkg-card {% if current_sub and pkg.idno == current_sub.package_id %}current{% endif %}">
+                {% if current_sub and pkg.idno == current_sub.package_id %}
+                <span class="pkg-current-tag">แพ็กเกจปัจจุบัน</span>
+                {% endif %}
+
+                <div class="pkg-name">{{ pkg.package_name }}</div>
+                <div class="pkg-price">
+                    {% if pkg.monthly_fee and pkg.monthly_fee > 0 %}
+                        ฿{{ '%.0f'|format(pkg.monthly_fee) }}<span>/เดือน</span>
+                    {% else %}
+                        ฟรี
+                    {% endif %}
+                </div>
+
+                <ul class="pkg-features">
+                    <li>ห้อง {{ pkg.max_room or 'ไม่จำกัด' }} ห้อง</li>
+                    <li>พนักงาน {{ pkg.max_user or 'ไม่จำกัด' }} คน</li>
+                    <li>พัสดุ {{ pkg.max_parcel or 'ไม่จำกัด' }} ชิ้น</li>
+                </ul>
+
+                {% if current_sub and pkg.idno == current_sub.package_id %}
+                <div class="btn-upgrade disabled">แพ็กเกจปัจจุบัน</div>
+                {% else %}
+                <a href="https://line.me/ti/p/your-line-id"
+                   target="_blank" class="btn-upgrade">
+                    ติดต่อเพื่ออัปเกรด →
+                </a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

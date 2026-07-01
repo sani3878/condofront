@@ -50,6 +50,12 @@ def dashboard():
 @property_bp.route('/setup', methods=['GET', 'POST'])
 @login_required
 def setup():
+    existing_property = None
+    if current_user.property_id:
+        existing_property = query_one("""
+            SELECT * FROM tblproperty WHERE idno = %s
+        """, [current_user.property_id])
+
     if request.method == 'POST':
         property_name = request.form.get('property_name', '').strip()
         address       = request.form.get('address', '').strip()
@@ -63,6 +69,23 @@ def setup():
         cur = db.cursor()
 
         try:
+            if existing_property:
+                # Editing an already-created property
+                cur.execute("""
+                    UPDATE tblproperty
+                    SET property_name = %s,
+                        property_code = %s,
+                        address = %s
+                    WHERE idno = %s
+                """, [property_name,
+                      property_code or None,
+                      address or None,
+                      existing_property['idno']])
+                db.commit()
+                flash('บันทึกข้อมูลโครงการสำเร็จแล้ว!', 'success')
+                return redirect(url_for('property.dashboard'))
+
+            # Creating a new property (first time setup)
             cur.execute("""
                 INSERT INTO tblproperty
                     (customer_id, property_name, property_code,
@@ -74,6 +97,28 @@ def setup():
                   property_code or None,
                   address or None])
             property_id = cur.fetchone()['idno']
+
+            # Create subscription using the package chosen at registration
+            # (falls back to the Free package if none was set)
+            customer_pkg = query_one("""
+                SELECT package_id FROM tblcustomer WHERE idno = %s
+            """, [current_user.customer_id])
+
+            package_id = customer_pkg['package_id'] if customer_pkg else None
+            if not package_id:
+                free_pkg = query_one("""
+                    SELECT idno FROM tblpackage
+                    WHERE package_name = 'Free' AND is_active = TRUE
+                    LIMIT 1
+                """)
+                package_id = free_pkg['idno'] if free_pkg else None
+
+            if package_id:
+                cur.execute("""
+                    INSERT INTO tblsubscription
+                        (property_id, package_id, start_date, is_active)
+                    VALUES (%s, %s, CURRENT_DATE, TRUE)
+                """, [property_id, package_id])
 
             # Link user to this property
             cur.execute("""
@@ -93,7 +138,7 @@ def setup():
             db.rollback()
             flash(f'เกิดข้อผิดพลาด: {str(e)}', 'danger')
 
-    return render_template('property/setup.html')
+    return render_template('property/setup.html', property=existing_property)
 
 
 @property_bp.route('/rooms')
@@ -123,10 +168,160 @@ def users():
         ORDER BY r.idno, u.fullname
     """, [current_user.property_id]) if current_user.property_id else []
 
+    # Subscription limit info
+    max_user = None
+    package_name = None
+    if current_user.property_id:
+        sub = query_one("""
+            SELECT pkg.max_user, pkg.package_name
+            FROM tblsubscription s
+            JOIN tblpackage pkg ON s.package_id = pkg.idno
+            WHERE s.property_id = %s AND s.is_active = TRUE
+            ORDER BY s.idno DESC LIMIT 1
+        """, [current_user.property_id])
+        if sub:
+            max_user = sub['max_user']
+            package_name = sub['package_name']
+
+    roles = query_all("SELECT * FROM tblrole ORDER BY idno")
+
     return render_template('property/users.html',
         active_page='staff',
-                           status=status,
-                           staff=staff)
+        status=status,
+        staff=staff,
+        roles=roles,
+        staff_count=len(staff),
+        max_user=max_user,
+        package_name=package_name)
+
+
+@property_bp.route('/billing')
+@login_required
+def billing():
+    status = get_setup_status(current_user)
+
+    current_sub = None
+    if current_user.property_id:
+        current_sub = query_one("""
+            SELECT s.idno AS sub_id, s.start_date, s.expire_date,
+                   pkg.idno AS package_id, pkg.package_name, pkg.monthly_fee,
+                   pkg.max_room, pkg.max_user, pkg.max_parcel
+            FROM tblsubscription s
+            JOIN tblpackage pkg ON s.package_id = pkg.idno
+            WHERE s.property_id = %s AND s.is_active = TRUE
+            ORDER BY s.idno DESC LIMIT 1
+        """, [current_user.property_id])
+
+    # Current usage against the plan's limits
+    usage = {'room': 0, 'user': 0, 'parcel': 0}
+    if current_user.property_id:
+        usage['room'] = query_one("""
+            SELECT COUNT(*) AS cnt FROM tblroom
+            WHERE property_id = %s AND is_active = TRUE
+        """, [current_user.property_id])['cnt']
+
+        usage['user'] = query_one("""
+            SELECT COUNT(*) AS cnt FROM tbluser
+            WHERE property_id = %s AND is_active = TRUE
+        """, [current_user.property_id])['cnt']
+
+        usage['parcel'] = query_one("""
+            SELECT COUNT(*) AS cnt FROM tblparcel
+            WHERE property_id = %s AND deleted_at IS NULL
+        """, [current_user.property_id])['cnt']
+
+    all_packages = query_all("""
+        SELECT * FROM tblpackage
+        WHERE is_active = TRUE
+        ORDER BY monthly_fee
+    """)
+
+    return render_template('property/billing.html',
+        active_page='settings',
+        status=status,
+        current_sub=current_sub,
+        usage=usage,
+        all_packages=all_packages)
+
+
+@property_bp.route('/users/add', methods=['POST'])
+@login_required
+def add_user():
+    from werkzeug.security import generate_password_hash
+    import secrets
+
+    if not current_user.property_id:
+        flash('กรุณาตั้งค่าโครงการก่อน', 'danger')
+        return redirect(url_for('property.dashboard'))
+
+    # ── Enforce package user limit ──────────────────────────
+    sub = query_one("""
+        SELECT pkg.max_user
+        FROM tblsubscription s
+        JOIN tblpackage pkg ON s.package_id = pkg.idno
+        WHERE s.property_id = %s AND s.is_active = TRUE
+        ORDER BY s.idno DESC LIMIT 1
+    """, [current_user.property_id])
+
+    current_count = query_one("""
+        SELECT COUNT(*) as cnt FROM tbluser
+        WHERE property_id = %s AND is_active = TRUE
+    """, [current_user.property_id])['cnt']
+
+    if sub and sub['max_user'] and current_count >= sub['max_user']:
+        flash(f'แพ็กเกจของคุณรองรับผู้ใช้งานสูงสุด {sub["max_user"]} คน '
+              f'กรุณาอัปเกรดแพ็กเกจเพื่อเพิ่มผู้ใช้งาน', 'danger')
+        return redirect(url_for('property.users'))
+
+    fullname = request.form.get('fullname', '').strip()
+    email    = request.form.get('email', '').strip().lower()
+    mobile   = request.form.get('mobile', '').strip()
+    role_id  = request.form.get('role_id')
+
+    if not all([fullname, email, role_id]):
+        flash('กรุณากรอกข้อมูลให้ครบ', 'danger')
+        return redirect(url_for('property.users'))
+
+    if query_one('SELECT idno FROM tbluser WHERE email = %s', [email]):
+        flash('อีเมลนี้ถูกใช้งานแล้ว', 'danger')
+        return redirect(url_for('property.users'))
+
+    # Temporary password — staff resets via "forgot password" on first login
+    temp_password = secrets.token_urlsafe(8)
+
+    db  = get_db()
+    cur = db.cursor()
+    cur.execute("""
+        INSERT INTO tbluser
+            (customer_id, property_id, role_id,
+             email, password_hash, fullname, mobile, is_active)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, TRUE)
+    """, [current_user.customer_id, current_user.property_id, role_id,
+          email, generate_password_hash(temp_password), fullname, mobile or None])
+    db.commit()
+
+    flash(f'เพิ่มพนักงานสำเร็จ! รหัสผ่านชั่วคราว: {temp_password} '
+          f'(กรุณาแจ้งพนักงานให้เปลี่ยนรหัสผ่านทันที)', 'success')
+    return redirect(url_for('property.users'))
+
+
+@property_bp.route('/users/deactivate/<int:user_id>', methods=['POST'])
+@login_required
+def deactivate_user(user_id):
+    if user_id == current_user.id:
+        flash('ไม่สามารถปิดใช้งานบัญชีตัวเองได้', 'danger')
+        return redirect(url_for('property.users'))
+
+    db  = get_db()
+    cur = db.cursor()
+    cur.execute("""
+        UPDATE tbluser SET is_active = FALSE
+        WHERE idno = %s AND property_id = %s
+    """, [user_id, current_user.property_id])
+    db.commit()
+
+    flash('ปิดใช้งานพนักงานสำเร็จ', 'success')
+    return redirect(url_for('property.users'))
 
 
 @property_bp.route('/rooms/add', methods=['POST'])

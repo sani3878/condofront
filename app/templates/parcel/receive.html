@@ -20,11 +20,11 @@ body { background: #f0f4f8; }
 /* ── ROOM DISPLAY ── */
 .room-display {
     background: #1e3a5f;
-    border-radius: 16px;
-    padding: 1.25rem;
+    border-radius: 14px;
+    padding: .65rem 1rem;
     text-align: center;
-    margin-bottom: 1rem;
-    min-height: 20px;
+    margin-bottom: .75rem;
+    min-height: 16px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -38,6 +38,41 @@ body { background: #f0f4f8; }
 }
 .room-display.tracking {
     background: #1e3a5f;
+}
+
+/* ── SCAN SUCCESS FLASH ── */
+@keyframes scanFlash {
+    0%   { box-shadow: 0 0 0 0 rgba(34,197,94,.7); }
+    60%  { box-shadow: 0 0 0 16px rgba(34,197,94,0); }
+    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+}
+.room-display.scan-success {
+    animation: scanFlash .6s ease-out;
+    background: #166534 !important;
+}
+.scan-badge {
+    position: absolute;
+    top: -10px;
+    right: 14px;
+    background: #22c55e;
+    color: white;
+    font-size: .72rem;
+    font-weight: 800;
+    padding: 3px 12px;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    opacity: 0;
+    transform: translateY(4px) scale(.9);
+    transition: opacity .2s, transform .2s;
+    pointer-events: none;
+    white-space: nowrap;
+}
+.scan-badge.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+.room-display-wrap {
+    position: relative;
 }
 .room-tracking-label {
     color: rgba(0,0,0,0);
@@ -54,7 +89,7 @@ body { background: #f0f4f8; }
 }
 .room-number-big {
     color: #ff7a00;
-    font-size: 5rem;
+    font-size: 3.6rem;
     font-weight: 900;
     line-height: 1;
     letter-spacing: 4px;
@@ -158,33 +193,6 @@ body { background: #f0f4f8; }
 }
 .btn-clear:hover { background: #e2e8f0; }
 
-/* ── STATS ── */
-.stats-bar {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: .75rem;
-    margin-bottom: 1rem;
-}
-.stat-box {
-    background: white;
-    border-radius: 12px;
-    padding: 1rem;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,.04);
-}
-.stat-num {
-    font-size: 2rem;
-    font-weight: 900;
-    line-height: 1;
-}
-.stat-label {
-    font-size: .72rem;
-    color: #000;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    margin-top: .25rem;
-}
-
 /* ── RECENT ── */
 .recent-item {
     display: flex;
@@ -225,23 +233,14 @@ body { background: #f0f4f8; }
         {% endif %}
     {% endwith %}
 
-    <!-- Stats -->
-    <div class="stats-bar">
-        <div class="stat-box">
-            <div class="stat-num" style="color:#ff7a00;">{{ today_count or 0 }}</div>
-            <div class="stat-label">Today</div>
-        </div>
-        <div class="stat-box">
-            <div class="stat-num" style="color:#e11d48;">{{ waiting_count or 0 }}</div>
-            <div class="stat-label">Waiting</div>
-        </div>
-    </div>
-
     <!-- Room display -->
-    <div class="room-display empty" id="roomDisplay">
-        <div class="room-placeholder">📦 Please Scan Parcel Tracking...</div>
-        <!-- Prefix buttons shown here when needed -->
-        <div class="prefix-wrap" id="prefixWrap"></div>
+    <div class="room-display-wrap">
+        <div class="scan-badge" id="scanBadge">✓ สแกนสำเร็จ</div>
+        <div class="room-display empty" id="roomDisplay">
+            <div class="room-placeholder">📷 สแกน Tracking หรือพิมพ์ห้องได้เลย</div>
+            <!-- Prefix buttons shown here when needed -->
+            <div class="prefix-wrap" id="prefixWrap"></div>
+        </div>
     </div>
 
     <!-- Form -->
@@ -277,13 +276,18 @@ body { background: #f0f4f8; }
 
         <!-- Courier -->
         <div class="cf-card">
-            <div class="cf-card-title">Courier</div>
-            <select name="courier_id" class="form-select">
-                <option value="">-- Select --</option>
+            <div class="cf-card-title">Courier *</div>
+            <select name="courier_id" id="courierSelect" class="form-select" required
+                    onchange="toggleOtherCourier()">
+                <option value="">-- เลือกขนส่ง --</option>
                 {% for c in couriers %}
                 <option value="{{ c.idno }}">{{ c.courier_name }}</option>
                 {% endfor %}
+                <option value="other">อื่นๆ...</option>
             </select>
+            <input type="text" name="courier_other" id="courierOther"
+                   class="form-control" placeholder="ระบุชื่อขนส่ง"
+                   style="display:none; margin-top:.6rem;">
         </div>
 
         <!-- Note -->
@@ -340,9 +344,36 @@ trackingEl.addEventListener('change', function() {
     const val = this.value.trim();
     if (val) {
         setDisplayTracking(val);
+        flashScanSuccess();
         setTimeout(() => roomSearch.focus(), 150);
     }
 });
+
+// ── SCAN SUCCESS VISUAL FEEDBACK ────────────────────────────
+const scanBadge = document.getElementById('scanBadge');
+
+function flashScanSuccess() {
+    // Brief green pulse on the room display box
+    roomDisplay.classList.remove('scan-success'); // restart animation if rapid scans
+    void roomDisplay.offsetWidth; // force reflow so animation can re-trigger
+    roomDisplay.classList.add('scan-success');
+
+    // Small corner badge confirmation
+    scanBadge.classList.add('show');
+
+    setTimeout(() => {
+        roomDisplay.classList.remove('scan-success');
+    }, 600);
+
+    setTimeout(() => {
+        scanBadge.classList.remove('show');
+    }, 1200);
+
+    // Haptic feedback on devices/PDAs that support it (most Android PDAs do)
+    if (navigator.vibrate) {
+        navigator.vibrate(60);
+    }
+}
 
 function setDisplayTracking(tracking) {
     roomDisplay.className = 'room-display tracking';
@@ -497,7 +528,7 @@ function resetToTracking() {
         setDisplayTracking(val);
     } else {
         roomDisplay.className = 'room-display empty';
-        roomDisplay.innerHTML = '<div class="room-placeholder">📦 Please Scan Parcel Tracking...</div>';
+        roomDisplay.innerHTML = '<div class="room-placeholder">📷 สแกน Tracking หรือพิมพ์ห้องได้เลย</div>';
     }
     roomIdInput.value = '';
 }
@@ -507,9 +538,76 @@ function clearForm() {
     roomIdInput.value = '';
     roomSearch.value  = '';
     roomDisplay.className = 'room-display empty';
-    roomDisplay.innerHTML = '<div class="room-placeholder">📦 Please Scan Parcel Tracking...</div>';
+    roomDisplay.innerHTML = '<div class="room-placeholder">📷 สแกน Tracking หรือพิมพ์ห้องได้เลย</div>';
+    document.getElementById('courierOther').style.display = 'none';
     trackingEl.focus();
 }
+
+function toggleOtherCourier() {
+    const sel   = document.getElementById('courierSelect');
+    const other = document.getElementById('courierOther');
+    if (sel.value === 'other') {
+        other.style.display = 'block';
+        other.required = true;
+        other.focus();
+    } else {
+        other.style.display = 'none';
+        other.required = false;
+        other.value = '';
+    }
+}
+
+// ── GLOBAL SCANNER LISTENER ─────────────────────────────────
+// PDA/USB barcode scanners type very fast and end with Enter.
+// This catches the scan even if focus is on the wrong field,
+// scrolled away, or nothing focused at all — and routes the
+// result straight into the tracking number field.
+(function() {
+    let buffer = '';
+    let lastKeyTime = Date.now();
+    const FAST_THRESHOLD_MS = 50; // human typing is slower than this between keys
+
+    document.addEventListener('keydown', function(e) {
+        const now = Date.now();
+        const elapsed = now - lastKeyTime;
+        lastKeyTime = now;
+
+        // If typing inside the tracking field itself, let it behave normally
+        if (document.activeElement === trackingEl) {
+            return;
+        }
+
+        // If user is actively typing in room search or other normal fields
+        // slowly (human speed), don't interfere
+        const isTypingField = document.activeElement === roomSearch ||
+                               document.activeElement.tagName === 'SELECT' ||
+                               document.activeElement.tagName === 'TEXTAREA';
+
+        if (e.key === 'Enter') {
+            if (buffer.length >= 4) {
+                // Looks like a completed scan — route it to tracking field
+                trackingEl.value = buffer;
+                trackingEl.dispatchEvent(new Event('change'));
+                e.preventDefault();
+            }
+            buffer = '';
+            return;
+        }
+
+        if (e.key.length === 1) {
+            if (elapsed > FAST_THRESHOLD_MS && !isTypingField) {
+                // Too slow to be a scanner and not in a known field — ignore
+                buffer = '';
+            }
+            // Only accumulate if this looks like scanner-speed input
+            if (elapsed <= FAST_THRESHOLD_MS || buffer.length > 0) {
+                buffer += e.key;
+            } else if (!isTypingField) {
+                buffer = e.key;
+            }
+        }
+    });
+})();
 
 // Prevent form submit if no room selected
 document.getElementById('receiveForm').addEventListener('submit', function(e) {

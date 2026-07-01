@@ -13,6 +13,7 @@ class User(UserMixin):
         self.mobile        = row['mobile']
         self.password_hash = row['password_hash']
         self.is_superadmin = row.get('is_superadmin', False)
+        self.email_verified = row.get('email_verified', True)  # default True for safety on old rows
         self._is_active    = row['is_active']   # ← renamed with underscore
 
     @property

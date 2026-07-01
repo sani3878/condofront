@@ -223,14 +223,15 @@ body { background: #f0f4f8; color: #1a1a1a; }
 
     <!-- Step 1: Property -->
     {% if status.has_property %}
-    <div class="step-card done">
+    <a href="{{ url_for('property.setup') }}" class="step-card done">
         <div class="step-icon done">✅</div>
         <div class="step-body">
             <div class="step-title">ขั้นตอนที่ 1 — ข้อมูลโครงการ</div>
             <div class="step-desc">{{ status.property.property_name }}</div>
-            <div class="step-status done">✓ เสร็จเรียบร้อย</div>
+            <div class="step-status done">✓ เสร็จเรียบร้อย — กดเพื่อแก้ไข</div>
         </div>
-    </div>
+        <div class="step-arrow">✏️</div>
+    </a>
     {% else %}
     <a href="{{ url_for('property.setup') }}" class="step-card active">
         <div class="step-icon active">🏢</div>
@@ -313,6 +314,17 @@ body { background: #f0f4f8; color: #1a1a1a; }
         </div>
     </div>
     {% endif %}
+
+    <!-- Billing — always visible, not part of setup wizard -->
+    <a href="{{ url_for('property.billing') }}" class="step-card done"
+       style="border-left-color:#1e3a5f;">
+        <div class="step-icon done" style="background:#1e3a5f1a; color:#1e3a5f;">💳</div>
+        <div class="step-body">
+            <div class="step-title">แพ็กเกจและการอัปเกรด</div>
+            <div class="step-desc">ดูแพ็กเกจปัจจุบัน การใช้งาน และตัวเลือกอัปเกรด</div>
+        </div>
+        <div class="step-arrow">›</div>
+    </a>
 
     <div class="logout-wrap">
         <a href="{{ url_for('auth.logout') }}" class="logout-link">

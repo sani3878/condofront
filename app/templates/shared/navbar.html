@@ -11,6 +11,7 @@
   {% set lbl_report   = "📊 Reports" %}
   {% set lbl_staff    = "👥 Staff" %}
   {% set lbl_settings = "⚙️ Settings" %}
+  {% set lbl_contact  = "💬 Contact Us" %}
   {% set lbl_logout   = "Logout" %}
 {% else %}
   {% set lbl_receive  = "📥 รับพัสดุ" %}
@@ -18,6 +19,7 @@
   {% set lbl_report   = "📊 รายงาน" %}
   {% set lbl_staff    = "👥 พนักงาน" %}
   {% set lbl_settings = "⚙️ ตั้งค่า" %}
+  {% set lbl_contact  = "💬 ติดต่อเรา" %}
   {% set lbl_logout   = "ออกจากระบบ" %}
 {% endif %}
 
@@ -105,6 +107,23 @@
     max-width: 130px;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+.cf-nav-plan {
+    font-size: .68rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    text-decoration: none;
+    letter-spacing: .3px;
+    background: rgba(255,122,0,.25);
+    color: #ff7a00;
+    border: 1px solid rgba(255,122,0,.4);
+    transition: .15s;
+}
+.cf-nav-plan:hover {
+    background: #ff7a00;
+    color: white;
 }
 .cf-nav-logout {
     color: rgba(255,255,255,.7);
@@ -207,9 +226,13 @@
            class="cf-nav-link {% if ap == 'staff' %}active{% endif %}">
             {{ lbl_staff }}
         </a>
-        <a href="{{ url_for('property.dashboard') }}"
+        <a href="{{ url_for('property.setup') }}"
            class="cf-nav-link {% if ap == 'settings' %}active{% endif %}">
             {{ lbl_settings }}
+        </a>
+        <a href="{{ url_for('auth.contact') }}"
+           class="cf-nav-link {% if ap == 'contact' %}active{% endif %}">
+            {{ lbl_contact }}
         </a>
     </div>
 
@@ -224,6 +247,11 @@
         </div>
 
         <span class="cf-nav-user">{{ current_user.fullname }}</span>
+        {% if current_plan %}
+        <a href="{{ url_for('property.billing') }}" class="cf-nav-plan">
+            {{ current_plan }}
+        </a>
+        {% endif %}
         <a href="{{ url_for('auth.logout') }}" class="cf-nav-logout">{{ lbl_logout }}</a>
         <button class="cf-hamburger" onclick="toggleMobileMenu()" aria-label="menu">☰</button>
     </div>
@@ -248,9 +276,13 @@
        class="cf-mobile-link {% if ap == 'staff' %}active{% endif %}">
         {{ lbl_staff }}
     </a>
-    <a href="{{ url_for('property.dashboard') }}"
+    <a href="{{ url_for('property.setup') }}"
        class="cf-mobile-link {% if ap == 'settings' %}active{% endif %}">
         {{ lbl_settings }}
+    </a>
+    <a href="{{ url_for('auth.contact') }}"
+       class="cf-mobile-link {% if ap == 'contact' %}active{% endif %}">
+        {{ lbl_contact }}
     </a>
     <div class="cf-mobile-divider"></div>
     <!-- Language in mobile -->
