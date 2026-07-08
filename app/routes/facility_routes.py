@@ -436,6 +436,9 @@ def my_bookings():
     if not current_user.is_resident:
         return redirect(url_for('facility.dashboard'))
 
+    if not current_user.unit_id:
+        return render_template('facility/my_bookings.html', bookings=[])
+
     bookings = query_all("""
         SELECT b.idno, b.booking_date, b.start_time, b.end_time,
                b.status, b.fee_amount, b.fee_paid, b.payment_method,
@@ -471,3 +474,44 @@ def cancel_my_booking(booking_id):
     db.commit()
     flash('ยกเลิกการจองแล้ว', 'success')
     return redirect(url_for('facility.my_bookings'))
+
+
+@facility_bp.route('/booking-qr/<int:booking_id>')
+@login_required
+def booking_qr(booking_id):
+    """Show QR code for a confirmed booking."""
+    # Allow both resident and staff to view
+    if current_user.is_resident:
+        booking = query_one("""
+            SELECT b.*, f.name AS facility_name, f.icon,
+                   r.room_no, r.building, p.property_name
+            FROM tblfacility_booking b
+            JOIN tblfacility f  ON b.facility_id = f.idno
+            JOIN tblroom r      ON b.unit_id = r.idno
+            JOIN tblproperty p  ON b.property_id = p.idno
+            WHERE b.idno = %s AND b.unit_id = %s
+        """, [booking_id, current_user.unit_id])
+    else:
+        booking = query_one("""
+            SELECT b.*, f.name AS facility_name, f.icon,
+                   r.room_no, r.building, p.property_name,
+                   u.fullname AS booked_by_name
+            FROM tblfacility_booking b
+            JOIN tblfacility f  ON b.facility_id = f.idno
+            JOIN tblroom r      ON b.unit_id = r.idno
+            JOIN tblproperty p  ON b.property_id = p.idno
+            JOIN tbluser u      ON b.booked_by = u.idno
+            WHERE b.idno = %s AND b.property_id = %s
+        """, [booking_id, current_user.property_id])
+
+    if not booking:
+        flash('ไม่พบข้อมูลการจอง', 'danger')
+        return redirect(url_for('facility.my_bookings') if current_user.is_resident
+                        else url_for('facility.bookings'))
+
+    # Generate booking code for QR
+    booking_code = f"BKG-{booking_id:06d}"
+
+    return render_template('facility/booking_qr.html',
+        booking=booking,
+        booking_code=booking_code)

@@ -99,7 +99,7 @@ body { background: #f0f4f8; }
                     <div class="b-name">{{ b.facility_name }}</div>
                     <div class="b-time">
                         {{ b.booking_date.strftime('%d/%m/%Y') if b.booking_date else '-' }}
-                        · {{ str(b.start_time)[:5] }}–{{ str(b.end_time)[:5] }}
+                        · {{ b.start_time | string | truncate(5, killwords=True, end="") }}–{{ b.end_time | string | truncate(5, killwords=True, end="") }}
                     </div>
                 </div>
                 <span class="status-pill s-{{ b.status }}">
@@ -124,6 +124,12 @@ body { background: #f0f4f8; }
                       onsubmit="return confirm('{{ 'Cancel this booking?' if lang == 'en' else 'ยกเลิกการจองนี้?' }}');">
                     <button type="submit" class="btn-cancel-sm">✕ {{ lbl_cancel }}</button>
                 </form>
+                <a href="{{ url_for('facility.booking_qr', booking_id=b.idno) }}"
+                   style="background:#1e3a5f; border:none; color:white;
+                          border-radius:8px; padding:.3rem .65rem; font-size:.75rem;
+                          font-weight:700; text-decoration:none; white-space:nowrap;">
+                    <i class="bi bi-qr-code"></i> QR
+                </a>
                 {% endif %}
             </div>
             {% endif %}

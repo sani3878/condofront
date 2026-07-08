@@ -118,14 +118,25 @@ body { background: #f0f4f8; }
             <i class="bi bi-clipboard"></i> {{ lbl_copy }}
         </button>
 
-        <button class="btn-share" onclick="downloadQR()">
-            <i class="bi bi-download"></i> {{ 'Save QR Image' if lang == 'en' else 'บันทึก QR' }}
+        <!-- Save QR — teal with QR icon, different from LINE button -->
+        <button onclick="downloadQR()"
+                style="display:block; width:100%; text-align:center;
+                       background:#0891b2; border:none; color:white;
+                       font-weight:800; border-radius:10px; padding:.7rem;
+                       margin-top:.5rem; font-size:.9rem; cursor:pointer;">
+            <i class="bi bi-qr-code"></i>
+            {{ 'Save QR Image' if lang == 'en' else 'บันทึกรูป QR' }}
         </button>
 
-        <a href="https://line.me/R/msg/text/?VisitorPass%3A+{{ visitor.visitor_code }}%0A{{ visitor.visitor_name }}%0A{{ visitor.visit_date }}%0AShow+this+code+at+reception"
-           class="btn-share" target="_blank"
-           style="background:#06C755;">
-            <i class="bi bi-chat-dots"></i> {{ lbl_share }}
+        <!-- LINE share — sends code so guest shows it to staff -->
+        <a href="https://line.me/R/msg/text/?🎟️+Visitor+Pass%0A%0AName%3A+{{ visitor.visitor_name }}%0ADate%3A+{{ visitor.visit_date }}%0A%0ACode%3A+{{ visitor.visitor_code }}%0A%0AShow+this+code+at+reception+or+ask+resident+to+scan+QR"
+           target="_blank"
+           style="display:block; text-align:center; text-decoration:none;
+                  background:#06C755; color:white; font-weight:800;
+                  border-radius:10px; padding:.7rem; margin-top:.5rem;
+                  font-size:.9rem;">
+            <i class="bi bi-chat-dots-fill"></i>
+            {{ lbl_share }}
         </a>
     </div>
 
