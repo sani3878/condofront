@@ -1,0 +1,276 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; color: #1a1a1a; }
+
+.main-wrap {
+    padding: 1.25rem;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.page-header {
+    background: #1e3a5f;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    color: #fff;
+}
+.page-header h2 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin: 0 0 .3rem;
+    color: #fff;
+}
+.page-header p {
+    font-size: .9rem;
+    color: rgba(255,255,255,.85);
+    margin: 0;
+}
+
+.cf-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05);
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: .9rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* ── LIMIT BAR ── */
+.limit-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: .8rem 1rem;
+    margin-bottom: 1rem;
+    border: 1.5px solid #e2e8f0;
+}
+.limit-bar.full { border-color: #fca5a5; background: #fef2f2; }
+.limit-text {
+    font-size: .85rem;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+.limit-badge {
+    font-size: .78rem;
+    font-weight: 700;
+    color: #1e3a5f;
+    background: #e2e8f0;
+    padding: .2rem .65rem;
+    border-radius: 20px;
+}
+.limit-bar.full .limit-badge { background: #fee2e2; color: #991b1b; }
+
+/* ── STAFF CARD ── */
+.staff-item {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    padding: .8rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+.staff-item:last-child { border-bottom: none; }
+.staff-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #1e3a5f;
+    color: white;
+    font-weight: 800;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.staff-info { flex: 1; min-width: 0; }
+.staff-name { font-weight: 700; font-size: .95rem; color: #1a1a1a; }
+.staff-meta { font-size: .78rem; color: #64748b; margin-top: 1px; }
+.role-badge {
+    font-size: .72rem;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+.role-manager    { background: #fef3c7; color: #92400e; }
+.role-reception  { background: #dbeafe; color: #1e40af; }
+.role-security   { background: #dcfce7; color: #166534; }
+.btn-deactivate {
+    background: none;
+    border: 1.5px solid #fca5a5;
+    color: #dc2626;
+    border-radius: 8px;
+    padding: .3rem .6rem;
+    font-size: .75rem;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.btn-deactivate:hover { background: #fef2f2; }
+
+/* ── FORM ── */
+.form-control, .form-select {
+    border-radius: 10px;
+    padding: 11px 13px;
+    border: 1.5px solid #e2e8f0;
+    font-size: .95rem;
+    width: 100%;
+    color: #1e293b;
+    margin-bottom: .7rem;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #1e3a5f;
+    box-shadow: 0 0 0 3px rgba(30,58,95,.1);
+    outline: none;
+}
+.btn-add {
+    background: #ff7a00;
+    border: none;
+    color: white;
+    font-weight: 800;
+    border-radius: 12px;
+    padding: 13px;
+    width: 100%;
+    font-size: 1rem;
+}
+.btn-add:hover { background: #eb6d00; color: #1a1a1a; }
+.btn-add:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+.empty-state {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #64748b;
+}
+</style>
+
+<div class="main-wrap">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                        alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="page-header">
+        <h2>👥 จัดการพนักงาน</h2>
+        <p>เพิ่มและจัดการผู้ใช้งานระบบของโครงการคุณ</p>
+    </div>
+
+    <!-- Limit bar — click to view billing details -->
+    {% set is_full = max_user and staff_count >= max_user %}
+    <a href="{{ url_for('property.billing') }}"
+       class="limit-bar {% if is_full %}full{% endif %}"
+       style="text-decoration:none; cursor:pointer;">
+        <div class="limit-text">
+            {% if package_name %}
+                แพ็กเกจ: <strong>{{ package_name }}</strong>
+            {% else %}
+                จำนวนพนักงาน
+            {% endif %}
+            <span style="color:#94a3b8; font-size:.75rem; font-weight:500;">— ดูรายละเอียด ›</span>
+        </div>
+        <div class="limit-badge">
+            {{ staff_count }} / {{ max_user if max_user else '∞' }} คน
+        </div>
+    </a>
+
+    {% if is_full %}
+    <div class="cf-card" style="border:1.5px solid #fca5a5; background:#fef2f2;">
+        <div style="font-size:.88rem; color:#991b1b; font-weight:600;">
+            ⚠️ แพ็กเกจของคุณรองรับพนักงานสูงสุด {{ max_user }} คน
+            กรุณาอัปเกรดแพ็กเกจเพื่อเพิ่มพนักงานใหม่
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Add staff form -->
+    <div class="cf-card">
+        <div class="card-title">➕ เพิ่มพนักงานใหม่</div>
+        <form method="POST" action="{{ url_for('property.add_user') }}">
+            <input type="text" name="fullname" class="form-control"
+                   placeholder="ชื่อ-นามสกุล" required
+                   {% if is_full %}disabled{% endif %}>
+            <input type="email" name="email" class="form-control"
+                   placeholder="อีเมล" required
+                   {% if is_full %}disabled{% endif %}>
+            <input type="text" name="mobile" class="form-control"
+                   placeholder="เบอร์โทร (ไม่บังคับ)"
+                   {% if is_full %}disabled{% endif %}>
+            <select name="role_id" class="form-select" required
+                    {% if is_full %}disabled{% endif %}>
+                <option value="">-- เลือกตำแหน่ง --</option>
+                {% for r in roles %}
+                <option value="{{ r.idno }}">{{ r.role_name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn-add" {% if is_full %}disabled{% endif %}>
+                {% if is_full %}แพ็กเกจเต็มแล้ว{% else %}เพิ่มพนักงาน{% endif %}
+            </button>
+        </form>
+    </div>
+
+    <!-- Staff list -->
+    <div class="cf-card">
+        <div class="card-title">รายชื่อพนักงาน ({{ staff_count }})</div>
+
+        {% if staff %}
+            {% for u in staff %}
+            <div class="staff-item">
+                <div class="staff-avatar">
+                    {{ u.fullname[0] if u.fullname else '?' }}
+                </div>
+                <div class="staff-info">
+                    <div class="staff-name">
+                        {{ u.fullname }}
+                        {% if u.idno == current_user.id %}
+                        <span style="color:#94a3b8; font-size:.75rem; font-weight:500;">(คุณ)</span>
+                        {% endif %}
+                    </div>
+                    <div class="staff-meta">{{ u.email }}</div>
+                </div>
+                <span class="role-badge
+                    {% if u.role_name == 'Manager' %}role-manager
+                    {% elif u.role_name == 'Reception' %}role-reception
+                    {% else %}role-security{% endif %}">
+                    {{ u.role_name }}
+                </span>
+                {% if u.idno != current_user.id %}
+                <form method="POST"
+                      action="{{ url_for('property.deactivate_user', user_id=u.idno) }}"
+                      onsubmit="return confirm('ปิดใช้งานพนักงานคนนี้?');">
+                    <button type="submit" class="btn-deactivate">ปิดใช้งาน</button>
+                </form>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <div style="font-size:2rem; margin-bottom:.5rem;">👥</div>
+            <div>ยังไม่มีพนักงาน</div>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

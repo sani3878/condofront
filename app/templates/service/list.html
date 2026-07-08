@@ -1,0 +1,371 @@
+{% extends "shared/base.html" %}
+{% block content %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; color: #1a1a1a; }
+.main-wrap { padding: 1.25rem 1rem; max-width: 900px; margin: 0 auto; }
+
+.page-header {
+    background: #1e3a5f; border-radius: 16px;
+    padding: 1.25rem; margin-bottom: 1.25rem; color: white;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: .75rem;
+}
+.page-header h2 { font-size: 1.2rem; font-weight: 800; margin: 0; color: white; }
+.btn-new {
+    background: #ff7a00; border: none; color: #1a1a1a;
+    font-weight: 800; border-radius: 10px; padding: .55rem 1rem;
+    font-size: .88rem; cursor: pointer; text-decoration: none; white-space: nowrap;
+}
+
+/* Status tabs */
+.status-tabs {
+    display: flex; gap: .4rem; margin-bottom: 1rem;
+    overflow-x: auto; padding-bottom: .25rem;
+}
+.status-tab {
+    background: white; border: 1.5px solid #e2e8f0; color: #1a1a1a;
+    font-weight: 600; border-radius: 20px; padding: .4rem .9rem;
+    font-size: .82rem; text-decoration: none; white-space: nowrap; transition: .15s;
+    display: flex; align-items: center; gap: .4rem;
+}
+.status-tab:hover { border-color: #1e3a5f; color: #1e3a5f; }
+.status-tab.active { background: #1e3a5f; border-color: #1e3a5f; color: white; }
+.status-tab.active .cnt { background: rgba(255,255,255,.25); color: white; }
+.cnt {
+    background: #f0f4f8; color: #64748b;
+    font-size: .7rem; font-weight: 700;
+    padding: 1px 7px; border-radius: 20px;
+}
+
+/* Request card */
+.req-card {
+    background: white; border-radius: 14px; padding: 1.1rem;
+    margin-bottom: .75rem; box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    border-left: 4px solid #e2e8f0;
+}
+.req-card.open         { border-left-color: #f59e0b; }
+.req-card.acknowledged { border-left-color: #3b82f6; }
+.req-card.scheduled    { border-left-color: #8b5cf6; }
+.req-card.in_progress  { border-left-color: #ff7a00; }
+.req-card.done         { border-left-color: #22c55e; }
+.req-card.closed       { border-left-color: #94a3b8; opacity: .8; }
+
+.req-top { display: flex; align-items: flex-start; gap: .75rem; flex-wrap: wrap; }
+.req-icon { font-size: 1.5rem; flex-shrink: 0; margin-top: .1rem; }
+.req-body { flex: 1; min-width: 200px; }
+.req-title { font-weight: 800; font-size: .95rem; color: #1a1a1a; margin-bottom: .2rem; }
+.req-meta { font-size: .75rem; color: #64748b; }
+.req-right { display: flex; flex-direction: column; align-items: flex-end; gap: .4rem; flex-shrink: 0; }
+.status-pill {
+    font-size: .82rem; font-weight: 700; padding: 4px 12px;
+    border-radius: 20px; white-space: nowrap;
+}
+.room-pill {
+    font-size: .72rem; font-weight: 700; padding: 2px 8px;
+    border-radius: 20px; background: #dbeafe; color: #1e40af; white-space: nowrap;
+}
+.fee-pill {
+    font-size: .72rem; font-weight: 700; padding: 2px 8px;
+    border-radius: 20px; white-space: nowrap;
+}
+.fee-unpaid { background: #fee2e2; color: #991b1b; }
+.fee-paid   { background: #dcfce7; color: #166534; }
+
+.req-actions {
+    display: flex; gap: .5rem; margin-top: .75rem; flex-wrap: wrap;
+    padding-top: .75rem; border-top: 1px solid #f0f4f8;
+}
+.btn-status {
+    background: #1e3a5f; border: none; color: white;
+    font-weight: 700; border-radius: 8px; padding: .35rem .75rem;
+    font-size: .78rem; cursor: pointer; white-space: nowrap;
+}
+.btn-status:hover { background: #152d4a; }
+.btn-detail {
+    background: none; border: 1.5px solid #e2e8f0; color: #64748b;
+    font-weight: 700; border-radius: 8px; padding: .35rem .75rem;
+    font-size: .78rem; cursor: pointer; white-space: nowrap;
+}
+.btn-detail:hover { border-color: #1e3a5f; color: #1e3a5f; }
+
+/* Modal */
+.modal-backdrop { display: none; }
+.modal-content { border-radius: 16px; }
+.modal-header { border-bottom: 1.5px solid #f0f4f8; }
+.modal-title { font-weight: 800; color: #1e3a5f; }
+.form-control, .form-select {
+    border-radius: 10px; border: 1.5px solid #e2e8f0; font-size: .92rem;
+}
+.form-control:focus, .form-select:focus { border-color: #1e3a5f; box-shadow: none; }
+.btn-save {
+    background: #ff7a00; border: none; color: #1a1a1a;
+    font-weight: 800; border-radius: 10px; padding: .6rem 1.25rem;
+}
+
+.empty { text-align: center; padding: 3rem; color: #64748b;
+         background: white; border-radius: 14px; }
+
+/* Search */
+.filter-row { display: flex; gap: .5rem; margin-bottom: 1rem; }
+.filter-input {
+    flex: 1; border-radius: 10px; padding: 9px 13px;
+    border: 1.5px solid #e2e8f0; font-size: .88rem;
+}
+.filter-input:focus { border-color: #1e3a5f; outline: none; }
+.btn-filter {
+    background: #1e3a5f; border: none; color: white;
+    border-radius: 10px; padding: 9px 14px; font-size: .85rem;
+    font-weight: 700; cursor: pointer;
+}
+</style>
+
+<div class="main-wrap">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                    alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="page-header">
+        <h2>🔧 คำร้องขอบริการ</h2>
+        <a href="#" class="btn-new" data-bs-toggle="modal" data-bs-target="#newModal">
+            ➕ สร้างคำร้องใหม่
+        </a>
+    </div>
+
+    <!-- Status tabs -->
+    <div class="status-tabs">
+        <a href="{{ url_for('service.list_requests', status='all') }}"
+           class="status-tab {% if status_filter == 'all' %}active{% endif %}">
+            ทั้งหมด
+            <span class="cnt">{{ counts.values()|sum }}</span>
+        </a>
+        {% for s, label, color, key in statuses %}
+        <a href="{{ url_for('service.list_requests', status=key) }}"
+           class="status-tab {% if status_filter == key %}active{% endif %}">
+            {{ label }}
+            <span class="cnt">{{ counts[key] }}</span>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Search -->
+    <form method="GET" action="{{ url_for('service.list_requests') }}" class="filter-row">
+        <input type="hidden" name="status" value="{{ status_filter }}">
+        <input type="text" name="q" class="filter-input"
+               placeholder="🔍 ค้นหาหัวข้อ หรือ ห้อง..."
+               value="{{ search or '' }}">
+        <button type="submit" class="btn-filter">ค้นหา</button>
+        <a href="{{ url_for('service.categories') }}"
+           style="background:#f0f4f8; border:none; color:#1e3a5f; border-radius:10px;
+                  padding:9px 14px; font-size:.85rem; font-weight:700;
+                  text-decoration:none; white-space:nowrap;">
+            ⚙️ หมวดหมู่
+        </a>
+    </form>
+
+    <!-- Request list -->
+    {% if requests %}
+        {% for r in requests %}
+        <div class="req-card {{ r.status }}">
+            <div class="req-top">
+                <div class="req-icon">{{ r.category_icon or '🔧' }}</div>
+                <div class="req-body">
+                    <div class="req-title">{{ r.title }}</div>
+                    <div class="req-meta">
+                        {{ r.category_name or 'ทั่วไป' }} ·
+                        {{ r.submitted_by_name or 'ไม่ระบุ' }} ·
+                        {{ r.created_at.strftime('%d/%m/%y %H:%M') if r.created_at else '-' }}
+                        {% if r.assigned_to_name %}
+                        · ผู้รับผิดชอบ: <strong>{{ r.assigned_to_name }}</strong>
+                        {% endif %}
+                        {% if r.scheduled_at %}
+                        · นัด: {{ r.scheduled_at.strftime('%d/%m/%y %H:%M') }}
+                        {% endif %}
+                    </div>
+                    {% if r.description %}
+                    <div style="font-size:.82rem; color:#475569; margin-top:.35rem;">
+                        {{ r.description[:100] }}{% if r.description|length > 100 %}...{% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="req-right">
+                    {% if r.room_no %}
+                    <span class="room-pill">{{ r.building or '' }}{{ r.room_no }}</span>
+                    {% endif %}
+                    <span class="status-pill"
+                          style="background:{{ {'open':'#fef3c7','acknowledged':'#dbeafe','scheduled':'#ede9fe','in_progress':'#fff7f0','done':'#dcfce7','closed':'#f1f5f9'}[r.status] }};
+                                 color:{{ {'open':'#92400e','acknowledged':'#1e40af','scheduled':'#5b21b6','in_progress':'#92400e','done':'#166534','closed':'#475569'}[r.status] }}">
+                        {{ status_labels[r.status] }}
+                    </span>
+                    {% if r.fee %}
+                    <span class="fee-pill {{ 'fee-paid' if r.fee_paid else 'fee-unpaid' }}">
+                        ฿{{ '%.0f'|format(r.fee) }} {{ '✓' if r.fee_paid else '⏳' }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if r.status != 'closed' %}
+            <div class="req-actions">
+                {% if status_next[r.status] %}
+                <form method="POST" action="{{ url_for('service.update', req_id=r.idno) }}"
+                      style="display:inline;">
+                    <input type="hidden" name="status" value="{{ status_next[r.status] }}">
+                    <input type="hidden" name="from_status" value="{{ status_filter }}">
+                    <button type="submit" class="btn-status">
+                        → {{ status_labels[status_next[r.status]] }}
+                    </button>
+                </form>
+                {% endif %}
+                <button class="btn-detail" data-bs-toggle="modal"
+                        data-bs-target="#updateModal{{ r.idno }}">
+                    ✏️ แก้ไข
+                </button>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Update modal for each request -->
+        <div class="modal fade" id="updateModal{{ r.idno }}" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">✏️ {{ r.title }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="POST"
+                          action="{{ url_for('service.update', req_id=r.idno) }}">
+                        <input type="hidden" name="from_status" value="{{ status_filter }}">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">สถานะ</label>
+                                <select name="status" class="form-select">
+                                    {% for s, label, color, key in statuses %}
+                                    <option value="{{ key }}"
+                                        {% if r.status == key %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">มอบหมายให้</label>
+                                <select name="assigned_to" class="form-select">
+                                    <option value="">-- ยังไม่มอบหมาย --</option>
+                                    {% for s in staff_list %}
+                                    <option value="{{ s.idno }}"
+                                        {% if r.assigned_to_name == s.fullname %}selected{% endif %}>
+                                        {{ s.fullname }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">วันเวลานัดหมาย</label>
+                                <input type="datetime-local" name="scheduled_at"
+                                       class="form-control"
+                                       value="{{ r.scheduled_at.strftime('%Y-%m-%dT%H:%M') if r.scheduled_at else '' }}">
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col">
+                                    <label class="form-label fw-bold">ค่าบริการ (฿)</label>
+                                    <input type="number" name="fee" class="form-control"
+                                           placeholder="0.00" step="0.01"
+                                           value="{{ r.fee or '' }}">
+                                </div>
+                                <div class="col-auto d-flex align-items-end">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox"
+                                               name="fee_paid" value="true"
+                                               {% if r.fee_paid %}checked{% endif %}>
+                                        <label class="form-check-label fw-bold">ชำระแล้ว</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">หมายเหตุ (staff only)</label>
+                                <textarea name="note" class="form-control" rows="2"
+                                          placeholder="บันทึกภายใน">{{ r.note or '' }}</textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light"
+                                    data-bs-dismiss="modal">ยกเลิก</button>
+                            <button type="submit" class="btn-save btn">💾 บันทึก</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+    {% else %}
+    <div class="empty">
+        <div style="font-size:2.5rem; margin-bottom:.75rem;">🔧</div>
+        <div>ไม่มีคำร้องขอบริการ</div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- New request modal -->
+<div class="modal fade" id="newModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">➕ สร้างคำร้องใหม่</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('service.create') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">หมวดหมู่</label>
+                        <select name="category_id" class="form-select">
+                            <option value="">-- เลือกหมวดหมู่ --</option>
+                            {% for c in categories %}
+                            <option value="{{ c.idno }}">{{ c.icon }} {{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">ห้อง</label>
+                        <select name="room_id" class="form-select">
+                            <option value="">-- เลือกห้อง --</option>
+                            {% for r in rooms %}
+                            <option value="{{ r.idno }}">
+                                {{ r.building or '' }}{{ r.room_no }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">หัวข้อ *</label>
+                        <input type="text" name="title" class="form-control"
+                               placeholder="เช่น แอร์ห้อง A101 ไม่เย็น" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">รายละเอียด</label>
+                        <textarea name="description" class="form-control" rows="3"
+                                  placeholder="รายละเอียดเพิ่มเติม..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">ค่าบริการโดยประมาณ (฿)</label>
+                        <input type="number" name="fee" class="form-control"
+                               placeholder="ไม่บังคับ" step="0.01">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light"
+                            data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn-save btn">💾 บันทึก</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

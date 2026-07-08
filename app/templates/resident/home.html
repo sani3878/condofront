@@ -1,0 +1,432 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+{% set lang = session.get('lang', request.accept_languages.best_match(['th', 'en'], default='en')) %}
+
+{% if lang == 'en' %}
+  {% set lbl_my_room      = "My Room" %}
+  {% set lbl_waiting      = "waiting" %}
+  {% set lbl_no_waiting   = "No parcels waiting" %}
+  {% set lbl_parcels      = "My Parcels" %}
+  {% set lbl_service      = "Services" %}
+  {% set lbl_members      = "My Unit" %}
+  {% set lbl_contact      = "Contact Office" %}
+  {% set lbl_hello        = "Hello" %}
+  {% set lbl_recent       = "20 recent items" %}
+  {% set lbl_no_parcels   = "No parcels yet" %}
+  {% set lbl_logout       = "Logout" %}
+{% else %}
+  {% set lbl_my_room      = "ห้องของฉัน" %}
+  {% set lbl_waiting      = "รอรับ" %}
+  {% set lbl_no_waiting   = "ไม่มีพัสดุรอรับ" %}
+  {% set lbl_parcels      = "พัสดุของฉัน" %}
+  {% set lbl_service      = "แจ้งซ่อม/บริการ" %}
+  {% set lbl_members      = "ห้องของฉัน" %}
+  {% set lbl_contact      = "ติดต่อนิติ" %}
+  {% set lbl_hello        = "สวัสดี" %}
+  {% set lbl_recent       = "20 รายการล่าสุด" %}
+  {% set lbl_no_parcels   = "ยังไม่มีพัสดุ" %}
+  {% set lbl_logout       = "ออกจากระบบ" %}
+{% endif %}
+
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; color: #1a1a1a; }
+
+.res-wrap {
+    padding: 1.25rem 1rem;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+/* ── UNIT CARD ── */
+.unit-card {
+    background: linear-gradient(135deg, #1e3a5f 0%, #15294a 100%);
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+.unit-card::after {
+    content: '🏠';
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 4rem;
+    opacity: .1;
+}
+.unit-greeting {
+    font-size: .82rem;
+    color: rgba(255,255,255,.85);
+    margin-bottom: .15rem;
+}
+.unit-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: .5rem;
+}
+.unit-label {
+    font-size: .72rem;
+    color: rgba(255,255,255,.75);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+.unit-number {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #ff7a00;
+    line-height: 1;
+    margin: .15rem 0;
+    letter-spacing: 2px;
+}
+.unit-property {
+    font-size: .85rem;
+    color: rgba(255,255,255,.85);
+}
+.unit-stat {
+    display: inline-block;
+    border-radius: 20px;
+    padding: .25rem .75rem;
+    font-size: .78rem;
+    margin-top: .6rem;
+    font-weight: 700;
+}
+.unit-stat.waiting { background: rgba(245,158,11,.5); color: #fff; }
+.unit-stat.ok      { background: rgba(34,197,94,.35); color: #fff; }
+
+/* Language toggle */
+.lang-toggle {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    background: rgba(255,255,255,.1);
+    border-radius: 20px;
+    padding: 2px;
+    gap: 1px;
+}
+.lang-btn {
+    color: rgba(255,255,255,.6);
+    text-decoration: none;
+    font-size: .7rem;
+    font-weight: 700;
+    padding: .2rem .5rem;
+    border-radius: 20px;
+    transition: .15s;
+}
+.lang-btn.active { background: #ff7a00; color: #1a1a1a; }
+
+/* ── APP GRID ── */
+.app-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: .75rem;
+    margin-bottom: 1.25rem;
+}
+.app-tile {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem .75rem;
+    text-align: center;
+    text-decoration: none;
+    color: #1a1a1a;
+    box-shadow: 0 2px 10px rgba(0,0,0,.05);
+    transition: .15s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100px;
+    border: 2px solid transparent;
+}
+.app-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0,0,0,.1);
+    border-color: #1e3a5f;
+    color: #1a1a1a;
+}
+.app-tile.primary {
+    background: #1e3a5f;
+    color: white;
+}
+.app-tile.primary:hover { background: #152d4a; color: white; border-color: #ff7a00; }
+.app-tile.disabled {
+    opacity: .6;
+    cursor: default;
+    pointer-events: none;
+}
+.tile-icon { font-size: 2.2rem; line-height: 1; margin-bottom: .4rem; }
+.tile-label { font-size: .82rem; font-weight: 700; line-height: 1.3; }
+.tile-sub {
+    font-size: .68rem;
+    margin-top: .2rem;
+    opacity: .6;
+}
+.tile-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #ef4444;
+    color: white;
+    font-size: .65rem;
+    font-weight: 800;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    border: 2px solid #f0f4f8;
+}
+.tile-badge.orange { background: #ff7a00; }
+
+/* ── SECTION ── */
+.section-title {
+    font-size: .9rem;
+    font-weight: 800;
+    color: #1e3a5f;
+    margin-bottom: .75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.section-sub {
+    color: #94a3b8;
+    font-weight: 500;
+    font-size: .78rem;
+}
+
+/* ── MEMBERS ── */
+.member-item {
+    background: white;
+    border-radius: 12px;
+    padding: .75rem 1rem;
+    margin-bottom: .5rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,.04);
+}
+.member-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #1e3a5f;
+    color: #ff7a00;
+    font-weight: 800;
+    font-size: .9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.member-name { font-weight: 700; font-size: .88rem; }
+.member-mobile { font-size: .75rem; color: #64748b; }
+
+/* ── PARCEL ── */
+.parcel-item {
+    background: white;
+    border-radius: 14px;
+    padding: 1rem;
+    margin-bottom: .65rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    border-left: 4px solid #e2e8f0;
+}
+.parcel-item.waiting { border-left-color: #f59e0b; }
+.parcel-item.picked  { border-left-color: #22c55e; }
+.parcel-type-icon { font-size: 1.8rem; flex-shrink: 0; }
+.parcel-body { flex: 1; min-width: 0; }
+.parcel-courier { font-weight: 700; font-size: .92rem; }
+.parcel-date { font-size: .75rem; color: #64748b; margin-top: 2px; }
+.parcel-tracking {
+    font-size: .72rem; color: #94a3b8;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 160px;
+}
+.status-pill {
+    font-size: .7rem; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px;
+    white-space: nowrap; flex-shrink: 0;
+}
+.status-waiting { background: #fef3c7; color: #92400e; font-size:.82rem; padding: 4px 12px; }
+.status-picked  { background: #dcfce7; color: #166534; font-size:.82rem; padding: 4px 12px; }
+
+.empty-state {
+    text-align: center; padding: 2rem 1rem;
+    color: #64748b; background: white;
+    border-radius: 14px;
+}
+
+/* ── FOOTER ── */
+.res-footer { text-align: center; margin-top: 1.5rem; padding-bottom: 1.5rem; }
+.btn-logout {
+    color: #64748b; text-decoration: none;
+    font-size: .85rem;
+    border: 1.5px solid #cbd5e1;
+    padding: .5rem 1.5rem; border-radius: 20px;
+    transition: all .2s; display: inline-block;
+    background: white;
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+}
+.btn-logout:hover {
+    color: #64748b;
+    border-color: #cbd5e1;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,.15);
+}
+</style>
+
+<div class="res-wrap">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                    alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <!-- Unit card -->
+    {% if unit %}
+    <div class="unit-card">
+        <!-- Language toggle -->
+        <div class="lang-toggle">
+            <a href="{{ url_for('auth.set_language', lang='th') }}"
+               class="lang-btn {% if lang == 'th' %}active{% endif %}">TH</a>
+            <a href="{{ url_for('auth.set_language', lang='en') }}"
+               class="lang-btn {% if lang == 'en' %}active{% endif %}">EN</a>
+        </div>
+
+        <div class="unit-greeting">{{ lbl_hello }}, {{ current_user.fullname.split()[0] if current_user.fullname else '' }}</div>
+        <div style="font-size:1rem; font-weight:900; color:white;
+                    letter-spacing:.5px; margin-bottom:.15rem;">
+            {{ unit.property_name | upper }}
+        </div>
+        <div class="unit-label">{{ lbl_my_room }}</div>
+        <div class="unit-number">{{ unit.building or '' }}{{ unit.room_no }}</div>
+        <div style="display:flex; gap:.5rem; margin-top:.6rem; flex-wrap:wrap;">
+            {% if waiting > 0 %}
+            <a href="{{ url_for('resident.parcels') }}"
+               style="text-decoration:none; background:#fef3c7; color:#92400e;
+                      border-radius:20px; padding:.25rem .75rem; font-size:.78rem;
+                      font-weight:700; display:inline-block;">
+                📦 {{ waiting }} {{ lbl_waiting }}
+            </a>
+            {% else %}
+            <span style="background:#dcfce7; color:#166534; border-radius:20px;
+                         padding:.25rem .75rem; font-size:.78rem; font-weight:700;
+                         display:inline-block; margin-top:.6rem;">
+                ✅ {{ lbl_no_waiting }}
+            </span>
+            {% endif %}
+            {% if pending_visitors > 0 %}
+            <a href="{{ url_for('visitor.my_visitors') }}"
+               style="text-decoration:none; background:#fff7f0; color:#c2410c;
+                      border-radius:20px; padding:.25rem .75rem; font-size:.78rem;
+                      font-weight:700; display:inline-block;">
+                🎟️ {{ pending_visitors }} {{ 'visitor waiting' if lang == 'en' else 'รอเช็คอิน' }}
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- App grid -->
+    <div class="app-grid">
+        <!-- My Parcels -->
+        <a href="{{ url_for('resident.parcels') }}" class="app-tile primary">
+            {% if waiting > 0 %}
+            <span class="tile-badge orange">{{ waiting }}</span>
+            {% endif %}
+            <div class="tile-icon">
+                <i class="bi bi-box-seam" style="font-size:2rem;"></i>
+            </div>
+            <div class="tile-label">{{ lbl_parcels }}</div>
+        </a>
+
+        <a href="{{ url_for('service.my_requests') }}" class="app-tile">
+            <div class="tile-icon">
+                <i class="bi bi-tools" style="font-size:2rem;"></i>
+            </div>
+            <div class="tile-label">{{ lbl_service }}</div>
+        </a>
+
+        <a href="{{ url_for('facility.resident_facilities') }}" class="app-tile">
+            <div class="tile-icon">
+                <i class="bi bi-buildings" style="font-size:2rem;"></i>
+            </div>
+            <div class="tile-label">{{ 'Facilities' if lang == 'en' else 'สิ่งอำนวยฯ' }}</div>
+        </a>
+
+        {% if unit_members is defined %}
+        <a href="{{ url_for('resident.unit') }}" class="app-tile">
+            <div class="tile-icon">
+                <i class="bi bi-house-door" style="font-size:2rem;"></i>
+            </div>
+            <div class="tile-label">{{ lbl_members }}</div>
+            {% if unit_members %}
+            <div class="tile-sub">{{ unit_members|length + 1 }}
+                {{ 'members' if lang == 'en' else 'คน' }}
+            </div>
+            {% endif %}
+        </a>
+        {% endif %}
+
+        <a href="{{ url_for('visitor.my_visitors') }}" class="app-tile"
+           style="border-color:#ff7a00; background:#fff7f0;">
+            <div class="tile-icon">
+                <i class="bi bi-person-check" style="font-size:2rem; color:#ff7a00;"></i>
+            </div>
+            <div class="tile-label" style="color:#ff7a00;">
+                {{ 'My Visitors' if lang == 'en' else 'ผู้มาเยี่ยม' }}
+            </div>
+        </a>
+
+        <a href="{{ url_for('auth.contact') }}" class="app-tile">
+            <div class="tile-icon">
+                <i class="bi bi-headset" style="font-size:2rem;"></i>
+            </div>
+            <div class="tile-label">{{ lbl_contact }}</div>
+        </a>
+    </div>
+
+    <!-- Unit members -->
+    {% if unit_members %}
+    <div id="members">
+        <div class="section-title">
+            <i class="bi bi-people"></i> {{ lbl_members }}
+        </div>
+        {% for m in unit_members %}
+        <div class="member-item">
+            <div class="member-avatar">{{ m.fullname[0] if m.fullname else '?' }}</div>
+            <div>
+                <div class="member-name">{{ m.fullname }}</div>
+                {% if m.mobile %}
+                <div class="member-mobile">{{ m.mobile }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="res-footer">
+        <a href="{{ url_for('auth.logout') }}" class="btn-logout">
+            🚪 {{ lbl_logout }}
+        </a>
+    </div>
+
+</div>
+{% endblock %}

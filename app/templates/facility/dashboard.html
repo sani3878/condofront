@@ -1,0 +1,224 @@
+{% extends "shared/base.html" %}
+{% block content %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; color: #1a1a1a; }
+.main-wrap { padding: 1.25rem 1rem; max-width: 900px; margin: 0 auto; }
+.page-header {
+    background: #1e3a5f; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1.25rem; color: white;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: .75rem;
+}
+.page-header h2 { font-size: 1.2rem; font-weight: 800; margin: 0; color: white; }
+.btn-header {
+    background: #ff7a00; border: none; color: #1a1a1a;
+    font-weight: 800; border-radius: 10px;
+    padding: .55rem 1rem; font-size: .88rem; text-decoration: none;
+    white-space: nowrap;
+}
+.btn-header-outline {
+    background: rgba(255,255,255,.15); border: 1.5px solid rgba(255,255,255,.5);
+    color: white; font-weight: 700; border-radius: 10px;
+    padding: .55rem 1rem; font-size: .88rem; text-decoration: none;
+    white-space: nowrap;
+}
+.btn-header-outline:hover { background: rgba(255,255,255,.25); color: white; }
+
+.stats-row { display: flex; gap: .75rem; margin-bottom: 1.25rem; }
+.stat-box {
+    flex: 1; background: white; border-radius: 12px; padding: .85rem;
+    text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    border: 1.5px solid #e2e8f0;
+}
+.stat-num { font-size: 1.8rem; font-weight: 900; line-height: 1; }
+.stat-label { font-size: .72rem; color: #64748b; margin-top: .2rem; font-weight: 600; }
+
+/* Facility grid */
+.facility-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: .75rem;
+}
+.facility-card {
+    background: white; border-radius: 14px; padding: 1.1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    border: 2px solid #e2e8f0;
+    display: flex; flex-direction: column; gap: .6rem;
+    transition: .15s;
+}
+.facility-card.active-card {
+    border-color: #22c55e;
+    box-shadow: 0 2px 12px rgba(34,197,94,.15);
+}
+.facility-card.inactive-card { opacity: .65; }
+
+/* Top row: icon + name + toggle */
+.facility-top {
+    display: flex; align-items: center; gap: .65rem;
+}
+.facility-icon { font-size: 1.8rem; flex-shrink: 0; }
+.facility-info { flex: 1; min-width: 0; }
+.facility-name { font-weight: 800; font-size: .92rem; }
+.facility-meta { font-size: .72rem; color: #64748b; margin-top: 1px; }
+
+/* Toggle switch */
+.toggle-wrap { flex-shrink: 0; }
+.toggle {
+    position: relative; width: 44px; height: 24px; display: block;
+}
+.toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: #e2e8f0; border-radius: 24px; transition: .25s;
+}
+.toggle-slider:before {
+    content: ''; position: absolute;
+    width: 18px; height: 18px; left: 3px; bottom: 3px;
+    background: white; border-radius: 50%; transition: .25s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+input:checked + .toggle-slider { background: #22c55e; }
+input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+/* Tags */
+.facility-tags { display: flex; gap: .35rem; flex-wrap: wrap; }
+.tag {
+    font-size: .68rem; font-weight: 700; padding: 2px 7px;
+    border-radius: 20px; white-space: nowrap;
+}
+.tag-booking  { background: #dbeafe; color: #1e40af; }
+.tag-open     { background: #fef3c7; color: #92400e; }
+.tag-fee      { background: #fce7f3; color: #9d174d; }
+.tag-approval { background: #ede9fe; color: #5b21b6; }
+
+/* Actions */
+.facility-actions {
+    display: flex; gap: .5rem; margin-top: .1rem;
+    padding-top: .65rem; border-top: 1px solid #f0f4f8;
+}
+.btn-bookings {
+    flex: 1; background: #1e3a5f; border: none; color: white;
+    font-weight: 700; border-radius: 8px; padding: .45rem;
+    font-size: .78rem; text-decoration: none; text-align: center;
+}
+.btn-bookings:hover { background: #152d4a; color: white; }
+
+/* Settings button — prominent orange */
+.btn-settings-icon {
+    background: #ff7a00; border: none; color: #1a1a1a;
+    font-weight: 900; border-radius: 8px; padding: .45rem .7rem;
+    font-size: .85rem; text-decoration: none; text-align: center;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 6px rgba(255,122,0,.3);
+    flex-shrink: 0;
+}
+.btn-settings-icon:hover { background: #eb6d00; color: #1a1a1a; }
+</style>
+
+<div class="main-wrap">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                    alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="page-header">
+        <h2>🏢 สิ่งอำนวยความสะดวก</h2>
+        <div style="display:flex; gap:.5rem;">
+            <a href="{{ url_for('facility.bookings') }}" class="btn-header-outline">
+                📋 รายการจอง
+                {% if pending > 0 %}
+                <span style="background:#ef4444; color:white; border-radius:20px;
+                             padding:1px 6px; font-size:.7rem; margin-left:.3rem;">
+                    {{ pending }}
+                </span>
+                {% endif %}
+            </a>
+            <a href="{{ url_for('facility.settings') }}" class="btn-header">
+                ⚙️ ตั้งค่า
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+        <div class="stat-box">
+            <div class="stat-num" style="color:#22c55e;">
+                {{ facilities | selectattr('is_active') | list | length }}
+            </div>
+            <div class="stat-label">เปิดใช้งาน</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-num" style="color:#ff7a00;">{{ today_bookings }}</div>
+            <div class="stat-label">จองวันนี้</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-num" style="color:#f59e0b;">{{ pending }}</div>
+            <div class="stat-label">รออนุมัติ</div>
+        </div>
+    </div>
+
+    <!-- Facility grid -->
+    <div class="facility-grid">
+        {% for f in facilities %}
+        <div class="facility-card {{ 'active-card' if f.is_active else 'inactive-card' }}">
+
+            <!-- Top: icon + name + toggle -->
+            <div class="facility-top">
+                <div class="facility-icon">{{ f.icon }}</div>
+                <div class="facility-info">
+                    <div class="facility-name">{{ f.name }}</div>
+                    <div class="facility-meta">
+                        {{ f.opening_time.strftime('%H:%M') if f.opening_time else '' }}
+                        — {{ f.closing_time.strftime('%H:%M') if f.closing_time else '' }}
+                    </div>
+                </div>
+                <!-- Toggle ON/OFF -->
+                <div class="toggle-wrap">
+                    <form method="POST"
+                          action="{{ url_for('facility.toggle_facility', facility_id=f.idno) }}"
+                          id="toggleForm{{ f.idno }}">
+                        <label class="toggle">
+                            <input type="checkbox"
+                                   {{ 'checked' if f.is_active }}
+                                   onchange="document.getElementById('toggleForm{{ f.idno }}').submit()">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="facility-tags">
+                {% if f.booking_required %}
+                <span class="tag tag-booking">📅 จองล่วงหน้า</span>
+                {% else %}
+                <span class="tag tag-open">🚶 เข้าได้เลย</span>
+                {% endif %}
+                {% if f.fee_amount and f.fee_amount > 0 %}
+                <span class="tag tag-fee">฿{{ '%.0f'|format(f.fee_amount) }}</span>
+                {% endif %}
+                {% if f.approval_required %}
+                <span class="tag tag-approval">⏳ อนุมัติ</span>
+                {% endif %}
+            </div>
+
+            <!-- Actions -->
+            <div class="facility-actions">
+                <a href="{{ url_for('facility.bookings') }}"
+                   class="btn-bookings">📋 การจอง</a>
+                <a href="{{ url_for('facility.settings') }}#f{{ f.idno }}"
+                   class="btn-settings-icon"
+                   title="ตั้งค่า">⚙️</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

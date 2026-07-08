@@ -1,0 +1,495 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; color: #1a1a1a; }
+
+
+
+
+
+
+.main-wrap {
+    padding: 1.25rem;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.page-header {
+    background: #1e3a5f;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    color: #fff;
+}
+.page-header h2 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin: 0 0 .3rem;
+    color: #fff;
+}
+.page-header p {
+    font-size: .9rem;
+    color: rgba(255,255,255,.85);
+    margin: 0;
+}
+
+.cf-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05);
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: .25rem;
+}
+
+.card-desc {
+    font-size: .88rem;
+    color: #444;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.form-label {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: .3rem;
+    display: block;
+}
+
+.form-hint {
+    font-size: .83rem;
+    color: #444;
+    margin-bottom: .5rem;
+}
+
+.form-control, .form-select {
+    border-radius: 10px;
+    padding: 12px 14px;
+    border: 1.5px solid #e2e8f0;
+    font-size: 1rem;
+    width: 100%;
+    color: #1a1a1a;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #1e3a5f;
+    box-shadow: 0 0 0 3px rgba(30,58,95,.1);
+    outline: none;
+}
+
+/* Import zone */
+.import-zone {
+    border: 2.5px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    background: #f8fafc;
+    cursor: pointer;
+    transition: .15s;
+    margin-bottom: 1rem;
+}
+.import-zone:hover { border-color: #1e3a5f; background: #f0f4f8; }
+.import-zone.dragover { border-color: #ff7a00; background: #fff3e0; }
+.import-icon { font-size: 2.5rem; margin-bottom: .5rem; }
+.import-title { font-size: 1rem; font-weight: 700; color: #1a1a1a; }
+.import-desc { font-size: .85rem; color: #444; margin-top: .25rem; }
+.import-zone input[type=file] { display: none; }
+
+/* Buttons */
+.btn-orange {
+    background: #ff7a00;
+    border: none;
+    color: white;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 13px;
+    width: 100%;
+    font-size: 1rem;
+    transition: .15s;
+}
+.btn-orange:hover { background: #eb6d00; color: #1a1a1a; }
+
+.btn-navy {
+    background: #1e3a5f;
+    border: none;
+    color: white;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 13px;
+    width: 100%;
+    font-size: 1rem;
+    transition: .15s;
+}
+.btn-navy:hover { background: #152d4a; color: white; }
+
+.btn-outline {
+    background: transparent;
+    border: 2px solid #1e3a5f;
+    color: #1e3a5f;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 11px;
+    width: 100%;
+    font-size: .95rem;
+    transition: .15s;
+    text-decoration: none;
+    display: block;
+    text-align: center;
+}
+.btn-outline:hover { background: #1e3a5f; color: white; }
+
+.btn-back {
+    background: #f1f5f9;
+    border: none;
+    color: #1a1a1a;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 11px;
+    width: 100%;
+    font-size: .9rem;
+    text-decoration: none;
+    display: block;
+    text-align: center;
+    margin-top: .6rem;
+}
+.btn-back:hover { background: #e2e8f0; color: #1a1a1a; }
+
+/* Stats */
+.room-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .75rem;
+    margin-bottom: 1rem;
+}
+.stat-box {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    border: 1.5px solid #e2e8f0;
+}
+.stat-num {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #1e3a5f;
+}
+.stat-label {
+    font-size: .78rem;
+    color: #444;
+    font-weight: 600;
+    margin-top: .2rem;
+}
+
+/* Room table */
+.room-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .9rem;
+}
+.room-table th {
+    background: #1e3a5f;
+    color: #fff;
+    padding: .6rem .9rem;
+    text-align: left;
+    font-weight: 600;
+}
+.room-table td {
+    padding: .6rem .9rem;
+    border-bottom: 1px solid #f1f5f9;
+    color: #1a1a1a;
+}
+.room-table tr:hover td { background: #f8fafc; }
+
+.room-badge {
+    background: #1e3a5f;
+    color: #ff7a00;
+    font-weight: 800;
+    padding: .2rem .6rem;
+    border-radius: 6px;
+    font-size: .9rem;
+    letter-spacing: 1px;
+}
+
+/* Template box */
+.template-box {
+    background: #f0f9ff;
+    border: 1.5px solid #bae6fd;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+.template-box p {
+    font-size: .88rem;
+    color: #1a1a1a;
+    margin: 0 0 .75rem;
+    line-height: 1.6;
+}
+
+/* Divider */
+.or-divider {
+    text-align: center;
+    color: #666;
+    font-size: .85rem;
+    font-weight: 600;
+    margin: 1rem 0;
+    position: relative;
+}
+.or-divider::before, .or-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 44%;
+    height: 1px;
+    background: #e2e8f0;
+}
+.or-divider::before { left: 0; }
+.or-divider::after  { right: 0; }
+</style>
+
+<!-- Navbar -->
+<div class="main-wrap">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                        alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Header -->
+    <div class="page-header">
+        <h2>🚪 ขั้นตอนที่ 2 — ห้องพัก</h2>
+        <p>เพิ่มรายชื่อห้องพักในโครงการของคุณ<br>
+           สามารถนำเข้าจาก Excel ได้ทีเดียวหลายร้อยห้อง!</p>
+    </div>
+
+    <!-- Stats if rooms exist -->
+    {% if rooms %}
+    <div class="room-stats">
+        <div class="stat-box">
+            <div class="stat-num">{{ rooms|length }}</div>
+            <div class="stat-label">ห้องทั้งหมด</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-num">
+                {{ rooms|map(attribute='building')|select|unique|list|length or 1 }}
+            </div>
+            <div class="stat-label">อาคาร</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Excel Import -->
+    <div class="cf-card">
+        <div class="card-title">📊 นำเข้าจาก Excel (แนะนำ)</div>
+        <div class="card-desc">
+            วิธีที่เร็วที่สุด! เหมาะสำหรับโครงการที่มีห้องจำนวนมาก<br>
+            ดาวน์โหลดแบบฟอร์ม → กรอกข้อมูล → อัปโหลด → เสร็จ!
+        </div>
+
+        <!-- Template download -->
+        <div class="template-box">
+            <p>
+                <strong>ขั้นตอนที่ 1:</strong> ดาวน์โหลดแบบฟอร์ม Excel<br>
+                กรอกข้อมูลห้องพักตามรูปแบบที่กำหนด<br>
+                <small style="color:#666;">
+                    คอลัมน์: building (อาคาร), room_no (หมายเลขห้อง), floor (ชั้น)
+                </small>
+            </p>
+            <a href="{{ url_for('property.download_template') }}"
+               class="btn-outline">
+                ⬇️ ดาวน์โหลดแบบฟอร์ม Excel
+            </a>
+        </div>
+
+        <!-- Upload zone -->
+        <p style="font-size:.9rem; font-weight:700; color:#1a1a1a; margin-bottom:.5rem;">
+            ขั้นตอนที่ 2: อัปโหลดไฟล์ Excel ที่กรอกข้อมูลแล้ว
+        </p>
+        <form method="POST"
+              action="{{ url_for('property.import_rooms') }}"
+              enctype="multipart/form-data"
+              id="importForm">
+            <div class="import-zone" id="importZone"
+                 onclick="document.getElementById('fileInput').click()">
+                <div class="import-icon">📂</div>
+                <div class="import-title" id="importTitle">
+                    กดที่นี่เพื่อเลือกไฟล์ Excel
+                </div>
+                <div class="import-desc">
+                    รองรับไฟล์ .xlsx และ .xls เท่านั้น
+                </div>
+                <input type="file"
+                       id="fileInput"
+                       name="file"
+                       accept=".xlsx,.xls"
+                       onchange="fileSelected(this)">
+            </div>
+            <button type="submit"
+                    class="btn btn-orange"
+                    id="importBtn"
+                    style="display:none;">
+                📤 นำเข้าข้อมูลห้องพัก
+            </button>
+        </form>
+    </div>
+
+    <div class="or-divider">หรือ</div>
+
+    <!-- Manual add -->
+    <div class="cf-card">
+        <div class="card-title">✏️ เพิ่มห้องด้วยตนเอง</div>
+        <div class="card-desc">
+            เหมาะสำหรับโครงการที่มีห้องน้อย หรือต้องการเพิ่มห้องทีละห้อง
+        </div>
+
+        <form method="POST" action="{{ url_for('property.add_room') }}">
+            <div class="row g-2 mb-3">
+                <div class="col-4">
+                    <label class="form-label">อาคาร</label>
+                    <div class="form-hint">เช่น A, B, ก</div>
+                    <input type="text"
+                           name="building"
+                           class="form-control"
+                           placeholder="A"
+                           maxlength="10"
+                           style="text-transform:uppercase;">
+                </div>
+                <div class="col-4">
+                    <label class="form-label">หมายเลขห้อง *</label>
+                    <div class="form-hint">เช่น 101, A101</div>
+                    <input type="text"
+                           name="room_no"
+                           class="form-control"
+                           placeholder="101"
+                           required>
+                </div>
+                <div class="col-4">
+                    <label class="form-label">ชั้น</label>
+                    <div class="form-hint">ตัวเลขชั้น</div>
+                    <input type="number"
+                           name="floor"
+                           class="form-control"
+                           placeholder="1"
+                           min="1">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-navy">
+                + เพิ่มห้องนี้
+            </button>
+        </form>
+    </div>
+
+    <!-- Room list -->
+    {% if rooms %}
+    <div class="cf-card">
+        <div class="card-title">
+            รายชื่อห้องพักทั้งหมด
+            <span style="font-weight:400; font-size:.85rem; color:#666;">
+                ({{ rooms|length }} ห้อง)
+            </span>
+        </div>
+        <div style="overflow-x:auto;">
+            <table class="room-table">
+                <thead>
+                    <tr>
+                        <th>ห้อง</th>
+                        <th>อาคาร</th>
+                        <th>ชั้น</th>
+                        <th>รหัสเชิญลูกบ้าน</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in rooms %}
+                    <tr>
+                        <td>
+                            <span class="room-badge">
+                                {{ r.building or '' }}{{ r.room_no }}
+                            </span>
+                        </td>
+                        <td>{{ r.building or '-' }}</td>
+                        <td>{{ r.floor or '-' }}</td>
+                        <td>
+                            {% if r.invite_code %}
+                            <span style="font-family:monospace; font-weight:800;
+                                         font-size:.9rem; color:#1e3a5f;
+                                         letter-spacing:2px;">
+                                {{ r.invite_code }}
+                            </span>
+                            {% else %}
+                            <span style="color:#94a3b8; font-size:.8rem;">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Next step -->
+    {% if rooms %}
+    <a href="{{ url_for('property.dashboard') }}" class="btn-orange"
+       style="display:block; text-align:center; text-decoration:none;
+              padding:15px; border-radius:12px; font-weight:800;
+              font-size:1rem; color:white; margin-bottom:.6rem;">
+        ดำเนินการต่อ ขั้นตอนที่ 3 →
+    </a>
+    {% endif %}
+
+    <a href="{{ url_for('property.dashboard') }}" class="btn-back">
+        ← กลับหน้าหลัก
+    </a>
+
+</div>
+
+<script>
+// Drag and drop
+const zone = document.getElementById('importZone');
+
+zone.addEventListener('dragover', e => {
+    e.preventDefault();
+    zone.classList.add('dragover');
+});
+
+zone.addEventListener('dragleave', () => {
+    zone.classList.remove('dragover');
+});
+
+zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) {
+        document.getElementById('fileInput').files = e.dataTransfer.files;
+        fileSelected({ files: [file] });
+    }
+});
+
+function fileSelected(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    document.getElementById('importTitle').textContent = `✅ ${file.name}`;
+    document.getElementById('importBtn').style.display = 'block';
+    zone.style.borderColor = '#22c55e';
+    zone.style.background  = '#f0fdf4';
+}
+</script>
+
+{% endblock %}

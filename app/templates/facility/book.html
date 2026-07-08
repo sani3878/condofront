@@ -1,0 +1,194 @@
+{% extends "shared/base.html" %}
+{% block content %}
+{% set lang = session.get('lang', 'en') %}
+{% if lang == 'en' %}
+  {% set lbl_title    = "Book Facility" %}
+  {% set lbl_date     = "Select Date" %}
+  {% set lbl_slots    = "Available Slots" %}
+  {% set lbl_book     = "Confirm Booking" %}
+  {% set lbl_back     = "Back" %}
+  {% set lbl_full     = "Full" %}
+  {% set lbl_yours    = "Your unit booked" %}
+  {% set lbl_avail    = "Available" %}
+  {% set lbl_cap      = "Capacity" %}
+  {% set lbl_fee      = "Fee" %}
+  {% set lbl_approval = "Requires approval" %}
+{% else %}
+  {% set lbl_title    = "จองสิ่งอำนวยความสะดวก" %}
+  {% set lbl_date     = "เลือกวันที่" %}
+  {% set lbl_slots    = "สล็อตที่ว่าง" %}
+  {% set lbl_book     = "ยืนยันการจอง" %}
+  {% set lbl_back     = "กลับ" %}
+  {% set lbl_full     = "เต็ม" %}
+  {% set lbl_yours    = "ห้องคุณจองแล้ว" %}
+  {% set lbl_avail    = "ว่าง" %}
+  {% set lbl_cap      = "จำนวน" %}
+  {% set lbl_fee      = "ค่าบริการ" %}
+  {% set lbl_approval = "ต้องรออนุมัติ" %}
+{% endif %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.wrap { padding: 1.25rem 1rem; max-width: 480px; margin: 0 auto; }
+.back-link { color: #1e3a5f; text-decoration: none; font-size: .88rem; font-weight: 700; margin-bottom: 1rem; display: inline-block; }
+.facility-card {
+    background: #1e3a5f; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1.25rem; color: white; text-align: center;
+}
+.f-icon-big { font-size: 3rem; margin-bottom: .5rem; }
+.f-name-big { font-size: 1.2rem; font-weight: 900; color: white; }
+.f-info { font-size: .82rem; color: rgba(255,255,255,.75); margin-top: .35rem; }
+.f-badges { display: flex; justify-content: center; gap: .5rem; margin-top: .75rem; flex-wrap: wrap; }
+.badge {
+    font-size: .75rem; font-weight: 700; padding: .25rem .75rem;
+    border-radius: 20px;
+}
+.badge-fee      { background: #fef3c7; color: #92400e; }
+.badge-approval { background: #ede9fe; color: #5b21b6; }
+.badge-cap      { background: #dbeafe; color: #1e40af; }
+
+/* Date selector */
+.cf-card { background: white; border-radius: 14px; padding: 1.1rem; margin-bottom: .75rem; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+.card-title { font-size: .9rem; font-weight: 800; color: #1e3a5f; margin-bottom: .75rem; }
+.date-input {
+    border-radius: 10px; padding: 11px 13px; border: 1.5px solid #e2e8f0;
+    font-size: .95rem; width: 100%; color: #1e293b;
+}
+.date-input:focus { border-color: #1e3a5f; outline: none; }
+
+/* Slots grid */
+.slots-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem;
+}
+.slot-btn {
+    border: 2px solid #e2e8f0; border-radius: 10px; padding: .6rem .4rem;
+    text-align: center; cursor: pointer; background: white; transition: .15s;
+    font-size: .8rem; font-weight: 700;
+}
+.slot-btn:hover:not(.disabled) { border-color: #ff7a00; background: #fff7f0; }
+.slot-btn.selected { border-color: #ff7a00; background: #fff7f0; color: #c2410c; }
+.slot-btn.full { background: #fef2f2; border-color: #fca5a5; color: #dc2626; cursor: not-allowed; }
+.slot-btn.unit-booked { background: #fef3c7; border-color: #fcd34d; color: #92400e; cursor: not-allowed; }
+.slot-time { font-size: .82rem; font-weight: 800; }
+.slot-status { font-size: .65rem; margin-top: 2px; color: #64748b; }
+.slot-btn.full .slot-status { color: #dc2626; }
+.slot-btn.unit-booked .slot-status { color: #92400e; }
+
+.btn-confirm {
+    background: #ff7a00; border: none; color: #1a1a1a;
+    font-weight: 800; border-radius: 12px; padding: 13px;
+    width: 100%; font-size: 1rem; cursor: pointer; margin-top: .5rem;
+    display: none;
+}
+.btn-confirm.show { display: block; }
+.btn-confirm:hover { background: #eb6d00; }
+.empty-slots { text-align: center; padding: 1.5rem; color: #64748b; }
+</style>
+
+<div class="wrap">
+    <a href="{{ url_for('facility.resident_facilities') }}" class="back-link">← {{ lbl_back }}</a>
+
+    <!-- Facility card -->
+    <div class="facility-card">
+        <div class="f-icon-big">{{ facility.icon }}</div>
+        <div class="f-name-big">
+            {{ facility.name_en if lang == 'en' and facility.name_en else facility.name }}
+        </div>
+        <div class="f-info">
+            🕐 {{ facility.opening_time.strftime('%H:%M') if facility.opening_time else '' }}
+            – {{ facility.closing_time.strftime('%H:%M') if facility.closing_time else '' }}
+            · {{ facility.slot_duration_mins }} min/slot
+        </div>
+        <div class="f-badges">
+            {% if facility.fee_amount and facility.fee_amount > 0 %}
+            <span class="badge badge-fee">
+                {{ lbl_fee }}: ฿{{ '%.0f'|format(facility.fee_amount) }}
+                ({{ 'Cash' if facility.payment_method == 'cash' else 'Billing' if facility.payment_method == 'billing' else 'Free' }})
+            </span>
+            {% endif %}
+            {% if facility.max_capacity %}
+            <span class="badge badge-cap">{{ lbl_cap }}: {{ facility.max_capacity }}</span>
+            {% endif %}
+            {% if facility.approval_required %}
+            <span class="badge badge-approval">⏳ {{ lbl_approval }}</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Date selector -->
+    <div class="cf-card">
+        <div class="card-title">📅 {{ lbl_date }}</div>
+        <form method="GET" action="{{ url_for('facility.book', facility_id=facility.idno) }}">
+            <input type="date" name="date" class="date-input"
+                   value="{{ selected_date }}"
+                   min="{{ today }}" max="{{ max_date }}"
+                   onchange="this.form.submit()">
+        </form>
+    </div>
+
+    <!-- Time slots -->
+    {% if slots %}
+    <div class="cf-card">
+        <div class="card-title">🕐 {{ lbl_slots }}</div>
+        <form method="POST"
+              action="{{ url_for('facility.book', facility_id=facility.idno) }}"
+              id="bookingForm">
+            <input type="hidden" name="booking_date" value="{{ selected_date }}">
+            <input type="hidden" name="start_time" id="selectedTime" value="">
+
+            <div class="slots-grid">
+                {% for slot in slots %}
+                {% set st = slot.start_time if slot.start_time is defined else slot.start %}
+                {% set slot_data = slot_status.get(st, {}) %}
+                {% set is_unit_booked = slot_data.get('unit_booked', 0) == 1 %}
+                {% set count = slot_data.get('count', 0) %}
+                {% set is_full = facility.max_capacity and count >= facility.max_capacity %}
+
+                {% if is_unit_booked %}
+                <div class="slot-btn unit-booked">
+                    <div class="slot-time">{{ st }}</div>
+                    <div class="slot-status">⚠️ {{ lbl_yours }}</div>
+                </div>
+                {% elif is_full %}
+                <div class="slot-btn full">
+                    <div class="slot-time">{{ st }}</div>
+                    <div class="slot-status">❌ {{ lbl_full }}</div>
+                </div>
+                {% else %}
+                <div class="slot-btn" onclick="selectSlot('{{ st }}', this)">
+                    <div class="slot-time">{{ st }}</div>
+                    <div class="slot-status">
+                        {% if facility.max_capacity %}
+                        {{ facility.max_capacity - count }}/{{ facility.max_capacity }}
+                        {% else %}
+                        ✅ {{ lbl_avail }}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="btn-confirm" id="confirmBtn">
+                📅 {{ lbl_book }}
+            </button>
+        </form>
+    </div>
+    {% else %}
+    <div class="cf-card">
+        <div class="empty-slots">ไม่มีสล็อตสำหรับวันนี้</div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function selectSlot(time, el) {
+    document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('selectedTime').value = time;
+    const btn = document.getElementById('confirmBtn');
+    btn.classList.add('show');
+    btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+</script>
+{% endblock %}

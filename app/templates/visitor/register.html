@@ -1,0 +1,109 @@
+{% extends "shared/base.html" %}
+{% block content %}
+{% set lang = session.get('lang', 'en') %}
+{% if lang == 'en' %}
+  {% set lbl_title    = "Invite a Visitor" %}
+  {% set lbl_sub      = "Pre-register your guest for faster entry" %}
+  {% set lbl_name     = "Visitor Name *" %}
+  {% set lbl_date     = "Visit Date *" %}
+  {% set lbl_purpose  = "Purpose (optional)" %}
+  {% set lbl_id       = "ID Card (optional)" %}
+  {% set lbl_submit   = "Register & Get QR Code" %}
+  {% set lbl_back     = "Back" %}
+  {% set lbl_my       = "My Visitors" %}
+{% else %}
+  {% set lbl_title    = "เชิญผู้มาเยี่ยม" %}
+  {% set lbl_sub      = "ลงทะเบียนล่วงหน้าเพื่อเข้าโครงการได้เร็วขึ้น" %}
+  {% set lbl_name     = "ชื่อผู้มาเยี่ยม *" %}
+  {% set lbl_date     = "วันที่มาเยี่ยม *" %}
+  {% set lbl_purpose  = "วัตถุประสงค์ (ไม่บังคับ)" %}
+  {% set lbl_id       = "เลขบัตร (ไม่บังคับ)" %}
+  {% set lbl_submit   = "ลงทะเบียน & รับ QR Code" %}
+  {% set lbl_back     = "กลับ" %}
+  {% set lbl_my       = "ผู้มาเยี่ยมของฉัน" %}
+{% endif %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.wrap { padding: 1.25rem 1rem; max-width: 460px; margin: 0 auto; }
+.back-link {
+    display: inline-flex; align-items: center; gap: .4rem;
+    color: #1e3a5f; text-decoration: none; font-size: .85rem;
+    font-weight: 600; margin-bottom: 1rem;
+}
+.page-header {
+    background: linear-gradient(135deg, #1e3a5f, #15294a);
+    border-radius: 16px; padding: 1.25rem; margin-bottom: 1.25rem; color: white;
+}
+.page-header h2 { font-size: 1.1rem; font-weight: 800; margin: 0 0 .25rem; color: white; }
+.page-header p  { font-size: .82rem; color: rgba(255,255,255,.75); margin: 0; }
+.cf-card {
+    background: white; border-radius: 16px; padding: 1.25rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05);
+}
+.form-label { font-weight: 700; font-size: .85rem; margin-bottom: .35rem; display: block; }
+.form-control {
+    border-radius: 10px; padding: 11px 13px; border: 1.5px solid #e2e8f0;
+    font-size: .95rem; width: 100%; margin-bottom: .85rem; color: #1e293b;
+}
+.form-control:focus { border-color: #ff7a00; outline: none; }
+.btn-submit {
+    background: #ff7a00; border: none; color: #1a1a1a; font-weight: 800;
+    border-radius: 12px; padding: 13px; width: 100%; font-size: 1rem; cursor: pointer;
+}
+.btn-submit:hover { background: #eb6d00; }
+.link-my {
+    display: block; text-align: center; margin-top: 1rem;
+    color: #1e3a5f; font-size: .85rem; text-decoration: none; font-weight: 600;
+}
+</style>
+
+<div class="wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <a href="{{ url_for('resident.home') }}" class="back-link">← {{ lbl_back }}</a>
+
+    <div class="page-header">
+        <h2>🎟️ {{ lbl_title }}</h2>
+        <p>{{ lbl_sub }}</p>
+    </div>
+
+    <div class="cf-card">
+        <form method="POST" action="{{ url_for('visitor.register_visitor') }}">
+            <label class="form-label">{{ lbl_name }}</label>
+            <input type="text" name="visitor_name" class="form-control"
+                   placeholder="Full name" required autofocus>
+
+            <label class="form-label">{{ lbl_date }}</label>
+            <input type="date" name="visit_date" class="form-control"
+                   value="{{ today }}" required>
+
+            <label class="form-label">{{ lbl_purpose }}</label>
+            <input type="text" name="purpose" class="form-control"
+                   placeholder="e.g. Visit, Delivery, Maintenance">
+
+            <label class="form-label">{{ lbl_id }}</label>
+            <input type="text" name="id_card" class="form-control"
+                   placeholder="ID / Passport number">
+
+            <button type="submit" class="btn-submit">🎟️ {{ lbl_submit }}</button>
+        </form>
+
+        <a href="{{ url_for('visitor.my_visitors') }}" class="link-my">
+            📋 {{ lbl_my }}
+        </a>
+    </div>
+</div>
+
+<script>
+// Set today's date as default
+document.querySelector('input[name="visit_date"]').value =
+    new Date().toISOString().split('T')[0];
+</script>
+{% endblock %}

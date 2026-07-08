@@ -1,0 +1,174 @@
+<style>
+.res-navbar {
+    background: #1e3a5f;
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    min-height: 54px;
+}
+.res-navbar-logo img { height: 30px; display: block; }
+.res-navbar-right {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+}
+.res-nav-user {
+    color: rgba(255,255,255,.7);
+    font-size: .78rem;
+    white-space: nowrap;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.res-lang-toggle {
+    display: flex;
+    background: rgba(255,255,255,.1);
+    border-radius: 20px;
+    padding: 2px;
+    gap: 1px;
+}
+.res-lang-btn {
+    color: rgba(255,255,255,.6);
+    text-decoration: none;
+    font-size: .7rem;
+    font-weight: 700;
+    padding: .2rem .5rem;
+    border-radius: 20px;
+    transition: .15s;
+}
+.res-lang-btn.active { background: #ff7a00; color: #1a1a1a; }
+
+/* Hamburger */
+.res-hamburger {
+    background: none;
+    border: 1.5px solid rgba(255,255,255,.3);
+    border-radius: 8px;
+    color: white;
+    padding: .3rem .55rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    line-height: 1;
+}
+
+/* Mobile drawer */
+.res-mobile-menu {
+    display: none;
+    flex-direction: column;
+    background: #162d4a;
+    padding: .5rem .75rem .75rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,.3);
+}
+.res-mobile-menu.open { display: flex; }
+.res-mobile-link {
+    color: rgba(255,255,255,.85);
+    text-decoration: none;
+    font-size: .95rem;
+    font-weight: 600;
+    padding: .65rem .75rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    transition: .15s;
+}
+.res-mobile-link:hover { background: rgba(255,255,255,.1); color: #fff; }
+.res-mobile-link.active { background: #ff7a00; color: #fff; }
+.res-mobile-divider {
+    height: 1px;
+    background: rgba(255,255,255,.12);
+    margin: .3rem 0;
+}
+.res-mobile-lang {
+    display: flex;
+    gap: .5rem;
+    padding: .5rem .75rem;
+}
+.res-mobile-lang a {
+    color: rgba(255,255,255,.7);
+    text-decoration: none;
+    font-size: .85rem;
+    font-weight: 700;
+    padding: .3rem .75rem;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,.2);
+}
+.res-mobile-lang a.active { background: #ff7a00; color: #fff; border-color: #ff7a00; }
+</style>
+
+{% set lang = session.get('lang', 'en') %}
+{% set ap = active_page | default('') %}
+
+<nav class="res-navbar">
+    <a href="{{ url_for('resident.home') }}" class="res-navbar-logo">
+        <img src="{{ url_for('static', filename='img/logo-white.png') }}" alt="CondoFront">
+    </a>
+    <div class="res-navbar-right">
+        <div class="res-lang-toggle">
+            <a href="{{ url_for('auth.set_language', lang='th') }}"
+               class="res-lang-btn {% if lang == 'th' %}active{% endif %}">TH</a>
+            <a href="{{ url_for('auth.set_language', lang='en') }}"
+               class="res-lang-btn {% if lang == 'en' %}active{% endif %}">EN</a>
+        </div>
+        <span class="res-nav-user">{{ current_user.fullname }}</span>
+        <button class="res-hamburger" onclick="toggleResMenu()" aria-label="menu">☰</button>
+    </div>
+</nav>
+
+<!-- Resident drawer -->
+<div class="res-mobile-menu" id="resMobileMenu">
+    <a href="{{ url_for('resident.home') }}"
+       class="res-mobile-link {% if ap == 'home' %}active{% endif %}">
+        🏠 {{ 'Home' if lang == 'en' else 'หน้าหลัก' }}
+    </a>
+    <a href="{{ url_for('resident.parcels') }}"
+       class="res-mobile-link {% if ap == 'parcels' %}active{% endif %}">
+        📦 {{ 'My Parcels' if lang == 'en' else 'พัสดุของฉัน' }}
+    </a>
+    <a href="{{ url_for('service.my_requests') }}"
+       class="res-mobile-link {% if ap == 'service' %}active{% endif %}">
+        🔧 {{ 'Service Request' if lang == 'en' else 'แจ้งบริการ' }}
+    </a>
+    <a href="{{ url_for('facility.resident_facilities') }}"
+       class="res-mobile-link {% if ap == 'facility' %}active{% endif %}">
+        🏢 {{ 'Facilities' if lang == 'en' else 'สิ่งอำนวยความสะดวก' }}
+    </a>
+    <a href="{{ url_for('visitor.my_visitors') }}"
+       class="res-mobile-link {% if ap == 'visitors' %}active{% endif %}">
+        🎟️ {{ 'My Visitors' if lang == 'en' else 'ผู้มาเยี่ยม' }}
+    </a>
+    <a href="{{ url_for('resident.unit') }}"
+       class="res-mobile-link {% if ap == 'unit' %}active{% endif %}">
+        👥 {{ 'My Unit' if lang == 'en' else 'ห้องของฉัน' }}
+    </a>
+    <a href="{{ url_for('auth.contact') }}"
+       class="res-mobile-link {% if ap == 'contact' %}active{% endif %}">
+        📞 {{ 'Contact Office' if lang == 'en' else 'ติดต่อนิติ' }}
+    </a>
+    <div class="res-mobile-divider"></div>
+    <div class="res-mobile-lang">
+        <a href="{{ url_for('auth.set_language', lang='th') }}"
+           class="{% if lang == 'th' %}active{% endif %}">🇹🇭 ภาษาไทย</a>
+        <a href="{{ url_for('auth.set_language', lang='en') }}"
+           class="{% if lang == 'en' %}active{% endif %}">🇬🇧 English</a>
+    </div>
+    <div class="res-mobile-divider"></div>
+    <a href="{{ url_for('auth.logout') }}" class="res-mobile-link">
+        🚪 {{ 'Logout' if lang == 'en' else 'ออกจากระบบ' }}
+    </a>
+</div>
+
+<script>
+function toggleResMenu() {
+    document.getElementById('resMobileMenu').classList.toggle('open');
+}
+document.querySelectorAll('.res-mobile-link').forEach(function(el) {
+    el.addEventListener('click', function() {
+        document.getElementById('resMobileMenu').classList.remove('open');
+    });
+});
+</script>

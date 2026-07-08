@@ -1,0 +1,288 @@
+{% extends "shared/base.html" %}
+
+{% block content %}
+{% set lang = session.get('lang', 'en') %}
+
+{% if lang == 'en' %}
+  {% set lbl_title        = "My Unit" %}
+  {% set lbl_members      = "Unit Members" %}
+  {% set lbl_invite       = "Invite Code" %}
+  {% set lbl_invite_sub   = "Share this code to invite family members" %}
+  {% set lbl_copy         = "Copy Code" %}
+  {% set lbl_copied       = "Copied!" %}
+  {% set lbl_scan         = "Scan QR to register" %}
+  {% set lbl_back         = "Back" %}
+{% else %}
+  {% set lbl_title        = "ห้องของฉัน" %}
+  {% set lbl_members      = "สมาชิกในห้อง" %}
+  {% set lbl_invite       = "รหัสเชิญ" %}
+  {% set lbl_invite_sub   = "แชร์รหัสนี้เพื่อเชิญสมาชิกในครอบครัว" %}
+  {% set lbl_copy         = "คัดลอกรหัส" %}
+  {% set lbl_copied       = "คัดลอกแล้ว!" %}
+  {% set lbl_scan         = "สแกน QR เพื่อสมัคร" %}
+  {% set lbl_back         = "กลับ" %}
+{% endif %}
+
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; color: #1a1a1a; }
+.wrap {
+    padding: 1.25rem 1rem;
+    max-width: 480px;
+    margin: 0 auto;
+}
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    color: #1e3a5f;
+    text-decoration: none;
+    font-size: .85rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+.room-header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #15294a 100%);
+    border-radius: 16px;
+    padding: 1.25rem;
+    color: white;
+    margin-bottom: 1.25rem;
+    text-align: center;
+}
+.room-number {
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: #ff7a00;
+    line-height: 1;
+    letter-spacing: 3px;
+}
+.room-property {
+    font-size: .88rem;
+    color: rgba(255,255,255,.75);
+    margin-top: .35rem;
+}
+
+/* Members */
+.section-title {
+    font-size: .9rem;
+    font-weight: 800;
+    color: #1e3a5f;
+    margin-bottom: .75rem;
+}
+.member-card {
+    background: white;
+    border-radius: 14px;
+    padding: .9rem 1rem;
+    margin-bottom: .6rem;
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.05);
+}
+.member-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: #1e3a5f;
+    color: #ff7a00;
+    font-weight: 900;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.member-you .member-avatar { background: #ff7a00; color: #1a1a1a; }
+.member-info { flex: 1; }
+.member-name { font-weight: 700; font-size: .92rem; }
+.member-tag {
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: #f0f4f8;
+    color: #64748b;
+    margin-top: 2px;
+    display: inline-block;
+}
+.member-you .member-tag { background: #fff7f0; color: #ff7a00; }
+
+/* Invite code */
+.invite-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,.05);
+    text-align: center;
+}
+.invite-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #1e3a5f;
+    margin-bottom: .25rem;
+}
+.invite-sub {
+    font-size: .78rem;
+    color: #64748b;
+    margin-bottom: 1.25rem;
+}
+.qr-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+}
+#qrcode canvas, #qrcode img { border-radius: 12px; }
+.invite-code-display {
+    background: #f0f4f8;
+    border-radius: 12px;
+    padding: .9rem;
+    margin-bottom: 1rem;
+}
+.invite-code-text {
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: 6px;
+    color: #1e3a5f;
+    font-family: monospace;
+}
+.btn-copy {
+    background: #ff7a00;
+    border: none;
+    color: white;
+    font-weight: 800;
+    border-radius: 12px;
+    padding: .75rem;
+    width: 100%;
+    font-size: .95rem;
+    cursor: pointer;
+    transition: .15s;
+}
+.btn-copy:hover { background: #eb6d00; }
+.btn-copy.copied { background: #22c55e; }
+.qr-sub {
+    font-size: .75rem;
+    color: #94a3b8;
+    margin-top: .75rem;
+}
+</style>
+
+<div class="wrap">
+    <a href="{{ url_for('resident.home') }}" class="back-link">← {{ lbl_back }}</a>
+
+    <!-- Room header -->
+    <div class="room-header">
+        <div class="room-number">{{ unit.building or '' }}{{ unit.room_no }}</div>
+        <div class="room-property">{{ unit.property_name }}</div>
+    </div>
+
+    <!-- Members -->
+    <div class="section-title">👥 {{ lbl_members }}</div>
+
+    <!-- Current user first -->
+    <div class="member-card member-you">
+        <div class="member-avatar">{{ current_user.fullname[0] if current_user.fullname else '?' }}</div>
+        <div class="member-info">
+            <div class="member-name">{{ current_user.fullname }}</div>
+            <span class="member-tag">You</span>
+        </div>
+    </div>
+
+    {% for m in unit_members %}
+    <div class="member-card">
+        <div class="member-avatar">{{ m.fullname[0] if m.fullname else '?' }}</div>
+        <div class="member-info">
+            <div class="member-name">{{ m.fullname }}</div>
+            {% if m.mobile %}
+            <span class="member-tag">{{ m.mobile }}</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Invite code -->
+    {% if unit.invite_code %}
+    <br>
+    <div class="invite-card">
+        <div class="invite-title">{{ lbl_invite }}</div>
+        <div class="invite-sub">{{ lbl_invite_sub }}</div>
+
+        <!-- QR Code -->
+        <div class="qr-wrap">
+            <div id="qrcode"></div>
+        </div>
+        <div class="qr-sub">{{ lbl_scan }}</div>
+
+        <!-- Code display -->
+        <div class="invite-code-display">
+            <div class="invite-code-text" id="inviteCodeText">
+                {{ unit.invite_code }}
+            </div>
+        </div>
+
+        <button class="btn-copy" id="copyBtn" onclick="copyCode()">
+            <i class="bi bi-clipboard"></i> {{ lbl_copy }}
+        </button>
+
+        <!-- Save QR -->
+        <button class="btn-copy" onclick="downloadQR()"
+                style="background:#1e3a5f; margin-top:.5rem;">
+            <i class="bi bi-download"></i>
+            {{ 'Save QR' if lang == 'en' else 'บันทึก QR' }}
+        </button>
+
+        <!-- Share on LINE with link -->
+        <a href="https://line.me/R/msg/text/?{{ 'Join my unit on CondoFront' if lang == 'en' else 'เชิญเข้าห้อง CondoFront' }}%0A{{ 'Registration Link' if lang == 'en' else 'ลิงก์สมัคร' }}%3A+{{ request.host_url }}auth/register/resident%3Fcode%3D{{ unit.invite_code }}%0A{{ 'Code' if lang == 'en' else 'รหัส' }}%3A+{{ unit.invite_code }}"
+           target="_blank"
+           style="display:block; text-align:center; text-decoration:none;
+                  background:#06C755; color:white; font-weight:800;
+                  border-radius:10px; padding:.7rem; margin-top:.5rem;
+                  font-size:.9rem;">
+            <i class="bi bi-chat-dots"></i>
+            {{ 'Share on LINE' if lang == 'en' else 'แชร์ทาง LINE' }}
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- QR Code library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const inviteCode = "{{ unit.invite_code }}";
+const registerUrl = "{{ request.host_url }}auth/register/resident?code=" + inviteCode;
+
+// Generate QR code
+new QRCode(document.getElementById("qrcode"), {
+    text: registerUrl,
+    width: 180,
+    height: 180,
+    colorDark: "#1e3a5f",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.M
+});
+
+function downloadQR() {
+    setTimeout(function() {
+        const canvas = document.querySelector('#qrcode canvas');
+        if (canvas) {
+            const link = document.createElement('a');
+            link.download = 'invite-code-{{ unit.invite_code }}.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    }, 100);
+}
+
+function copyCode() {
+    navigator.clipboard.writeText(registerUrl).then(function() {
+        const btn = document.getElementById('copyBtn');
+        btn.innerHTML = '<i class="bi bi-check2"></i> {{ lbl_copied }}';
+        btn.classList.add('copied');
+        setTimeout(function() {
+            btn.innerHTML = '<i class="bi bi-clipboard"></i> {{ lbl_copy }}';
+            btn.classList.remove('copied');
+        }, 2000);
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,435 @@
+{% extends "shared/base.html" %}
+{% block content %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; color: #1a1a1a; }
+.main-wrap { padding: 1.25rem 1rem; max-width: 750px; margin: 0 auto; }
+
+.page-header {
+    background: #1e3a5f;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .75rem;
+}
+.page-header h2 { font-size: 1.2rem; font-weight: 800; margin: 0; color: white; }
+.btn-new {
+    background: #ff7a00; border: none; color: #1a1a1a;
+    font-weight: 800; border-radius: 10px; padding: .55rem 1rem;
+    font-size: .88rem; cursor: pointer; white-space: nowrap;
+}
+
+.cf-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05);
+}
+.card-title {
+    font-size: 1rem; font-weight: 800; color: #1e3a5f; margin-bottom: 1rem;
+    display: flex; align-items: center; justify-content: space-between;
+}
+
+/* Scanner */
+.scan-field {
+    border: 2px solid #ff7a00;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-align: center;
+    margin-bottom: .75rem;
+    color: #1e3a5f;
+}
+.scan-field:focus { outline: none; border-color: #1e3a5f; }
+.scan-hint { font-size: .78rem; color: #94a3b8; text-align: center; margin-bottom: .75rem; }
+
+/* Stats */
+.stats-row { display: flex; gap: .75rem; margin-bottom: 1rem; }
+.stat-box {
+    flex: 1; background: #f8fafc; border-radius: 12px;
+    padding: .75rem; text-align: center; border: 1.5px solid #e2e8f0;
+}
+.stat-num { font-size: 1.8rem; font-weight: 900; line-height: 1; }
+.stat-label { font-size: .72rem; color: #64748b; margin-top: .2rem; font-weight: 600; }
+
+/* Form */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+@media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
+.form-control, .form-select {
+    border-radius: 10px; padding: 11px 13px;
+    border: 1.5px solid #e2e8f0; font-size: .92rem;
+    width: 100%; color: #1e293b; margin-bottom: .65rem;
+}
+.form-control:focus, .form-select:focus { border-color: #1e3a5f; outline: none; }
+.btn-primary {
+    background: #1e3a5f; border: none; color: white;
+    font-weight: 800; border-radius: 12px; padding: 12px;
+    width: 100%; font-size: .95rem; cursor: pointer;
+}
+.btn-primary:hover { background: #152d4a; }
+
+/* Visitor rows */
+.visitor-row {
+    display: flex; align-items: center; gap: .75rem;
+    padding: .85rem 0; border-bottom: 1px solid #f0f4f8; flex-wrap: wrap;
+}
+.visitor-row:last-child { border-bottom: none; }
+.v-status {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.v-status.pending  { background: #f59e0b; }
+.v-status.arrived  { background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.2); }
+.v-status.completed { background: #94a3b8; }
+.v-info { flex: 1; min-width: 150px; }
+.v-name { font-weight: 700; font-size: .92rem; }
+.v-meta { font-size: .75rem; color: #64748b; margin-top: 2px; }
+.v-code {
+    font-family: monospace; font-weight: 800; font-size: .78rem;
+    color: #1e3a5f; background: #f0f4f8;
+    padding: 2px 7px; border-radius: 6px;
+}
+.room-pill {
+    font-size: .72rem; font-weight: 700; padding: 2px 8px;
+    border-radius: 20px; background: #dbeafe; color: #1e40af; white-space: nowrap;
+}
+.pre-pill {
+    font-size: .68rem; font-weight: 700; padding: 2px 7px;
+    border-radius: 20px; background: #fef3c7; color: #92400e; white-space: nowrap;
+}
+.time-col { font-size: .78rem; color: #64748b; text-align: right; min-width: 80px; }
+.btn-sm {
+    border: 1.5px solid #e2e8f0; background: none;
+    color: #64748b; border-radius: 8px; padding: .3rem .65rem;
+    font-size: .75rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+.btn-sm:hover { border-color: #1e3a5f; color: #1e3a5f; }
+.btn-sm.confirm { border-color: #22c55e; color: #22c55e; }
+.btn-sm.confirm:hover { background: #22c55e; color: white; }
+
+/* Filter */
+.filter-row {
+    display: flex; gap: .5rem; margin-bottom: .75rem; align-items: center;
+}
+.filter-input {
+    flex: 1; border-radius: 10px; padding: 9px 13px;
+    border: 1.5px solid #e2e8f0; font-size: .88rem;
+}
+.filter-input:focus { border-color: #1e3a5f; outline: none; }
+.btn-filter {
+    background: #1e3a5f; border: none; color: white;
+    border-radius: 10px; padding: 9px 14px; font-size: .85rem;
+    font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+
+.empty { text-align: center; padding: 2rem; color: #64748b; }
+</style>
+
+<div class="main-wrap">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                    alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="page-header">
+        <h2>🚶 บันทึกผู้มาติดต่อ</h2>
+        <div style="display:flex; gap:.5rem;">
+            <button class="btn-new" data-bs-toggle="modal" data-bs-target="#walkinModal">
+                ➕ Walk-in
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats — clickable filter -->
+    <div class="stats-row">
+        <a href="{{ url_for('visitor.log', show='default') }}"
+           class="stat-box" style="text-decoration:none; cursor:pointer;
+           {% if show == 'default' %}border-color:#1e3a5f;{% endif %}">
+            <div class="stat-num" style="color:#22c55e;">{{ currently_in|length }}</div>
+            <div class="stat-label">อยู่ในโครงการ</div>
+        </a>
+        <a href="{{ url_for('visitor.log', show='pending') }}"
+           class="stat-box" style="text-decoration:none; cursor:pointer;
+           {% if show == 'pending' %}border-color:#f59e0b; background:#fffbeb;{% endif %}">
+            <div class="stat-num" style="color:#f59e0b;">{{ pending|length }}</div>
+            <div class="stat-label">รอเช็คอิน</div>
+        </a>
+        <a href="{{ url_for('visitor.log', show='all') }}"
+           class="stat-box" style="text-decoration:none; cursor:pointer;
+           {% if show == 'all' %}border-color:#1e3a5f;{% endif %}">
+            <div class="stat-num" style="color:#1e3a5f;">{{ visitors|length }}</div>
+            <div class="stat-label">ทั้งหมด</div>
+        </a>
+    </div>
+
+    {% if pending and show == 'default' %}
+    <div style="background:#fffbeb; border:1.5px solid #f59e0b; border-radius:12px;
+                padding:.85rem 1rem; margin-bottom:1rem; font-size:.85rem;
+                color:#92400e; font-weight:600;">
+        ⏳ มีผู้มาเยี่ยมที่ลงทะเบียนล่วงหน้ารออยู่ {{ pending|length }} คน
+        — <a href="{{ url_for('visitor.log', show='pending') }}"
+              style="color:#92400e; font-weight:800;">ดูทั้งหมด →</a>
+    </div>
+    {% endif %}
+
+    <!-- QR Scanner — stays visible, primary action -->
+    <div class="cf-card">
+        <div class="card-title">📷 สแกน QR / กรอกรหัส</div>
+        <div style="display:flex; gap:.5rem; align-items:center; margin-bottom:.5rem;">
+            <input type="text" id="scanInput" class="scan-field"
+                   placeholder="VST-XXXX หรือ PKP-XXXX"
+                   maxlength="12" autocomplete="off" style="flex:1;">
+            <button type="button" id="visitorCameraBtn"
+                    onclick="startVisitorCamera()"
+                    style="background:#ff7a00; border:none; color:#1a1a1a;
+                           font-weight:800; border-radius:10px;
+                           padding:.6rem .9rem; font-size:.9rem;
+                           white-space:nowrap; flex-shrink:0;
+                           box-shadow:0 2px 6px rgba(255,122,0,.3);">
+                📷 สแกน
+            </button>
+        </div>
+        <div id="visitorCameraWrap" style="display:none; margin-bottom:.5rem;">
+            <div id="visitorQrReader" style="border-radius:12px; overflow:hidden;"></div>
+            <button type="button" onclick="stopVisitorCamera()"
+                    style="background:#f1f5f9; border:none; color:#64748b;
+                           font-weight:700; border-radius:8px; padding:.4rem .9rem;
+                           font-size:.82rem; margin-top:.5rem; cursor:pointer;">
+                ✕ ปิดกล้อง
+            </button>
+        </div>
+        <div class="scan-hint">PDA สแกนได้เลย หรือกด 📷 สแกน เพื่อใช้กล้องโทรศัพท์</div>
+    </div>
+
+    <!-- Visitor list -->
+    <div class="cf-card">
+        <div class="card-title">
+            {% if show == 'pending' %}⏳ รอเช็คอิน
+            {% elif show == 'all' %}📋 ทั้งหมด
+            {% else %}📋 วันนี้ + รอเช็คอิน{% endif %}
+        </div>
+
+        <!-- Filter -->
+        <form method="GET" action="{{ url_for('visitor.log') }}" class="filter-row">
+            <input type="hidden" name="show" value="{{ show }}">
+            <input type="text" name="q" class="filter-input"
+                   placeholder="🔍 ชื่อ หรือ รหัส VST-..."
+                   value="{{ search or '' }}">
+            <input type="date" name="date" class="filter-input" style="flex:0 0 130px;"
+                   value="{{ today }}">
+            <button type="submit" class="btn-filter">ค้นหา</button>
+        </form>
+
+        {% if visitors %}
+            {% for v in visitors %}
+            <div class="visitor-row">
+                <div class="v-status {{ v.status or 'pending' }}"></div>
+                <div class="v-info">
+                    <div class="v-name">{{ v.visitor_name }}</div>
+                    <div class="v-meta">
+                        {% if v.purpose %}{{ v.purpose }}{% endif %}
+                        {% if v.registered_by_name %}
+                        · <span class="pre-pill">ลงทะเบียนล่วงหน้า</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <span class="v-code">{{ v.visitor_code }}</span>
+                {% if v.room_no %}
+                <span class="room-pill">{{ v.building or '' }}{{ v.room_no }}</span>
+                {% endif %}
+                <div class="time-col">
+                    {% if v.time_in %}
+                    <div style="color:#22c55e; font-weight:600;">
+                        {{ v.time_in.strftime('%H:%M') }}
+                    </div>
+                    {% elif v.visit_date %}
+                    <div style="color:#f59e0b;">
+                        {{ v.visit_date.strftime('%d/%m') }}
+                    </div>
+                    {% endif %}
+                    {% if v.time_out %}
+                    <div style="color:#94a3b8;">→ {{ v.time_out.strftime('%H:%M') }}</div>
+                    {% endif %}
+                </div>
+                {% if v.status == 'pending' %}
+                <form method="POST"
+                      action="{{ url_for('visitor.confirm_arrival', code=v.visitor_code) }}">
+                    <button type="submit" class="btn-sm confirm">✓ เช็คอิน</button>
+                </form>
+                {% elif v.status == 'arrived' %}
+                <form method="POST"
+                      action="{{ url_for('visitor.checkout', visitor_id=v.idno) }}">
+                    <button type="submit" class="btn-sm">ออก →</button>
+                </form>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="empty">
+            <div style="font-size:2rem; margin-bottom:.5rem;">🚶</div>
+            ไม่มีผู้มาติดต่อ
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<script>
+// Global scanner listener — same pattern as parcel receive
+const scanInput = document.getElementById('scanInput');
+let buffer = '';
+let lastKeyTime = Date.now();
+
+document.addEventListener('keydown', function(e) {
+    const now = Date.now();
+    const elapsed = now - lastKeyTime;
+    lastKeyTime = now;
+
+    if (document.activeElement === scanInput) return;
+
+    if (e.key === 'Enter') {
+        if (buffer.length >= 4) {
+            scanInput.value = buffer;
+            submitScan(buffer);
+        }
+        buffer = '';
+        return;
+    }
+
+    if (e.key.length === 1) {
+        if (elapsed > 50 && buffer.length === 0) buffer = '';
+        if (elapsed <= 50 || buffer.length > 0) buffer += e.key;
+    }
+});
+
+scanInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        submitScan(this.value.trim());
+    }
+});
+
+function submitScan(code) {
+    if (!code) return;
+    const clean = code.toUpperCase().replace(/[^A-Z0-9\-]/g, '');
+    if (clean.startsWith('PKP-')) {
+        window.location.href = '/parcel/qr-pickup/' + clean;
+    } else if (clean.length >= 4) {
+        window.location.href = '/visitor/confirm/' + clean;
+    }
+}
+</script>
+
+<!-- Walk-in modal -->
+<div class="modal fade" id="walkinModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;">
+            <div class="modal-header" style="border-bottom:1.5px solid #f0f4f8;">
+                <h5 class="modal-title" style="font-weight:800; color:#1e3a5f;">
+                    ➕ บันทึกผู้มาติดต่อ (Walk-in)
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('visitor.checkin') }}">
+                <div class="modal-body" style="padding:1.25rem;">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">ชื่อผู้มาติดต่อ *</label>
+                        <input type="text" name="visitor_name" class="form-control"
+                               placeholder="ชื่อ-นามสกุล" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">ห้องที่มาติดต่อ</label>
+                        <select name="room_id" class="form-select">
+                            <option value="">-- เลือกห้อง --</option>
+                            {% for r in rooms %}
+                            <option value="{{ r.idno }}">
+                                {{ r.building or '' }}{{ r.room_no }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col">
+                            <label class="form-label fw-bold">เลขบัตร</label>
+                            <input type="text" name="id_card" class="form-control"
+                                   placeholder="ไม่บังคับ">
+                        </div>
+                        <div class="col">
+                            <label class="form-label fw-bold">วัตถุประสงค์</label>
+                            <input type="text" name="purpose" class="form-control"
+                                   placeholder="ไม่บังคับ">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top:1.5px solid #f0f4f8;">
+                    <button type="button" class="btn btn-light"
+                            data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit"
+                            style="background:#1e3a5f; border:none; color:white;
+                                   font-weight:800; border-radius:10px;
+                                   padding:.6rem 1.25rem;" class="btn">
+                        ✅ บันทึกเข้า
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script>
+let visitorCam = null;
+
+function startVisitorCamera() {
+    const wrap = document.getElementById('visitorCameraWrap');
+    const btn  = document.getElementById('visitorCameraBtn');
+    wrap.style.display = 'block';
+    btn.style.display  = 'none';
+
+    visitorCam = new Html5Qrcode("visitorQrReader");
+    visitorCam.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        function(decodedText) {
+            stopVisitorCamera();
+            const clean = decodedText.toUpperCase().replace(/[^A-Z0-9\-]/g, '');
+            if (clean.startsWith('PKP-')) {
+                window.location.href = '/parcel/qr-pickup/' + clean;
+            } else if (clean.length >= 4) {
+                window.location.href = '/visitor/confirm/' + clean;
+            }
+        },
+        function(error) { /* scanning */ }
+    ).catch(function() {
+        wrap.style.display = 'none';
+        btn.style.display  = 'block';
+        btn.textContent    = '📷 ไม่สามารถเปิดกล้อง';
+        btn.style.background = '#94a3b8';
+    });
+}
+
+function stopVisitorCamera() {
+    if (visitorCam) {
+        visitorCam.stop().catch(() => {});
+        visitorCam = null;
+    }
+    document.getElementById('visitorCameraWrap').style.display = 'none';
+    document.getElementById('visitorCameraBtn').style.display  = 'block';
+}
+</script>
+
+{% endblock %}

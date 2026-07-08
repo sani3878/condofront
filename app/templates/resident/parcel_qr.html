@@ -1,0 +1,133 @@
+{% extends "shared/base.html" %}
+{% block content %}
+{% set lang = session.get('lang', 'en') %}
+{% if lang == 'en' %}
+  {% set lbl_title   = "Pickup QR" %}
+  {% set lbl_show    = "Show this QR to reception staff" %}
+  {% set lbl_or      = "or use code" %}
+  {% set lbl_copy    = "Copy Code" %}
+  {% set lbl_copied  = "Copied!" %}
+  {% set lbl_back    = "Back" %}
+  {% set lbl_note    = "Staff will scan this to release your parcel" %}
+{% else %}
+  {% set lbl_title   = "QR รับพัสดุ" %}
+  {% set lbl_show    = "แสดง QR นี้ให้เจ้าหน้าที่ที่จุดรับพัสดุ" %}
+  {% set lbl_or      = "หรือใช้รหัส" %}
+  {% set lbl_copy    = "คัดลอกรหัส" %}
+  {% set lbl_copied  = "คัดลอกแล้ว!" %}
+  {% set lbl_back    = "กลับ" %}
+  {% set lbl_note    = "เจ้าหน้าที่จะสแกน QR เพื่อมอบพัสดุให้คุณ" %}
+{% endif %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.wrap { padding: 1.25rem 1rem; max-width: 400px; margin: 0 auto; }
+.back-link {
+    display: inline-flex; align-items: center; gap: .4rem;
+    color: #1e3a5f; text-decoration: none; font-size: .88rem; font-weight: 700; margin-bottom: 1rem;
+}
+.qr-card {
+    background: white; border-radius: 20px; padding: 1.75rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,.1); text-align: center;
+}
+.parcel-header {
+    background: #1e3a5f; border-radius: 12px;
+    padding: .75rem 1rem; margin-bottom: 1.25rem;
+}
+.room-label { font-size: .72rem; color: rgba(255,255,255,.6); }
+.room-num {
+    font-size: 2.2rem; font-weight: 900; color: #ff7a00;
+    line-height: 1; letter-spacing: 2px;
+}
+.courier { font-size: .85rem; color: rgba(255,255,255,.8); margin-top: .2rem; }
+.show-hint {
+    font-size: .85rem; color: #64748b;
+    margin-bottom: 1.25rem; font-weight: 600;
+}
+.qr-wrap { display: flex; justify-content: center; margin-bottom: 1.25rem; }
+#qrcode canvas { border-radius: 12px; }
+.note-badge {
+    display: inline-flex; align-items: center; gap: .35rem;
+    background: #f0fdf4; color: #166534; border: 1.5px solid #bbf7d0;
+    border-radius: 20px; padding: .35rem .85rem;
+    font-size: .75rem; font-weight: 700; margin-bottom: 1.25rem;
+}
+.code-box {
+    background: #f0f4f8; border-radius: 12px; padding: .75rem;
+    margin-bottom: 1rem;
+}
+.code-label { font-size: .7rem; color: #94a3b8; margin-bottom: .2rem; }
+.code-text {
+    font-size: 1.6rem; font-weight: 900; letter-spacing: 4px;
+    color: #1e3a5f; font-family: monospace;
+}
+.btn-copy {
+    background: #1e3a5f; border: none; color: white;
+    font-weight: 800; border-radius: 10px; padding: .7rem;
+    width: 100%; font-size: .9rem; cursor: pointer;
+}
+.btn-copy:hover { background: #152d4a; }
+.btn-copy.copied { background: #22c55e; }
+</style>
+
+<div class="wrap">
+    <a href="{{ url_for('resident.parcels') }}" class="back-link">
+        ← {{ lbl_back }}
+    </a>
+
+    <div class="qr-card">
+        <div class="parcel-header">
+            <div style="font-size:1.1rem; font-weight:900; color:white;
+                        letter-spacing:1px; margin-bottom:.4rem;">
+                {{ parcel.property_name | upper if parcel.property_name else '' }}
+            </div>
+            <div class="room-num">{{ parcel.building or '' }}{{ parcel.room_no }}</div>
+            <div class="courier">{{ parcel.courier_name or '-' }}</div>
+        </div>
+
+        <div class="show-hint">{{ lbl_show }}</div>
+
+        <div class="qr-wrap">
+            <div id="qrcode"></div>
+        </div>
+
+        <div class="note-badge">
+            📱 {{ lbl_note }}
+        </div>
+
+        <div class="code-box">
+            <div class="code-label">{{ lbl_or }}</div>
+            <div class="code-text" id="codeText">{{ parcel.pickup_code }}</div>
+        </div>
+
+        <button class="btn-copy" id="copyBtn" onclick="copyCode()">
+            📋 {{ lbl_copy }}
+        </button>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const code = "{{ parcel.pickup_code }}";
+new QRCode(document.getElementById("qrcode"), {
+    text: code,
+    width: 200,
+    height: 200,
+    colorDark: "#1e3a5f",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.M
+});
+
+function copyCode() {
+    navigator.clipboard.writeText(code).then(function() {
+        const btn = document.getElementById('copyBtn');
+        btn.textContent = '✅ {{ lbl_copied }}';
+        btn.classList.add('copied');
+        setTimeout(function() {
+            btn.textContent = '📋 {{ lbl_copy }}';
+            btn.classList.remove('copied');
+        }, 2000);
+    });
+}
+</script>
+{% endblock %}

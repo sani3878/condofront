@@ -1,0 +1,102 @@
+{% extends "shared/base.html" %}
+{% block content %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.wrap { padding: 1.25rem 1rem; max-width: 540px; margin: 0 auto; }
+.page-header {
+    background: #1e3a5f; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1.25rem; color: white;
+}
+.page-header h2 { font-size: 1.1rem; font-weight: 800; margin: 0 0 .25rem; color: white; }
+.page-header p  { font-size: .82rem; color: rgba(255,255,255,.75); margin: 0; }
+.cf-card {
+    background: white; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1rem; box-shadow: 0 2px 12px rgba(0,0,0,.05);
+}
+.card-title { font-size: 1rem; font-weight: 800; color: #1e3a5f; margin-bottom: 1rem; }
+.form-row { display: grid; grid-template-columns: 60px 1fr 100px auto; gap: .5rem; align-items: center; }
+.form-control {
+    border-radius: 10px; padding: 10px 12px; border: 1.5px solid #e2e8f0;
+    font-size: .9rem; width: 100%; color: #1e293b;
+}
+.form-control:focus { border-color: #1e3a5f; outline: none; }
+.btn-add {
+    background: #1e3a5f; border: none; color: white;
+    font-weight: 800; border-radius: 10px; padding: 10px 14px;
+    font-size: .9rem; cursor: pointer; white-space: nowrap;
+}
+.cat-row {
+    display: flex; align-items: center; gap: .75rem;
+    padding: .75rem 0; border-bottom: 1px solid #f0f4f8;
+}
+.cat-row:last-child { border-bottom: none; }
+.cat-icon { font-size: 1.5rem; width: 36px; text-align: center; flex-shrink: 0; }
+.cat-name { flex: 1; font-weight: 700; font-size: .92rem; }
+.cat-fee  { font-size: .78rem; color: #64748b; white-space: nowrap; }
+.btn-delete {
+    background: none; border: 1.5px solid #fca5a5; color: #dc2626;
+    border-radius: 8px; padding: .3rem .6rem; font-size: .75rem;
+    font-weight: 700; cursor: pointer;
+}
+.btn-delete:hover { background: #fef2f2; }
+.back-link {
+    display: inline-flex; align-items: center; gap: .4rem;
+    color: #1e3a5f; text-decoration: none; font-size: .85rem;
+    font-weight: 600; margin-bottom: 1rem;
+}
+</style>
+
+<div class="wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                    alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <a href="{{ url_for('service.list_requests') }}" class="back-link">← กลับ</a>
+
+    <div class="page-header">
+        <h2>⚙️ จัดการหมวดหมู่บริการ</h2>
+        <p>กำหนดประเภทบริการสำหรับโครงการของคุณ</p>
+    </div>
+
+    <!-- Add category -->
+    <div class="cf-card">
+        <div class="card-title">➕ เพิ่มหมวดหมู่ใหม่</div>
+        <form method="POST" action="{{ url_for('service.categories') }}">
+            <div class="form-row">
+                <input type="text" name="icon" class="form-control"
+                       placeholder="🔧" value="🔧" maxlength="5" style="text-align:center; font-size:1.2rem;">
+                <input type="text" name="name" class="form-control"
+                       placeholder="ชื่อบริการ" required>
+                <input type="number" name="default_fee" class="form-control"
+                       placeholder="ค่าบริการ" step="0.01">
+                <button type="submit" class="btn-add">➕ เพิ่ม</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Category list -->
+    <div class="cf-card">
+        <div class="card-title">หมวดหมู่ทั้งหมด ({{ categories|length }})</div>
+        {% for c in categories %}
+        <div class="cat-row">
+            <div class="cat-icon">{{ c.icon }}</div>
+            <div class="cat-name">{{ c.name }}</div>
+            {% if c.default_fee %}
+            <div class="cat-fee">฿{{ '%.0f'|format(c.default_fee) }}</div>
+            {% endif %}
+            <form method="POST"
+                  action="{{ url_for('service.delete_category', cat_id=c.idno) }}"
+                  onsubmit="return confirm('ลบหมวดหมู่นี้?');">
+                <button type="submit" class="btn-delete">ลบ</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

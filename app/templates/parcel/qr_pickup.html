@@ -1,0 +1,98 @@
+{% extends "shared/base.html" %}
+{% block content %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.wrap { padding: 1.25rem 1rem; max-width: 420px; margin: 0 auto; }
+.confirm-card {
+    background: white; border-radius: 20px; padding: 1.75rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,.08); text-align: center;
+}
+.parcel-icon { font-size: 3.5rem; margin-bottom: .75rem; }
+.room-number {
+    font-size: 3rem; font-weight: 900; color: #ff7a00;
+    letter-spacing: 3px; line-height: 1; margin-bottom: .25rem;
+}
+.courier-name {
+    font-size: 1rem; font-weight: 700; color: #1a1a1a; margin-bottom: .5rem;
+}
+.parcel-meta { font-size: .82rem; color: #64748b; margin-bottom: 1.5rem; }
+.method-badge {
+    display: inline-flex; align-items: center; gap: .4rem;
+    background: #f0fdf4; color: #166534; border: 1.5px solid #bbf7d0;
+    border-radius: 20px; padding: .4rem 1rem;
+    font-size: .82rem; font-weight: 700; margin-bottom: 1.5rem;
+}
+.btn-confirm {
+    background: #22c55e; border: none; color: white;
+    font-weight: 800; border-radius: 14px; padding: 14px;
+    width: 100%; font-size: 1.05rem; cursor: pointer; margin-bottom: .65rem;
+}
+.btn-confirm:hover { background: #16a34a; }
+.btn-cancel {
+    background: none; border: 1.5px solid #e2e8f0; color: #64748b;
+    font-weight: 700; border-radius: 14px; padding: 12px;
+    width: 100%; font-size: .92rem; cursor: pointer;
+    text-decoration: none; display: block;
+}
+.btn-cancel:hover { border-color: #1e3a5f; color: #1e3a5f; }
+.tracking-code {
+    font-family: monospace; font-size: .78rem; color: #94a3b8;
+    margin-top: .35rem;
+}
+</style>
+
+<div class="wrap">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                    alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="confirm-card">
+
+        {% if parcel.parcel_type == 'envelope' %}
+        <div class="parcel-icon">✉️</div>
+        {% elif parcel.parcel_type == 'bag' %}
+        <div class="parcel-icon">🛍️</div>
+        {% elif parcel.parcel_type == 'fragile' %}
+        <div class="parcel-icon">🫙</div>
+        {% elif parcel.parcel_type == 'large' %}
+        <div class="parcel-icon">🗃️</div>
+        {% else %}
+        <div class="parcel-icon">📦</div>
+        {% endif %}
+
+        <div class="room-number">
+            {{ parcel.building or '' }}{{ parcel.room_no }}
+        </div>
+        <div class="courier-name">{{ parcel.courier_name or 'ไม่ระบุผู้ส่ง' }}</div>
+        {% if parcel.tracking_no %}
+        <div class="tracking-code">{{ parcel.tracking_no }}</div>
+        {% endif %}
+        <div class="parcel-meta">
+            รับเข้า: {{ parcel.received_at.strftime('%d/%m/%y %H:%M') if parcel.received_at else '-' }}
+        </div>
+
+        <div class="method-badge">
+            📱 QR Pickup — ไม่ต้องลงลายเซ็น
+        </div>
+
+        <form method="POST"
+              action="{{ url_for('parcel.qr_pickup', code=parcel.pickup_code) }}">
+            <button type="submit" class="btn-confirm">
+                ✅ ยืนยันการรับพัสดุ
+            </button>
+        </form>
+
+        <a href="{{ url_for('parcel.pickup', parcel_id=parcel.idno) }}"
+           class="btn-cancel">
+            ✍️ เปลี่ยนเป็นลงลายเซ็นแทน
+        </a>
+    </div>
+</div>
+{% endblock %}

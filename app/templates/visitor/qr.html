@@ -1,0 +1,174 @@
+{% extends "shared/base.html" %}
+{% block content %}
+{% set lang = session.get('lang', 'en') %}
+{% if lang == 'en' %}
+  {% set lbl_title    = "Visitor Pass" %}
+  {% set lbl_show     = "Show this QR to reception" %}
+  {% set lbl_code     = "or use code" %}
+  {% set lbl_visit    = "Visit Date" %}
+  {% set lbl_purpose  = "Purpose" %}
+  {% set lbl_copy     = "Copy Code" %}
+  {% set lbl_copied   = "Copied!" %}
+  {% set lbl_share    = "Share via LINE" %}
+  {% set lbl_back     = "Back" %}
+  {% set lbl_my       = "My Visitors" %}
+{% else %}
+  {% set lbl_title    = "บัตรผ่านเข้าโครงการ" %}
+  {% set lbl_show     = "แสดง QR นี้ที่จุดรับแขก" %}
+  {% set lbl_code     = "หรือใช้รหัส" %}
+  {% set lbl_visit    = "วันที่มาเยี่ยม" %}
+  {% set lbl_purpose  = "วัตถุประสงค์" %}
+  {% set lbl_copy     = "คัดลอกรหัส" %}
+  {% set lbl_copied   = "คัดลอกแล้ว!" %}
+  {% set lbl_share    = "แชร์ทาง LINE" %}
+  {% set lbl_back     = "กลับ" %}
+  {% set lbl_my       = "ผู้มาเยี่ยมของฉัน" %}
+{% endif %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.wrap { padding: 1.25rem 1rem; max-width: 400px; margin: 0 auto; }
+.back-link {
+    display: inline-flex; align-items: center; gap: .4rem;
+    color: #1e3a5f; text-decoration: none; font-size: .85rem;
+    font-weight: 600; margin-bottom: 1rem;
+}
+.pass-card {
+    background: white; border-radius: 20px; padding: 1.75rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,.1); text-align: center;
+}
+.pass-header {
+    background: #1e3a5f; border-radius: 12px;
+    padding: .75rem 1rem; margin-bottom: 1.5rem; color: white;
+}
+.pass-property { font-size: .78rem; color: rgba(255,255,255,.7); }
+.pass-room {
+    font-size: 2rem; font-weight: 900; color: #ff7a00;
+    letter-spacing: 2px; line-height: 1;
+}
+.visitor-name {
+    font-size: 1.3rem; font-weight: 800; color: #1a1a1a;
+    margin-bottom: .25rem;
+}
+.visit-info {
+    font-size: .82rem; color: #64748b; margin-bottom: 1.25rem;
+}
+.qr-wrap { display: flex; justify-content: center; margin-bottom: 1.25rem; }
+#qrcode canvas { border-radius: 12px; }
+.show-hint {
+    font-size: .82rem; color: #64748b; margin-bottom: .75rem; font-weight: 600;
+}
+.code-display {
+    background: #f0f4f8; border-radius: 10px; padding: .75rem;
+    margin-bottom: 1rem;
+}
+.code-label { font-size: .7rem; color: #94a3b8; margin-bottom: .2rem; }
+.code-text {
+    font-size: 1.6rem; font-weight: 900; letter-spacing: 4px;
+    color: #1e3a5f; font-family: monospace;
+}
+.btn-copy {
+    background: #ff7a00; border: none; color: #1a1a1a;
+    font-weight: 800; border-radius: 10px; padding: .7rem;
+    width: 100%; font-size: .9rem; cursor: pointer; margin-bottom: .5rem;
+}
+.btn-copy:hover { background: #eb6d00; }
+.btn-copy.copied { background: #22c55e; }
+.btn-share {
+    background: #06C755; border: none; color: white;
+    font-weight: 800; border-radius: 10px; padding: .7rem;
+    width: 100%; font-size: .9rem; cursor: pointer; text-decoration: none;
+    display: block; text-align: center;
+}
+.link-my {
+    display: block; text-align: center; margin-top: 1rem;
+    color: #1e3a5f; font-size: .85rem; text-decoration: none;
+}
+</style>
+
+<div class="wrap">
+    <a href="{{ url_for('visitor.my_visitors') }}" class="back-link">← {{ lbl_back }}</a>
+
+    <div class="pass-card">
+        <div class="pass-header">
+            <div class="pass-property">{{ visitor.property_name }}</div>
+            <div class="pass-room">{{ visitor.building or '' }}{{ visitor.room_no }}</div>
+        </div>
+
+        <div class="visitor-name">{{ visitor.visitor_name }}</div>
+        <div class="visit-info">
+            {{ lbl_visit }}: <strong>
+                {{ visitor.visit_date.strftime('%d/%m/%Y') if visitor.visit_date else '-' }}
+            </strong>
+            {% if visitor.purpose %} · {{ visitor.purpose }}{% endif %}
+        </div>
+
+        <div class="qr-wrap">
+            <div id="qrcode"></div>
+        </div>
+
+        <div class="show-hint">{{ lbl_show }}</div>
+
+        <div class="code-display">
+            <div class="code-label">{{ lbl_code }}</div>
+            <div class="code-text" id="codeText">{{ visitor.visitor_code }}</div>
+        </div>
+
+        <button class="btn-copy" id="copyBtn" onclick="copyCode()">
+            <i class="bi bi-clipboard"></i> {{ lbl_copy }}
+        </button>
+
+        <button class="btn-share" onclick="downloadQR()">
+            <i class="bi bi-download"></i> {{ 'Save QR Image' if lang == 'en' else 'บันทึก QR' }}
+        </button>
+
+        <a href="https://line.me/R/msg/text/?VisitorPass%3A+{{ visitor.visitor_code }}%0A{{ visitor.visitor_name }}%0A{{ visitor.visit_date }}%0AShow+this+code+at+reception"
+           class="btn-share" target="_blank"
+           style="background:#06C755;">
+            <i class="bi bi-chat-dots"></i> {{ lbl_share }}
+        </a>
+    </div>
+
+    <a href="{{ url_for('visitor.my_visitors') }}" class="link-my">
+        <i class="bi bi-list-ul"></i> {{ lbl_my }}
+    </a>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const code = "{{ visitor.visitor_code }}";
+new QRCode(document.getElementById("qrcode"), {
+    text: code,
+    width: 200,
+    height: 200,
+    colorDark: "#1e3a5f",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.M
+});
+
+function downloadQR() {
+    // Get the canvas from QR code
+    setTimeout(function() {
+        const canvas = document.querySelector('#qrcode canvas');
+        if (canvas) {
+            const link = document.createElement('a');
+            link.download = 'visitor-pass-{{ visitor.visitor_code }}.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    }, 100);
+}
+
+function copyCode() {
+    navigator.clipboard.writeText(code).then(function() {
+        const btn = document.getElementById('copyBtn');
+        btn.textContent = '✅ {{ lbl_copied }}';
+        btn.classList.add('copied');
+        setTimeout(function() {
+            btn.textContent = '📋 {{ lbl_copy }}';
+            btn.classList.remove('copied');
+        }, 2000);
+    });
+}
+</script>
+{% endblock %}

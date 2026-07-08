@@ -1,0 +1,242 @@
+{% extends "shared/base.html" %}
+{% block content %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.main-wrap { padding: 1.25rem 1rem; max-width: 700px; margin: 0 auto; }
+.page-header {
+    background: #1e3a5f; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1.25rem; color: white;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.page-header h2 { font-size: 1.1rem; font-weight: 800; margin: 0; color: white; }
+.back-link { color: #ff7a00; text-decoration: none; font-size: .88rem; font-weight: 700; }
+.cf-card {
+    background: white; border-radius: 16px; margin-bottom: .75rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.05); overflow: hidden;
+}
+.facility-header {
+    display: flex; align-items: center; gap: .75rem;
+    padding: 1rem 1.25rem; cursor: pointer;
+    border-bottom: 1.5px solid #f0f4f8;
+    user-select: none;
+}
+.facility-header:hover { background: #f8fafc; }
+.f-icon { font-size: 1.5rem; }
+.f-name { font-weight: 800; font-size: .95rem; flex: 1; }
+.f-status {
+    font-size: .72rem; font-weight: 700; padding: 2px 8px;
+    border-radius: 20px;
+}
+.f-active   { background: #dcfce7; color: #166534; }
+.f-inactive { background: #f1f5f9; color: #64748b; }
+.chevron { color: #94a3b8; transition: .2s; }
+.chevron.open { transform: rotate(180deg); }
+
+.facility-body { display: none; padding: 1.25rem; }
+.facility-body.open { display: block; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+@media(max-width:500px) { .form-grid { grid-template-columns: 1fr; } }
+.form-group { margin-bottom: .75rem; }
+.form-label { font-weight: 700; font-size: .82rem; margin-bottom: .3rem; display: block; color: #1a1a1a; }
+.form-control, .form-select {
+    border-radius: 10px; padding: 9px 12px;
+    border: 1.5px solid #e2e8f0; font-size: .88rem;
+    width: 100%; color: #1e293b;
+}
+.form-control:focus, .form-select:focus { border-color: #1e3a5f; outline: none; }
+.toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .65rem 0; border-bottom: 1px solid #f0f4f8;
+}
+.toggle-row:last-child { border-bottom: none; }
+.toggle-label { font-weight: 600; font-size: .88rem; }
+.toggle-sub { font-size: .75rem; color: #64748b; margin-top: 1px; }
+.toggle {
+    position: relative; width: 44px; height: 24px;
+    flex-shrink: 0;
+}
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: #e2e8f0; border-radius: 24px; transition: .2s;
+}
+.toggle-slider:before {
+    content: ''; position: absolute;
+    width: 18px; height: 18px; left: 3px; bottom: 3px;
+    background: white; border-radius: 50%; transition: .2s;
+}
+input:checked + .toggle-slider { background: #ff7a00; }
+input:checked + .toggle-slider:before { transform: translateX(20px); }
+.btn-save {
+    background: #ff7a00; border: none; color: #1a1a1a;
+    font-weight: 800; border-radius: 10px; padding: .65rem 1.25rem;
+    font-size: .88rem; cursor: pointer; margin-top: .5rem;
+}
+.btn-save:hover { background: #eb6d00; }
+</style>
+
+<div class="main-wrap">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                    alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="page-header">
+        <h2>⚙️ ตั้งค่าสิ่งอำนวยความสะดวก</h2>
+        <a href="{{ url_for('facility.dashboard') }}" class="back-link">← กลับ</a>
+    </div>
+
+    {% for f in facilities %}
+    <div class="cf-card" id="f{{ f.idno }}">
+        <div class="facility-header" onclick="toggleFacility({{ f.idno }})">
+            <div class="f-icon">{{ f.icon }}</div>
+            <div class="f-name">{{ f.name }}</div>
+            <span class="f-status {{ 'f-active' if f.is_active else 'f-inactive' }}">
+                {{ '✅ เปิด' if f.is_active else '❌ ปิด' }}
+            </span>
+            <span class="chevron" id="chev{{ f.idno }}">▼</span>
+        </div>
+
+        <div class="facility-body" id="body{{ f.idno }}">
+            <form method="POST" action="{{ url_for('facility.settings') }}">
+                <input type="hidden" name="facility_id" value="{{ f.idno }}">
+
+                <!-- Toggles -->
+                <div class="toggle-row">
+                    <div>
+                        <div class="toggle-label">เปิดใช้งาน</div>
+                        <div class="toggle-sub">ลูกบ้านจะเห็นสิ่งอำนวยความสะดวกนี้</div>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" name="is_active" value="true"
+                               onchange="this.form.querySelector('[name=is_active_val]').value = this.checked ? 'true' : 'false'"
+                               {{ 'checked' if f.is_active }}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-row">
+                    <div>
+                        <div class="toggle-label">ต้องจองล่วงหน้า</div>
+                        <div class="toggle-sub">ปิด = แสดงแค่เวลาเปิด-ปิด ไม่ต้องจอง</div>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" name="booking_required" value="true"
+                               {{ 'checked' if f.booking_required }}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-row">
+                    <div>
+                        <div class="toggle-label">ต้องรอเจ้าหน้าที่อนุมัติ</div>
+                        <div class="toggle-sub">ปิด = ยืนยันอัตโนมัติทันที</div>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" name="approval_required" value="true"
+                               {{ 'checked' if f.approval_required }}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <!-- Time & slots -->
+                <div class="form-grid" style="margin-top:1rem;">
+                    <div class="form-group">
+                        <label class="form-label">เวลาเปิด</label>
+                        <input type="time" name="opening_time" class="form-control"
+                               value="{{ f.opening_time.strftime('%H:%M') if f.opening_time else '06:00' }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">เวลาปิด</label>
+                        <input type="time" name="closing_time" class="form-control"
+                               value="{{ f.closing_time.strftime('%H:%M') if f.closing_time else '22:00' }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ระยะเวลาต่อสล็อต (นาที)</label>
+                        <select name="slot_duration_mins" class="form-select">
+                            {% for mins in [30, 60, 90, 120, 180, 240] %}
+                            <option value="{{ mins }}" {{ 'selected' if f.slot_duration_mins == mins }}>
+                                {{ mins }} นาที
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">จำนวนสูงสุดต่อสล็อต</label>
+                        <input type="number" name="max_capacity" class="form-control"
+                               placeholder="ว่าง = ไม่จำกัด"
+                               value="{{ f.max_capacity if f.max_capacity else '' }}"
+                               min="1">
+                    </div>
+                </div>
+
+                <!-- Fee -->
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">ค่าบริการ (฿)</label>
+                        <input type="number" name="fee_amount" class="form-control"
+                               placeholder="0 = ฟรี" step="0.01"
+                               value="{{ f.fee_amount if f.fee_amount else 0 }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">วิธีชำระเงิน</label>
+                        <select name="payment_method" class="form-select">
+                            <option value="free" {{ 'selected' if f.payment_method == 'free' }}>ฟรี</option>
+                            <option value="cash" {{ 'selected' if f.payment_method == 'cash' }}>เงินสดที่ออฟฟิศ</option>
+                            <option value="billing" {{ 'selected' if f.payment_method == 'billing' }}>รวมบิลค่าส่วนกลาง</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-save">💾 บันทึก</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+
+<script>
+function toggleFacility(id) {
+    const body = document.getElementById('body' + id);
+    const chev = document.getElementById('chev' + id);
+    body.classList.toggle('open');
+    chev.classList.toggle('open');
+}
+
+// Auto-open if hash matches
+window.addEventListener('load', function() {
+    const hash = window.location.hash;
+    if (hash && hash.startsWith('#f')) {
+        const id = hash.replace('#f', '');
+        toggleFacility(id);
+        document.querySelector(hash).scrollIntoView({ behavior: 'smooth' });
+    }
+});
+
+// Fix checkboxes — HTML form only sends checked checkboxes
+document.querySelectorAll('form').forEach(function(form) {
+    form.addEventListener('submit', function() {
+        ['is_active', 'booking_required', 'approval_required'].forEach(function(name) {
+            const cb = form.querySelector('[name="' + name + '"]');
+            if (cb && !cb.checked) {
+                const hidden = document.createElement('input');
+                hidden.type  = 'hidden';
+                hidden.name  = name;
+                hidden.value = 'false';
+                form.appendChild(hidden);
+            } else if (cb && cb.checked) {
+                cb.value = 'true';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

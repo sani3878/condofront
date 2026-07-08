@@ -1,0 +1,204 @@
+{% extends "shared/base.html" %}
+{% block content %}
+{% set lang = session.get('lang', 'en') %}
+{% if lang == 'en' %}
+  {% set lbl_title   = "Service Requests" %}
+  {% set lbl_new     = "+ New Request" %}
+  {% set lbl_empty   = "No service requests yet" %}
+  {% set lbl_back    = "Back" %}
+  {% set lbl_fee     = "Fee" %}
+  {% set lbl_paid    = "Paid" %}
+  {% set lbl_unpaid  = "Unpaid" %}
+  {% set lbl_sched   = "Scheduled" %}
+{% else %}
+  {% set lbl_title   = "คำร้องขอบริการของฉัน" %}
+  {% set lbl_new     = "+ แจ้งบริการใหม่" %}
+  {% set lbl_empty   = "ยังไม่มีคำร้องขอบริการ" %}
+  {% set lbl_back    = "กลับ" %}
+  {% set lbl_fee     = "ค่าบริการ" %}
+  {% set lbl_paid    = "ชำระแล้ว" %}
+  {% set lbl_unpaid  = "รอชำระ" %}
+  {% set lbl_sched   = "นัดหมาย" %}
+{% endif %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.wrap { padding: 1.25rem 1rem; max-width: 480px; margin: 0 auto; }
+.top-row {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 1.25rem;
+}
+.back-link { color: #1e3a5f; text-decoration: none; font-size: .85rem; font-weight: 600; }
+.page-title { font-size: 1.1rem; font-weight: 800; color: #1e3a5f; }
+.btn-new {
+    background: #ff7a00; border: none; color: #1a1a1a;
+    font-weight: 700; border-radius: 10px; padding: .5rem .9rem;
+    font-size: .82rem; cursor: pointer;
+}
+
+.req-card {
+    background: white; border-radius: 14px; padding: 1rem;
+    margin-bottom: .65rem; box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    border-left: 4px solid #e2e8f0;
+}
+.req-card.open         { border-left-color: #f59e0b; }
+.req-card.acknowledged { border-left-color: #3b82f6; }
+.req-card.scheduled    { border-left-color: #8b5cf6; }
+.req-card.in_progress  { border-left-color: #ff7a00; }
+.req-card.done         { border-left-color: #22c55e; }
+.req-card.closed       { border-left-color: #94a3b8; opacity: .85; }
+
+.req-top { display: flex; gap: .75rem; align-items: flex-start; }
+.req-icon { font-size: 1.5rem; flex-shrink: 0; }
+.req-body { flex: 1; }
+.req-title { font-weight: 800; font-size: .92rem; color: #1a1a1a; }
+.req-date  { font-size: .72rem; color: #94a3b8; margin-top: 2px; }
+.req-cat   { font-size: .72rem; color: #64748b; margin-top: 2px; }
+.status-pill {
+    font-size: .82rem; font-weight: 700; padding: 4px 12px;
+    border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+}
+.req-footer {
+    display: flex; gap: .5rem; margin-top: .65rem;
+    padding-top: .65rem; border-top: 1px solid #f0f4f8;
+    flex-wrap: wrap; align-items: center;
+}
+.fee-tag {
+    font-size: .72rem; font-weight: 700; padding: 2px 8px;
+    border-radius: 20px;
+}
+.fee-unpaid { background: #fee2e2; color: #991b1b; }
+.fee-paid   { background: #dcfce7; color: #166534; }
+.sched-tag  {
+    font-size: .72rem; color: #64748b;
+    display: flex; align-items: center; gap: .25rem;
+}
+
+.empty { text-align: center; padding: 3rem 1rem; color: #64748b;
+         background: white; border-radius: 14px; }
+
+/* New request modal */
+.form-label { font-weight: 700; font-size: .85rem; margin-bottom: .35rem; display: block; }
+.form-control, .form-select {
+    border-radius: 10px; padding: 11px 13px; border: 1.5px solid #e2e8f0;
+    font-size: .92rem; width: 100%; margin-bottom: .85rem; color: #1e293b;
+}
+.form-control:focus, .form-select:focus { border-color: #ff7a00; outline: none; }
+.btn-submit {
+    background: #ff7a00; border: none; color: #1a1a1a;
+    font-weight: 800; border-radius: 12px; padding: 12px;
+    width: 100%; font-size: .95rem; cursor: pointer;
+}
+</style>
+
+<div class="wrap">
+    <div class="top-row">
+        <a href="{{ url_for('resident.home') }}" class="back-link">← {{ lbl_back }}</a>
+        <div class="page-title">🔧 {{ lbl_title }}</div>
+        <button class="btn-new" data-bs-toggle="modal" data-bs-target="#newModal">
+            {{ lbl_new }}
+        </button>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                    alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    {% if requests %}
+        {% for r in requests %}
+        <div class="req-card {{ r.status }}">
+            <div class="req-top">
+                <div class="req-icon">{{ r.category_icon or '🔧' }}</div>
+                <div class="req-body">
+                    <div class="req-title">{{ r.title }}</div>
+                    <div class="req-cat">{{ r.category_name or 'ทั่วไป' }}</div>
+                    <div class="req-date">
+                        {{ r.created_at.strftime('%d/%m/%y %H:%M') if r.created_at else '-' }}
+                    </div>
+                </div>
+                <span class="status-pill"
+                      style="background:{{ {'open':'#fef3c7','acknowledged':'#dbeafe','scheduled':'#ede9fe','in_progress':'#fff7f0','done':'#dcfce7','closed':'#f1f5f9'}[r.status] }};
+                             color:{{ {'open':'#92400e','acknowledged':'#1e40af','scheduled':'#5b21b6','in_progress':'#92400e','done':'#166534','closed':'#475569'}[r.status] }}">
+                    {{ status_labels[r.status] }}
+                </span>
+            </div>
+
+            {% if r.fee or r.scheduled_at %}
+            <div class="req-footer">
+                {% if r.fee %}
+                <span class="fee-tag {{ 'fee-paid' if r.fee_paid else 'fee-unpaid' }}">
+                    {{ lbl_fee }}: ฿{{ '%.0f'|format(r.fee) }}
+                    — {{ lbl_paid if r.fee_paid else lbl_unpaid }}
+                </span>
+                {% endif %}
+                {% if r.scheduled_at %}
+                <span class="sched-tag">
+                    📅 {{ lbl_sched }}: {{ r.scheduled_at.strftime('%d/%m/%y %H:%M') }}
+                </span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="empty">
+        <div style="font-size:2.5rem; margin-bottom:.75rem;">🔧</div>
+        <div>{{ lbl_empty }}</div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- New request modal -->
+<div class="modal fade" id="newModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;">
+            <div class="modal-header" style="border-bottom:1.5px solid #f0f4f8;">
+                <h5 class="modal-title" style="font-weight:800; color:#1e3a5f;">
+                    🔧 {{ lbl_new }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('service.create') }}">
+                <div class="modal-body" style="padding:1.25rem;">
+                    <label class="form-label">
+                        {{ 'Category' if lang == 'en' else 'หมวดหมู่' }}
+                    </label>
+                    <select name="category_id" class="form-select">
+                        <option value="">-- {{ 'Select' if lang == 'en' else 'เลือก' }} --</option>
+                        {% for c in categories %}
+                        <option value="{{ c.idno }}">{{ c.icon }} {{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label class="form-label">
+                        {{ 'Title' if lang == 'en' else 'หัวข้อ' }} *
+                    </label>
+                    <input type="text" name="title" class="form-control"
+                           placeholder="{{ 'e.g. AC not working' if lang == 'en' else 'เช่น แอร์เสีย, น้ำรั่ว' }}"
+                           required>
+
+                    <label class="form-label">
+                        {{ 'Details' if lang == 'en' else 'รายละเอียด' }}
+                    </label>
+                    <textarea name="description" class="form-control" rows="3"
+                              placeholder="{{ 'Describe the issue...' if lang == 'en' else 'อธิบายรายละเอียดปัญหา...' }}"></textarea>
+                </div>
+                <div class="modal-footer" style="border-top:1.5px solid #f0f4f8;">
+                    <button type="button" class="btn btn-light"
+                            data-bs-dismiss="modal">
+                        {{ 'Cancel' if lang == 'en' else 'ยกเลิก' }}
+                    </button>
+                    <button type="submit" class="btn-submit btn" style="width:auto; padding:.55rem 1.25rem;">
+                        💾 {{ 'Submit' if lang == 'en' else 'ส่งคำร้อง' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
