@@ -224,11 +224,14 @@ body { background: #f0f4f8; color: #1a1a1a; }
             <i class="bi bi-clipboard"></i> {{ lbl_copy }}
         </button>
 
-        <!-- Save QR -->
-        <button class="btn-copy" onclick="downloadQR()"
-                style="background:#1e3a5f; margin-top:.5rem;">
-            <i class="bi bi-download"></i>
-            {{ 'Save QR' if lang == 'en' else 'บันทึก QR' }}
+        <!-- Save full invite card as image -->
+        <button id="saveInviteBtn" onclick="saveInviteCard()"
+                style="display:block; width:100%; text-align:center;
+                       background:#0891b2; border:none; color:white;
+                       font-weight:800; border-radius:10px; padding:.7rem;
+                       margin-top:.5rem; font-size:.9rem; cursor:pointer;">
+            <i class="bi bi-qr-code"></i>
+            {{ 'Save Invite Card' if lang == 'en' else 'บันทึกบัตรเชิญ' }}
         </button>
 
         <!-- Share on LINE with link -->
@@ -238,15 +241,20 @@ body { background: #f0f4f8; color: #1a1a1a; }
                   background:#06C755; color:white; font-weight:800;
                   border-radius:10px; padding:.7rem; margin-top:.5rem;
                   font-size:.9rem;">
-            <i class="bi bi-chat-dots"></i>
+            <i class="bi bi-chat-dots-fill"></i>
             {{ 'Share on LINE' if lang == 'en' else 'แชร์ทาง LINE' }}
         </a>
+
+        <div style="text-align:center; font-size:.75rem; color:#94a3b8; margin-top:.5rem;">
+            💡 {{ 'Save the card image and forward on LINE' if lang == 'en' else 'บันทึกรูปแล้วส่งต่อทาง LINE' }}
+        </div>
     </div>
     {% endif %}
 </div>
 
-<!-- QR Code library -->
+<!-- Libraries -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 const inviteCode = "{{ unit.invite_code }}";
 const registerUrl = "{{ request.host_url }}auth/register/resident?code=" + inviteCode;
@@ -261,16 +269,37 @@ new QRCode(document.getElementById("qrcode"), {
     correctLevel: QRCode.CorrectLevel.M
 });
 
-function downloadQR() {
-    setTimeout(function() {
-        const canvas = document.querySelector('#qrcode canvas');
-        if (canvas) {
-            const link = document.createElement('a');
-            link.download = 'invite-code-{{ unit.invite_code }}.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
+function saveInviteCard() {
+    const btn  = document.getElementById('saveInviteBtn');
+    const card = document.querySelector('.invite-card');
+
+    btn.innerHTML = '⏳ {{ "Processing..." if lang == "en" else "กำลังประมวลผล..." }}';
+    btn.disabled = true;
+
+    html2canvas(card, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        ignoreElements: function(el) {
+            return el.tagName === 'BUTTON' || el.tagName === 'A';
         }
-    }, 100);
+    }).then(function(canvas) {
+        const link = document.createElement('a');
+        link.download = 'invite-{{ unit.invite_code }}.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        btn.innerHTML = '✅ {{ "Saved!" if lang == "en" else "บันทึกแล้ว!" }}';
+        btn.style.background = '#22c55e';
+        setTimeout(function() {
+            btn.innerHTML = '<i class="bi bi-qr-code"></i> {{ "Save Invite Card" if lang == "en" else "บันทึกบัตรเชิญ" }}';
+            btn.style.background = '#0891b2';
+            btn.disabled = false;
+        }, 2000);
+    }).catch(function() {
+        btn.innerHTML = '{{ "Try again" if lang == "en" else "ลองใหม่" }}';
+        btn.disabled = false;
+    });
 }
 
 function copyCode() {

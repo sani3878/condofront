@@ -118,18 +118,19 @@ body { background: #f0f4f8; }
             <i class="bi bi-clipboard"></i> {{ lbl_copy }}
         </button>
 
-        <!-- Save QR — teal with QR icon, different from LINE button -->
-        <button onclick="downloadQR()"
+        <!-- Save full pass card as image -->
+        <button onclick="savePassCard()"
                 style="display:block; width:100%; text-align:center;
                        background:#0891b2; border:none; color:white;
                        font-weight:800; border-radius:10px; padding:.7rem;
-                       margin-top:.5rem; font-size:.9rem; cursor:pointer;">
+                       margin-top:.5rem; font-size:.9rem; cursor:pointer;"
+                id="saveBtn">
             <i class="bi bi-qr-code"></i>
-            {{ 'Save QR Image' if lang == 'en' else 'บันทึกรูป QR' }}
+            {{ 'Save Pass Card' if lang == 'en' else 'บันทึกบัตรผ่าน' }}
         </button>
 
-        <!-- LINE share — sends code so guest shows it to staff -->
-        <a href="https://line.me/R/msg/text/?🎟️+Visitor+Pass%0A%0AName%3A+{{ visitor.visitor_name }}%0ADate%3A+{{ visitor.visit_date }}%0A%0ACode%3A+{{ visitor.visitor_code }}%0A%0AShow+this+code+at+reception+or+ask+resident+to+scan+QR"
+        <!-- LINE share — clear instruction -->
+        <a href="https://line.me/R/msg/text/?🎟️+{{ 'Visitor Pass' if lang == 'en' else 'บัตรผ่านผู้มาเยี่ยม' }}%0A%0A👤+{{ visitor.visitor_name }}%0A📅+{{ visitor.visit_date }}%0A🏠+{{ visitor.building or '' }}{{ visitor.room_no }}%0A%0A🔑+{{ 'Code' if lang == 'en' else 'รหัส' }}%3A+{{ visitor.visitor_code }}%0A%0A{{ 'Please show this code or QR to reception staff' if lang == 'en' else 'กรุณาแสดงรหัสหรือ QR ต่อเจ้าหน้าที่ที่ประตู' }}"
            target="_blank"
            style="display:block; text-align:center; text-decoration:none;
                   background:#06C755; color:white; font-weight:800;
@@ -140,12 +141,19 @@ body { background: #f0f4f8; }
         </a>
     </div>
 
+    <!-- Note about LINE sharing -->
+    <div style="text-align:center; font-size:.75rem; color:#94a3b8;
+                margin-top:.75rem; padding: 0 1rem;">
+        💡 {{ 'Save the pass card image and forward it on LINE for best results' if lang == 'en' else 'บันทึกรูปบัตรผ่านและส่งต่อทาง LINE เพื่อผลลัพธ์ที่ดีที่สุด' }}
+    </div>
+
     <a href="{{ url_for('visitor.my_visitors') }}" class="link-my">
         <i class="bi bi-list-ul"></i> {{ lbl_my }}
     </a>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 const code = "{{ visitor.visitor_code }}";
 new QRCode(document.getElementById("qrcode"), {
@@ -157,26 +165,48 @@ new QRCode(document.getElementById("qrcode"), {
     correctLevel: QRCode.CorrectLevel.M
 });
 
-function downloadQR() {
-    // Get the canvas from QR code
-    setTimeout(function() {
-        const canvas = document.querySelector('#qrcode canvas');
-        if (canvas) {
-            const link = document.createElement('a');
-            link.download = 'visitor-pass-{{ visitor.visitor_code }}.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
+function savePassCard() {
+    const btn  = document.getElementById('saveBtn');
+    const card = document.querySelector('.pass-card');
+
+    btn.innerHTML = '⏳ {{ "Processing..." if lang == "en" else "กำลังประมวลผล..." }}';
+    btn.disabled = true;
+
+    html2canvas(card, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        ignoreElements: function(el) {
+            // Exclude buttons from the captured image
+            return el.tagName === 'BUTTON' || el.tagName === 'A' ||
+                   el.id === 'copyBtn' || el.id === 'saveBtn';
         }
-    }, 100);
+    }).then(function(canvas) {
+        const link = document.createElement('a');
+        link.download = 'visitor-pass-{{ visitor.visitor_code }}.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        btn.innerHTML = '✅ {{ "Saved!" if lang == "en" else "บันทึกแล้ว!" }}';
+        btn.style.background = '#22c55e';
+        setTimeout(function() {
+            btn.innerHTML = '<i class="bi bi-qr-code"></i> {{ "Save Pass Card" if lang == "en" else "บันทึกบัตรผ่าน" }}';
+            btn.style.background = '#0891b2';
+            btn.disabled = false;
+        }, 2000);
+    }).catch(function() {
+        btn.innerHTML = '{{ "Try again" if lang == "en" else "ลองใหม่" }}';
+        btn.disabled = false;
+    });
 }
 
 function copyCode() {
     navigator.clipboard.writeText(code).then(function() {
         const btn = document.getElementById('copyBtn');
-        btn.textContent = '✅ {{ lbl_copied }}';
+        btn.innerHTML = '<i class="bi bi-check2"></i> {{ lbl_copied }}';
         btn.classList.add('copied');
         setTimeout(function() {
-            btn.textContent = '📋 {{ lbl_copy }}';
+            btn.innerHTML = '<i class="bi bi-clipboard"></i> {{ lbl_copy }}';
             btn.classList.remove('copied');
         }, 2000);
     });
