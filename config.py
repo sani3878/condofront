@@ -10,7 +10,7 @@ class Config:
     DB_USER = os.environ.get('PGUSER') or os.environ.get('DB_USER', 'postgres')
     DB_PASS = os.environ.get('PGPASSWORD') or os.environ.get('DB_PASS', '')
     DB_PORT = int(os.environ.get('PGPORT') or os.environ.get('DB_PORT', 5432))
-    SESSION_PERMANENT = False
+    SESSION_PERMANENT = True
     REMEMBER_COOKIE_DURATION = 30  # days
 
     # Email — SMTP SSL port 465 (works on Railway, no port blocking)

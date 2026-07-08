@@ -451,8 +451,8 @@ def set_language(lang):
     from flask import session
     if lang in ('th', 'en'):
         session['lang'] = lang
-    # Go back to where user came from
-    return redirect(request.referrer or url_for('parcel.receive'))
+        session.modified = True
+    return redirect(request.referrer or url_for('main.home'))
 
 
 @auth_bp.route('/contact', methods=['GET', 'POST'])

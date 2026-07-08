@@ -1,7 +1,7 @@
 {% extends "shared/base.html" %}
 
 {% block content %}
-{% set lang = session.get('lang', request.accept_languages.best_match(['th', 'en'], default='en')) %}
+{% set lang = session.get('lang', 'en') %}
 
 {% if lang == 'en' %}
   {% set lbl_my_room      = "My Room" %}
