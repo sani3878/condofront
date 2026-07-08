@@ -1,5 +1,6 @@
 {% extends "shared/base.html" %}
 {% block content %}
+{% set lang = session.get('lang', 'th') %}
 <style>
 * { box-sizing: border-box; }
 body { background: #f0f4f8; color: #1a1a1a; }
@@ -146,10 +147,10 @@ body { background: #f0f4f8; color: #1a1a1a; }
     {% endwith %}
 
     <div class="page-header">
-        <h2>🚶 บันทึกผู้มาติดต่อ</h2>
+        <h2>{{ '🚶 Visitor Log' if lang == 'en' else '🚶 บันทึกผู้มาติดต่อ' }}</h2>
         <div style="display:flex; gap:.5rem;">
             <button class="btn-new" data-bs-toggle="modal" data-bs-target="#walkinModal">
-                ➕ Walk-in
+                ➕ {{ 'Walk-in' if lang == 'en' else 'Walk-in' }}
             </button>
         </div>
     </div>
@@ -160,19 +161,19 @@ body { background: #f0f4f8; color: #1a1a1a; }
            class="stat-box" style="text-decoration:none; cursor:pointer;
            {% if show == 'default' %}border-color:#1e3a5f;{% endif %}">
             <div class="stat-num" style="color:#22c55e;">{{ currently_in|length }}</div>
-            <div class="stat-label">อยู่ในโครงการ</div>
+            <div class="stat-label">{{ 'Inside' if lang == 'en' else 'อยู่ในโครงการ' }}</div>
         </a>
         <a href="{{ url_for('visitor.log', show='pending') }}"
            class="stat-box" style="text-decoration:none; cursor:pointer;
            {% if show == 'pending' %}border-color:#f59e0b; background:#fffbeb;{% endif %}">
             <div class="stat-num" style="color:#f59e0b;">{{ pending|length }}</div>
-            <div class="stat-label">รอเช็คอิน</div>
+            <div class="stat-label">{{ 'Pending' if lang == 'en' else '{{ 'Pending' if lang == 'en' else 'รอเช็คอิน' }}' }}</div>
         </a>
         <a href="{{ url_for('visitor.log', show='all') }}"
            class="stat-box" style="text-decoration:none; cursor:pointer;
            {% if show == 'all' %}border-color:#1e3a5f;{% endif %}">
             <div class="stat-num" style="color:#1e3a5f;">{{ visitors|length }}</div>
-            <div class="stat-label">ทั้งหมด</div>
+            <div class="stat-label">{{ 'All' if lang == 'en' else 'ทั้งหมด' }}</div>
         </a>
     </div>
 
@@ -220,7 +221,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
         <div class="card-title">
             {% if show == 'pending' %}⏳ รอเช็คอิน
             {% elif show == 'all' %}📋 ทั้งหมด
-            {% else %}📋 วันนี้ + รอเช็คอิน{% endif %}
+            {% else %}📋 {{ 'Today + Pending' if lang == 'en' else 'วันนี้ + รอเช็คอิน' }}{% endif %}
         </div>
 
         <!-- Filter -->
@@ -231,7 +232,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
                    value="{{ search or '' }}">
             <input type="date" name="date" class="filter-input" style="flex:0 0 130px;"
                    value="{{ today }}">
-            <button type="submit" class="btn-filter">ค้นหา</button>
+            <button type="submit" class="btn-filter">{{ 'Search' if lang == 'en' else 'ค้นหา' }}</button>
         </form>
 
         {% if visitors %}
@@ -347,14 +348,14 @@ function submitScan(code) {
             <form method="POST" action="{{ url_for('visitor.checkin') }}">
                 <div class="modal-body" style="padding:1.25rem;">
                     <div class="mb-3">
-                        <label class="form-label fw-bold">ชื่อผู้มาติดต่อ *</label>
+                        <label class="form-label fw-bold">{{ 'Visitor Name' if lang == 'en' else 'ชื่อผู้มาติดต่อ' }} *</label>
                         <input type="text" name="visitor_name" class="form-control"
                                placeholder="ชื่อ-นามสกุล" required autofocus>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold">ห้องที่มาติดต่อ</label>
+                        <label class="form-label fw-bold">{{ 'Room' if lang == 'en' else 'ห้องที่มาติดต่อ' }}</label>
                         <select name="room_id" class="form-select">
-                            <option value="">-- เลือกห้อง --</option>
+                            <option value="">-- {{ 'Select Room' if lang == 'en' else 'เลือกห้อง' }} --</option>
                             {% for r in rooms %}
                             <option value="{{ r.idno }}">
                                 {{ r.building or '' }}{{ r.room_no }}
@@ -369,7 +370,7 @@ function submitScan(code) {
                                    placeholder="ไม่บังคับ">
                         </div>
                         <div class="col">
-                            <label class="form-label fw-bold">วัตถุประสงค์</label>
+                            <label class="form-label fw-bold">{{ 'Purpose' if lang == 'en' else 'วัตถุประสงค์' }}</label>
                             <input type="text" name="purpose" class="form-control"
                                    placeholder="ไม่บังคับ">
                         </div>
@@ -377,12 +378,12 @@ function submitScan(code) {
                 </div>
                 <div class="modal-footer" style="border-top:1.5px solid #f0f4f8;">
                     <button type="button" class="btn btn-light"
-                            data-bs-dismiss="modal">ยกเลิก</button>
+                            data-bs-dismiss="modal">{{ 'Cancel' if lang == 'en' else 'ยกเลิก' }}</button>
                     <button type="submit"
                             style="background:#1e3a5f; border:none; color:white;
                                    font-weight:800; border-radius:10px;
                                    padding:.6rem 1.25rem;" class="btn">
-                        ✅ บันทึกเข้า
+                        ✅ {{ 'Check In' if lang == 'en' else 'บันทึกเข้า' }}
                     </button>
                 </div>
             </form>

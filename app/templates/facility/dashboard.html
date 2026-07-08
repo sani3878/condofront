@@ -1,5 +1,6 @@
 {% extends "shared/base.html" %}
 {% block content %}
+{% set lang = session.get('lang', 'th') %}
 <style>
 * { box-sizing: border-box; }
 body { background: #f0f4f8; color: #1a1a1a; }
@@ -140,7 +141,7 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
                 {% endif %}
             </a>
             <a href="{{ url_for('facility.settings') }}" class="btn-header">
-                ⚙️ ตั้งค่า
+                ⚙️ {{ 'Settings' if lang == 'en' else 'ตั้งค่า' }}
             </a>
         </div>
     </div>
@@ -151,15 +152,15 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
             <div class="stat-num" style="color:#22c55e;">
                 {{ facilities | selectattr('is_active') | list | length }}
             </div>
-            <div class="stat-label">เปิดใช้งาน</div>
+            <div class="stat-label">{{ 'Active' if lang == 'en' else 'เปิดใช้งาน' }}</div>
         </div>
         <div class="stat-box">
             <div class="stat-num" style="color:#ff7a00;">{{ today_bookings }}</div>
-            <div class="stat-label">จองวันนี้</div>
+            <div class="stat-label">{{ 'Today' if lang == 'en' else 'จองวันนี้' }}</div>
         </div>
         <div class="stat-box">
             <div class="stat-num" style="color:#f59e0b;">{{ pending }}</div>
-            <div class="stat-label">รออนุมัติ</div>
+            <div class="stat-label">{{ 'Pending' if lang == 'en' else '{{ 'Pending' if lang == 'en' else 'รออนุมัติ' }}' }}</div>
         </div>
     </div>
 
@@ -196,22 +197,22 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
             <!-- Tags -->
             <div class="facility-tags">
                 {% if f.booking_required %}
-                <span class="tag tag-booking">📅 จองล่วงหน้า</span>
+                <span class="tag tag-booking">📅 {{ 'Booking Required' if lang == 'en' else 'จองล่วงหน้า' }}</span>
                 {% else %}
-                <span class="tag tag-open">🚶 เข้าได้เลย</span>
+                <span class="tag tag-open">🚶 {{ 'Open Access' if lang == 'en' else 'เข้าได้เลย' }}</span>
                 {% endif %}
                 {% if f.fee_amount and f.fee_amount > 0 %}
                 <span class="tag tag-fee">฿{{ '%.0f'|format(f.fee_amount) }}</span>
                 {% endif %}
                 {% if f.approval_required %}
-                <span class="tag tag-approval">⏳ อนุมัติ</span>
+                <span class="tag tag-approval">⏳ {{ 'Approval' if lang == 'en' else 'อนุมัติ' }}</span>
                 {% endif %}
             </div>
 
             <!-- Actions -->
             <div class="facility-actions">
                 <a href="{{ url_for('facility.bookings') }}"
-                   class="btn-bookings">📋 การจอง</a>
+                   class="btn-bookings">📋 {{ 'Bookings' if lang == 'en' else 'การจอง' }}</a>
                 <a href="{{ url_for('facility.settings') }}#f{{ f.idno }}"
                    class="btn-settings-icon"
                    title="ตั้งค่า">⚙️</a>

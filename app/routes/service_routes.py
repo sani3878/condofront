@@ -14,6 +14,18 @@ STATUSES = [
     ('closed',       '🔒 ปิด',            '#94a3b8', 'closed'),
 ]
 
+STATUSES_EN = [
+    ('open',         '📬 Open',          '#f59e0b', 'open'),
+    ('acknowledged', '👀 Acknowledged',  '#3b82f6', 'acknowledged'),
+    ('scheduled',    '📅 Scheduled',     '#8b5cf6', 'scheduled'),
+    ('in_progress',  '🔧 In Progress',   '#ff7a00', 'in_progress'),
+    ('done',         '✅ Done',          '#22c55e', 'done'),
+    ('closed',       '🔒 Closed',        '#94a3b8', 'closed'),
+]
+
+STATUS_LABELS    = {s[0]: s[1] for s in STATUSES}
+STATUS_LABELS_EN = {s[0]: s[1] for s in STATUSES_EN}
+
 STATUS_NEXT = {
     'open':         'acknowledged',
     'acknowledged': 'scheduled',
@@ -21,8 +33,6 @@ STATUS_NEXT = {
     'in_progress':  'done',
     'done':         'closed',
 }
-
-STATUS_LABELS = {s[0]: s[1] for s in STATUSES}
 
 
 def get_categories(property_id):
@@ -123,14 +133,19 @@ def list_requests():
         ORDER BY building, room_no
     """, [current_user.property_id])
 
+    from flask import session
+    lang = session.get('lang', 'th')
+    labels  = STATUS_LABELS_EN if lang == 'en' else STATUS_LABELS
+    stats   = STATUSES_EN      if lang == 'en' else STATUSES
+
     return render_template('service/list.html',
         active_page='service',
         requests=requests_list,
         counts=counts,
-        statuses=STATUSES,
+        statuses=stats,
         status_filter=status_filter,
         status_next=STATUS_NEXT,
-        status_labels=STATUS_LABELS,
+        status_labels=labels,
         categories=categories,
         staff_list=staff_list,
         rooms=rooms,
@@ -231,11 +246,15 @@ def my_requests():
 
     categories = get_categories(current_user.property_id) if current_user.property_id else []
 
+    from flask import session
+    lang = session.get('lang', 'en')
+    labels = STATUS_LABELS_EN if lang == 'en' else STATUS_LABELS
+
     return render_template('service/my_requests.html',
         requests=requests_list,
         categories=categories,
-        statuses=STATUSES,
-        status_labels=STATUS_LABELS)
+        statuses=STATUSES_EN if lang == 'en' else STATUSES,
+        status_labels=labels)
 
 
 # ── CATEGORY MANAGEMENT ──────────────────────────────────────

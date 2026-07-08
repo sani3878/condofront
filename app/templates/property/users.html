@@ -1,6 +1,7 @@
 {% extends "shared/base.html" %}
 
 {% block content %}
+{% set lang = session.get('lang', 'th') %}
 <style>
 * { box-sizing: border-box; }
 body { background: #f0f4f8; color: #1a1a1a; }
@@ -173,7 +174,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
     {% endwith %}
 
     <div class="page-header">
-        <h2>👥 จัดการพนักงาน</h2>
+        <h2>{{ '👥 Staff Management' if lang == 'en' else '👥 จัดการพนักงาน' }}</h2>
         <p>เพิ่มและจัดการผู้ใช้งานระบบของโครงการคุณ</p>
     </div>
 
@@ -206,10 +207,10 @@ body { background: #f0f4f8; color: #1a1a1a; }
 
     <!-- Add staff form -->
     <div class="cf-card">
-        <div class="card-title">➕ เพิ่มพนักงานใหม่</div>
+        <div class="card-title">➕ {{ 'Add Staff' if lang == 'en' else 'เพิ่มพนักงาน' }}ใหม่</div>
         <form method="POST" action="{{ url_for('property.add_user') }}">
             <input type="text" name="fullname" class="form-control"
-                   placeholder="ชื่อ-นามสกุล" required
+                   placeholder="{{ 'Full Name' if lang == 'en' else 'ชื่อ-นามสกุล' }}" required
                    {% if is_full %}disabled{% endif %}>
             <input type="email" name="email" class="form-control"
                    placeholder="อีเมล" required
@@ -219,7 +220,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
                    {% if is_full %}disabled{% endif %}>
             <select name="role_id" class="form-select" required
                     {% if is_full %}disabled{% endif %}>
-                <option value="">-- เลือกตำแหน่ง --</option>
+                <option value="">-- เลือก{{ 'Role' if lang == 'en' else 'ตำแหน่ง' }} --</option>
                 {% for r in roles %}
                 <option value="{{ r.idno }}">{{ r.role_name }}</option>
                 {% endfor %}
@@ -267,7 +268,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
         {% else %}
         <div class="empty-state">
             <div style="font-size:2rem; margin-bottom:.5rem;">👥</div>
-            <div>ยังไม่มีพนักงาน</div>
+            <div>ยัง{{ 'No staff found' if lang == 'en' else 'ไม่มีพนักงาน' }}</div>
         </div>
         {% endif %}
     </div>

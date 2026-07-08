@@ -1,6 +1,7 @@
 {% extends "shared/base.html" %}
 
 {% block content %}
+{% set lang = session.get('lang', 'th') %}
 <style>
 * { box-sizing: border-box; }
 body { background: #f0f4f8; color: #1a1a1a; }
@@ -251,7 +252,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
             <div class="summary-num" style="color:#f59e0b;">
                 {{ counts.waiting or 0 }}
             </div>
-            <div class="summary-label">รอรับ</div>
+            <div class="summary-label">{{ 'Waiting' if lang == 'en' else 'รอรับ' }}</div>
         </div>
         <div class="summary-box">
             <div class="summary-num" style="color:#22c55e;">
@@ -278,8 +279,8 @@ body { background: #f0f4f8; color: #1a1a1a; }
                autocomplete="off">
 
         <select name="status" class="filter-select" onchange="document.getElementById('filterForm').submit()">
-            <option value="0"  {% if current_status == 0  %}selected{% endif %}>รอรับ</option>
-            <option value="1"  {% if current_status == 1  %}selected{% endif %}>รับแล้ว</option>
+            <option value="0"  {% if current_status == 0  %}selected{% endif %}>{{ 'Waiting' if lang == 'en' else 'รอรับ' }}</option>
+            <option value="1"  {% if current_status == 1  %}selected{% endif %}>{{ 'Collected' if lang == 'en' else 'รับแล้ว' }}</option>
             <option value="2"  {% if current_status == 2  %}selected{% endif %}>ส่งคืน</option>
             <option value="99" {% if current_status == 99 %}selected{% endif %}>ทุกสถานะ</option>
         </select>
@@ -395,15 +396,15 @@ body { background: #f0f4f8; color: #1a1a1a; }
             <div class="empty-icon">📭</div>
             <div class="empty-title">
                 {% if search %}
-                    ไม่พบพัสดุที่ค้นหา
+                    {{ 'No parcels found' if lang == 'en' else 'ไม่พบพัสดุที่ค้นหา' }}
                 {% else %}
                     ยังไม่มีพัสดุ
                 {% endif %}
             </div>
             <div class="empty-desc">
                 {% if search %}
-                    ลองค้นหาด้วยคำอื่น หรือ
-                    <a href="{{ url_for('parcel.list_parcels') }}">ดูทั้งหมด</a>
+                    {{ 'Try another search or' if lang == 'en' else 'ลองค้นหาด้วยคำอื่น หรือ' }}
+                    <a href="{{ url_for('parcel.list_parcels') }}">{{ 'View All' if lang == 'en' else 'ดูทั้งหมด' }}</a>
                 {% else %}
                     พัสดุที่รับเข้ามาจะแสดงที่นี่
                 {% endif %}

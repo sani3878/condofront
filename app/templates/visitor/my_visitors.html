@@ -90,9 +90,9 @@ body { background: #f0f4f8; }
                 {% if v.status == 'arrived' %}s-arrived
                 {% elif v.status == 'completed' %}s-completed
                 {% else %}s-pending{% endif %}">
-                {% if v.status == 'arrived' %}เช็คอินแล้ว
-                {% elif v.status == 'completed' %}เสร็จสิ้น
-                {% else %}รอเช็คอิน{% endif %}
+                {% if v.status == 'arrived' %}{{ 'Checked In' if lang == 'en' else 'เช็คอินแล้ว' }}
+                {% elif v.status == 'completed' %}{{ 'Completed' if lang == 'en' else 'เสร็จสิ้น' }}
+                {% else %}{{ 'Pending' if lang == 'en' else 'รอเช็คอิน' }}{% endif %}
             </span>
             {% if v.status == 'pending' %}
             <a href="{{ url_for('visitor.visitor_qr', visitor_id=v.idno) }}"

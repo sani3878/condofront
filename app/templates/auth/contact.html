@@ -104,34 +104,38 @@ textarea.form-control { resize: vertical; min-height: 110px; }
     </a>
 
     <div class="page-header">
-        <h2>💬 ติดต่อเรา</h2>
-        <p>มีคำถาม ข้อเสนอแนะ หรือต้องการความช่วยเหลือ? ส่งข้อความถึงเราได้เลย</p>
+        <h2>💬 {{ 'Contact Us' if session.get('lang') == 'en' else 'ติดต่อเรา' }}</h2>
+        <p>{{ 'Questions or suggestions? Send us a message.' if session.get('lang') == 'en' else 'มีคำถาม ข้อเสนอแนะ หรือต้องการความช่วยเหลือ? ส่งข้อความถึงเราได้เลย' }}</p>
     </div>
 
     <div class="cf-card">
         <form method="POST" action="{{ url_for('auth.contact') }}">
-            <label class="form-label">ชื่อของคุณ *</label>
+            <label class="form-label">{{ 'Your Name' if session.get('lang') == 'en' else 'ชื่อของคุณ' }} *</label>
             <input type="text" name="name" class="form-control"
-                   value="{{ prefill_name }}" placeholder="ชื่อ-นามสกุล" required>
+                   value="{{ prefill_name }}"
+                   placeholder="{{ 'Full name' if session.get('lang') == 'en' else 'ชื่อ-นามสกุล' }}" required>
 
-            <label class="form-label">อีเมล *</label>
+            <label class="form-label">{{ 'Email' if session.get('lang') == 'en' else 'อีเมล' }} *</label>
             <input type="email" name="email" class="form-control"
                    value="{{ prefill_email }}" placeholder="email@example.com" required>
 
-            <label class="form-label">เบอร์โทร</label>
+            <label class="form-label">{{ 'Phone' if session.get('lang') == 'en' else 'เบอร์โทร' }}</label>
             <input type="text" name="mobile" class="form-control"
-                   value="{{ prefill_mobile }}" placeholder="08x-xxx-xxxx (ไม่บังคับ)">
+                   value="{{ prefill_mobile }}"
+                   placeholder="{{ 'Optional' if session.get('lang') == 'en' else '08x-xxx-xxxx (ไม่บังคับ)' }}">
 
-            <label class="form-label">ข้อความ *</label>
+            <label class="form-label">{{ 'Message' if session.get('lang') == 'en' else 'ข้อความ' }} *</label>
             <textarea name="message" class="form-control"
-                      placeholder="พิมพ์คำถามหรือข้อเสนอแนะของคุณที่นี่..." required></textarea>
+                      placeholder="{{ 'Type your message here...' if session.get('lang') == 'en' else 'พิมพ์คำถามหรือข้อเสนอแนะของคุณที่นี่...' }}" required></textarea>
 
-            <button type="submit" class="btn-send">📨 ส่งข้อความ</button>
+            <button type="submit" class="btn-send">
+                📨 {{ 'Send Message' if session.get('lang') == 'en' else 'ส่งข้อความ' }}
+            </button>
         </form>
     </div>
 
     <div class="alt-contact">
-        หรือพูดคุยกับเราโดยตรงทาง LINE / โทรศัพท์
+        {{ 'Or contact us directly via LINE / Phone' if session.get('lang') == 'en' else 'หรือพูดคุยกับเราโดยตรงทาง LINE / โทรศัพท์' }}
     </div>
 
 </div>

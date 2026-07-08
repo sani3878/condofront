@@ -1,5 +1,6 @@
 {% extends "shared/base.html" %}
 {% block content %}
+{% set lang = session.get('lang', 'th') %}
 <style>
 * { box-sizing: border-box; }
 body { background: #f0f4f8; }
@@ -78,7 +79,7 @@ body { background: #f0f4f8; }
     {% endwith %}
 
     <div class="page-header">
-        <h2>📋 รายการจอง</h2>
+        <h2>{{ '📋 Bookings' if lang == 'en' else '📋 รายการจอง' }}</h2>
         <a href="{{ url_for('facility.dashboard') }}" class="back-link">← กลับ</a>
     </div>
 
@@ -95,12 +96,12 @@ body { background: #f0f4f8; }
         <input type="date" name="date" class="filter-input"
                value="{{ filter_date }}">
         <select name="status" class="filter-input">
-            <option value="all" {{ 'selected' if filter_status == 'all' }}>ทุกสถานะ</option>
-            <option value="pending" {{ 'selected' if filter_status == 'pending' }}>⏳ รออนุมัติ</option>
-            <option value="confirmed" {{ 'selected' if filter_status == 'confirmed' }}>✅ ยืนยันแล้ว</option>
-            <option value="cancelled" {{ 'selected' if filter_status == 'cancelled' }}>❌ ยกเลิก</option>
+            <option value="all" {{ 'selected' if filter_status == 'all' }}>{{ 'All Status' if lang == 'en' else 'ทุกสถานะ' }}</option>
+            <option value="pending" {{ 'selected' if filter_status == 'pending' }}>⏳ {{ 'Pending' if lang == 'en' else 'รออนุมัติ' }}</option>
+            <option value="confirmed" {{ 'selected' if filter_status == 'confirmed' }}>✅ {{ 'Confirmed' if lang == 'en' else 'ยืนยันแล้ว' }}</option>
+            <option value="cancelled" {{ 'selected' if filter_status == 'cancelled' }}>❌ {{ 'Cancelled' if lang == 'en' else 'ยกเลิก' }}</option>
         </select>
-        <button type="submit" class="btn-filter">ค้นหา</button>
+        <button type="submit" class="btn-filter">{{ 'Search' if lang == 'en' else 'ค้นหา' }}</button>
     </form>
 
     {% if bookings %}
@@ -140,14 +141,14 @@ body { background: #f0f4f8; }
                 <form method="POST"
                       action="{{ url_for('facility.approve_booking', booking_id=b.idno) }}"
                       style="display:inline;">
-                    <button type="submit" class="btn-sm btn-approve">✅ อนุมัติ</button>
+                    <button type="submit" class="btn-sm btn-approve">✅ {{ 'Approve' if lang == 'en' else 'อนุมัติ' }}</button>
                 </form>
                 {% endif %}
                 {% if b.fee_amount and b.fee_amount > 0 and not b.fee_paid %}
                 <form method="POST"
                       action="{{ url_for('facility.mark_paid', booking_id=b.idno) }}"
                       style="display:inline;">
-                    <button type="submit" class="btn-sm btn-paid">฿ รับเงินแล้ว</button>
+                    <button type="submit" class="btn-sm btn-paid">฿ {{ 'Mark Paid' if lang == 'en' else 'รับเงินแล้ว' }}</button>
                 </form>
                 {% endif %}
                 <a href="{{ url_for('facility.booking_qr', booking_id=b.idno) }}"
@@ -159,7 +160,7 @@ body { background: #f0f4f8; }
                       action="{{ url_for('facility.cancel_booking', booking_id=b.idno) }}"
                       style="display:inline;"
                       onsubmit="return confirm('ยกเลิกการจองนี้?');">
-                    <button type="submit" class="btn-sm btn-cancel">✕ ยกเลิก</button>
+                    <button type="submit" class="btn-sm btn-cancel">✕ {{ 'Cancel' if lang == 'en' else 'ยกเลิก' }}</button>
                 </form>
             </div>
             {% endif %}
@@ -168,7 +169,7 @@ body { background: #f0f4f8; }
     {% else %}
     <div class="empty">
         <div style="font-size:2.5rem; margin-bottom:.75rem;">📋</div>
-        ไม่มีรายการจองในวันนี้
+        {{ 'No bookings today' if lang == 'en' else 'ไม่มีรายการจองในวันนี้' }}
     </div>
     {% endif %}
 

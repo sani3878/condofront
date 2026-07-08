@@ -1,6 +1,7 @@
 {% extends "shared/base.html" %}
 
 {% block content %}
+{% set lang = session.get('lang', 'th') %}
 <style>
 * { box-sizing: border-box; }
 body { background: #f0f4f8; color: #1a1a1a; }
@@ -137,7 +138,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
     <!-- Pending approvals -->
     <div class="cf-card">
         <div class="card-title">
-            ⏳ รออนุมัติ
+            ⏳ {{ 'Pending Approval' if lang == 'en' else 'รออนุมัติ' }}
             {% if pending %}
             <span class="pending-badge">{{ pending|length }} รายการ</span>
             {% endif %}

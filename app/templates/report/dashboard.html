@@ -258,9 +258,10 @@ body { background: #f0f4f8; color: #1a1a1a; font-size: 16px; }
 
 <!-- Navbar -->
 {% block content %}
+{% set lang = session.get('lang', 'th') %}
 <div class="main-wrap">
 
-    <div class="page-title">📊 รายงานภาพรวม</div>
+    <div class="page-title">{{ '📊 Reports' if lang == 'en' else '📊 รายงาน' }}ภาพรวม</div>
 
     <!-- ══════════════════════════════════════════
          SECTION 1 : วันนี้
@@ -270,11 +271,11 @@ body { background: #f0f4f8; color: #1a1a1a; font-size: 16px; }
         <div class="stat-grid">
             <div class="stat-box">
                 <div class="stat-num" style="color:#1e3a5f;">{{ today_received }}</div>
-                <div class="stat-label">รับเข้าวันนี้</div>
+                <div class="stat-label">{{ 'Received Today' if lang == 'en' else 'รับเข้าวันนี้' }}</div>
             </div>
             <div class="stat-box">
                 <div class="stat-num" style="color:#22c55e;">{{ today_picked }}</div>
-                <div class="stat-label">รับออกวันนี้</div>
+                <div class="stat-label">{{ 'Collected Today' if lang == 'en' else 'รับออกวันนี้' }}</div>
             </div>
             <div class="stat-box">
                 <div class="stat-num" style="color:#f59e0b;">{{ today_waiting }}</div>
@@ -291,7 +292,7 @@ body { background: #f0f4f8; color: #1a1a1a; font-size: 16px; }
         {% if pickup_total > 0 %}
         <div style="margin-top:1rem; padding-top:.85rem; border-top:1.5px solid #f0f4f8;">
             <div style="font-size:.78rem; font-weight:700; color:#1e3a5f; margin-bottom:.6rem;">
-                วิธีการรับพัสดุ (ทั้งหมด)
+                {{ 'Pickup Method (All)' if lang == 'en' else 'วิธีการรับพัสดุ (ทั้งหมด)' }}
             </div>
             <div style="display:flex; gap:.75rem;">
                 <div style="flex:1; background:#f0fdf4; border-radius:10px;

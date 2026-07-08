@@ -1,5 +1,6 @@
 {% extends "shared/base.html" %}
 {% block content %}
+{% set lang = session.get('lang', 'th') %}
 <style>
 * { box-sizing: border-box; }
 body { background: #f0f4f8; }
@@ -75,23 +76,23 @@ body { background: #f0f4f8; }
         <div class="tracking-code">{{ parcel.tracking_no }}</div>
         {% endif %}
         <div class="parcel-meta">
-            รับเข้า: {{ parcel.received_at.strftime('%d/%m/%y %H:%M') if parcel.received_at else '-' }}
+            {{ 'Received:' if lang == 'en' else 'รับเข้า:' }} {{ parcel.received_at.strftime('%d/%m/%y %H:%M') if parcel.received_at else '-' }}
         </div>
 
         <div class="method-badge">
-            📱 QR Pickup — ไม่ต้องลงลายเซ็น
+            📱 QR Pickup — {{ 'No signature needed' if lang == 'en' else 'ไม่ต้องลงลายเซ็น' }}
         </div>
 
         <form method="POST"
               action="{{ url_for('parcel.qr_pickup', code=parcel.pickup_code) }}">
             <button type="submit" class="btn-confirm">
-                ✅ ยืนยันการรับพัสดุ
+                ✅ {{ 'Confirm Pickup' if lang == 'en' else 'ยืนยันการรับพัสดุ' }}
             </button>
         </form>
 
         <a href="{{ url_for('parcel.pickup', parcel_id=parcel.idno) }}"
            class="btn-cancel">
-            ✍️ เปลี่ยนเป็นลงลายเซ็นแทน
+            ✍️ {{ 'Use Signature Instead' if lang == 'en' else 'เปลี่ยนเป็นลงลายเซ็นแทน' }}
         </a>
     </div>
 </div>

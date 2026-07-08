@@ -121,7 +121,7 @@ body { background: #f0f4f8; }
             </div>
             <div class="parcel-body">
                 <div class="parcel-courier">
-                    {{ p.courier_name or 'ไม่ระบุผู้ส่ง' }}
+                    {{ p.courier_name or ('Unknown' if lang == 'en' else 'ไม่ระบุผู้ส่ง') }}
                 </div>
                 <div class="parcel-date">
                     {{ p.received_at.strftime('%d/%m/%y %H:%M') if p.received_at else '-' }}
@@ -139,7 +139,7 @@ body { background: #f0f4f8; }
                           font-weight:800; border-radius:10px; padding:.4rem .75rem;
                           font-size:.78rem; white-space:nowrap; display:block;
                           text-align:center; box-shadow:0 2px 6px rgba(255,122,0,.4);">
-                    📱 QR รับของ
+                    <i class="bi bi-qr-code-scan"></i> {{ 'QR Pickup' if lang == 'en' else 'QR รับของ' }}
                 </a>
             </div>
             {% else %}

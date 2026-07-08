@@ -1,6 +1,7 @@
 {% extends "shared/base.html" %}
 
 {% block content %}
+{% set lang = session.get('lang', 'th') %}
 <style>
 * { box-sizing: border-box; }
 body { background: #f0f4f8; color: #1a1a1a; }

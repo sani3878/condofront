@@ -1,6 +1,7 @@
 {% extends "shared/base.html" %}
 
 {% block content %}
+{% set lang = session.get('lang', 'th') %}
 <style>
 * { box-sizing: border-box; }
 body { background: #f0f4f8; }
@@ -335,7 +336,7 @@ body { background: #f0f4f8; }
             <div class="cf-card-title">Courier *</div>
             <select name="courier_id" id="courierSelect" class="form-select" required
                     onchange="toggleOtherCourier()">
-                <option value="">-- เลือกขนส่ง --</option>
+                <option value="">-- {{ 'Select Courier' if lang == 'en' else 'เลือกขนส่ง' }} --</option>
                 {% for c in couriers %}
                 <option value="{{ c.idno }}">{{ c.courier_name }}</option>
                 {% endfor %}
@@ -348,7 +349,7 @@ body { background: #f0f4f8; }
 
         <!-- Parcel Type -->
         <div class="cf-card">
-            <div class="cf-card-title">ประเภทพัสดุ</div>
+            <div class="cf-card-title">{{ 'Parcel Type' if lang == 'en' else 'ประเภทพัสดุ' }}</div>
             <div class="parcel-type-grid">
                 <label class="type-btn active" data-type="box">
                     <input type="radio" name="parcel_type" value="box" checked hidden>

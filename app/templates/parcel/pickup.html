@@ -1,6 +1,7 @@
 {% extends "shared/base.html" %}
 
 {% block content %}
+{% set lang = session.get('lang', 'th') %}
 <style>
 * { box-sizing: border-box; }
 body { background: #f0f4f8; color: #1a1a1a; }
@@ -274,7 +275,7 @@ canvas {
                            font-size:.92rem; cursor:pointer;
                            box-shadow:0 2px 6px rgba(0,0,0,.1);
                            transition:.2s;">
-                ✍️ ลงลายเซ็น
+                ✍️ {{ 'Signature' if lang == 'en' else 'ลงลายเซ็น' }}
             </button>
             <button type="button" id="tabQR"
                     onclick="switchMode('qr')"
@@ -289,15 +290,15 @@ canvas {
         <!-- Signature mode -->
         <div id="modeSignature">
             <div class="cf-card">
-                <div class="card-title">ลายเซ็นผู้รับพัสดุ</div>
+                <div class="card-title">{{ 'Recipient Signature' if lang == 'en' else 'ลายเซ็นผู้รับพัสดุ' }}</div>
                 <div class="form-hint">ให้ผู้รับลงนามในกล่องด้านล่าง</div>
                 <button type="button" class="btn-clear-sig" onclick="clearSig()">
-                    ล้างลายเซ็น
+                    {{ 'Clear' if lang == 'en' else 'ล้างลายเซ็น' }}
                 </button>
                 <div class="sig-wrap" id="sigWrap">
                     <canvas id="sigCanvas"></canvas>
                     <div class="sig-placeholder" id="sigPlaceholder">
-                        ✍️ ลงนามที่นี่
+                        ✍️ {{ 'Sign here' if lang == 'en' else 'ลงนามที่นี่' }}
                     </div>
                 </div>
                 <input type="hidden" name="signature_data" id="sigData">
@@ -325,7 +326,7 @@ canvas {
                                width:100%; font-size:.92rem; cursor:pointer;
                                margin-bottom:.75rem;
                                box-shadow:0 2px 6px rgba(255,122,0,.3);">
-                    <i class="bi bi-qr-code-scan"></i> เปิดกล้องสแกน
+                    <i class="bi bi-qr-code-scan"></i> {{ 'Open Camera' if lang == 'en' else 'เปิดกล้องสแกน' }}
                 </button>
 
                 <!-- Manual code input (PDA or fallback) -->
@@ -355,18 +356,18 @@ canvas {
 
         <!-- Note -->
         <div class="cf-card">
-            <label class="form-label">หมายเหตุการรับ (ไม่บังคับ)</label>
+            <label class="form-label">{{ 'Pickup Note (Optional)' if lang == 'en' else 'หมายเหตุการรับ (ไม่บังคับ)' }}</label>
             <div class="form-hint">เช่น ผู้รับแทน, ฝากไว้ที่เคาน์เตอร์</div>
             <input type="text" name="pickup_note" class="form-control"
                    placeholder="หมายเหตุ (ถ้ามี)">
         </div>
 
         <button type="submit" class="btn btn-confirm" id="confirmBtn">
-            ✓ &nbsp; ยืนยันการรับพัสดุ
+            ✓ &nbsp; {{ 'Confirm Pickup' if lang == 'en' else 'ยืนยันการรับพัสดุ' }}
         </button>
 
         <a href="{{ url_for('parcel.list_parcels') }}" class="btn-back">
-            ← ยกเลิก กลับรายการ
+            ← {{ 'Cancel' if lang == 'en' else 'ยกเลิก กลับรายการ' }}
         </a>
 
     </form>
