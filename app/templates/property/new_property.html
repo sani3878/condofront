@@ -1,0 +1,99 @@
+{% extends "shared/base.html" %}
+{% block content %}
+{% set lang = session.get('lang', 'th') %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.wrap { padding: 1.25rem 1rem; max-width: 540px; margin: 0 auto; }
+.page-header {
+    background: #1e3a5f; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1.25rem; color: white;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.page-header h2 { font-size: 1.1rem; font-weight: 800; margin: 0; color: white; }
+.back-link { color: #ff7a00; text-decoration: none; font-size: .88rem; font-weight: 700; }
+.cf-card {
+    background: white; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1rem; box-shadow: 0 2px 12px rgba(0,0,0,.05);
+}
+.form-label { font-weight: 700; font-size: .85rem; margin-bottom: .3rem; display: block; }
+.form-hint { font-size: .75rem; color: #94a3b8; margin-bottom: .5rem; }
+.form-control {
+    border-radius: 10px; border: 1.5px solid #e2e8f0;
+    padding: 10px 13px; font-size: .92rem; width: 100%;
+    color: #1e293b; margin-bottom: .85rem;
+}
+.form-control:focus { border-color: #1e3a5f; outline: none; }
+.btn-save {
+    background: #ff7a00; border: none; color: #1a1a1a;
+    font-weight: 800; border-radius: 12px; padding: 12px;
+    width: 100%; font-size: .95rem; cursor: pointer;
+}
+.limit-bar {
+    background: #f0f4f8; border-radius: 10px; padding: .75rem 1rem;
+    margin-bottom: 1rem; font-size: .82rem; color: #64748b;
+    display: flex; align-items: center; gap: .5rem;
+}
+</style>
+
+<div class="wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                    alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="page-header">
+        <h2>➕ {{ 'Add New Property' if lang == 'en' else 'เพิ่มโครงการใหม่' }}</h2>
+        <a href="{{ url_for('property.setup') }}" class="back-link">← {{ 'Back' if lang == 'en' else 'กลับ' }}</a>
+    </div>
+
+    <div class="limit-bar">
+        🏢 {{ 'Properties' if lang == 'en' else 'โครงการ' }}: {{ prop_count }} / {{ max_property }}
+        &nbsp;—&nbsp;
+        {{ 'slots remaining' if lang == 'en' else 'ที่เหลือ' }}: {{ max_property - prop_count }}
+    </div>
+
+    <div class="cf-card">
+        <form method="POST" action="{{ url_for('property.new_property') }}">
+
+            <label class="form-label">
+                {{ 'Property Name' if lang == 'en' else 'ชื่อโครงการ' }} *
+            </label>
+            <div class="form-hint">
+                {{ 'e.g. The Base Pattaya, Life Asoke' if lang == 'en' else 'เช่น ลุมพินี พาร์ค, ศุภาลัย ริเวอร์ไซด์' }}
+            </div>
+            <input type="text" name="property_name" class="form-control"
+                   placeholder="{{ 'Enter property name' if lang == 'en' else 'กรอกชื่อโครงการ' }}"
+                   required autofocus>
+
+            <label class="form-label">
+                {{ 'Property Code' if lang == 'en' else 'รหัสโครงการ' }}
+            </label>
+            <div class="form-hint">
+                {{ 'Short reference code (optional)' if lang == 'en' else 'รหัสย่อ (ไม่บังคับ)' }}
+            </div>
+            <input type="text" name="property_code" class="form-control"
+                   placeholder="{{ 'e.g. TB-PTY' if lang == 'en' else 'เช่น LPN-PK' }}">
+
+            <label class="form-label">
+                {{ 'Address' if lang == 'en' else 'ที่อยู่' }}
+            </label>
+            <textarea name="address" class="form-control" rows="3"
+                      placeholder="{{ 'Full address (optional)' if lang == 'en' else 'ที่อยู่เต็ม (ไม่บังคับ)' }}"></textarea>
+
+            <button type="submit" class="btn-save">
+                ➕ {{ 'Create Property' if lang == 'en' else 'สร้างโครงการ' }}
+            </button>
+        </form>
+    </div>
+
+    <div style="background:#fffbeb; border:1.5px solid #fcd34d; border-radius:12px;
+                padding:.85rem 1rem; font-size:.82rem; color:#92400e;">
+        💡 {{ 'After creating, add a manager user to this property from Staff Management.' if lang == 'en' else 'หลังจากสร้างแล้ว เพิ่มผู้จัดการให้โครงการนี้ได้ที่หน้าจัดการพนักงาน' }}
+    </div>
+</div>
+{% endblock %}

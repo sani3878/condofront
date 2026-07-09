@@ -1,121 +1,130 @@
 {% extends "shared/base.html" %}
-
 {% block content %}
-{% set lang = session.get('lang', 'th') %}
+{% set lang = session.get('lang', 'en') %}
 <style>
 * { box-sizing: border-box; }
 body { background: #f0f4f8; color: #1a1a1a; }
+.main-wrap { padding: 1.25rem 1rem; max-width: 1000px; margin: 0 auto; }
 
-.main-wrap {
-    padding: 1.25rem;
-    max-width: 900px;
-    margin: 0 auto;
-}
 .page-header {
-    background: #1e3a5f;
-    border-radius: 16px;
-    padding: 1.25rem;
-    margin-bottom: 1.25rem;
-    color: white;
+    background: #1e3a5f; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1.25rem; color: white;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: .75rem;
 }
-.page-header h2 {
-    font-size: 1.2rem;
-    font-weight: 800;
-    margin: 0 0 .25rem;
-    color: white;
+.page-header h2 { font-size: 1.2rem; font-weight: 800; margin: 0; color: white; }
+.page-header p  { font-size: .82rem; color: rgba(255,255,255,.7); margin: .25rem 0 0; }
+
+/* Stats grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: .75rem; margin-bottom: 1.25rem;
 }
-.page-header p {
-    font-size: .85rem;
-    color: rgba(255,255,255,.75);
-    margin: 0;
+.stat-card {
+    background: white; border-radius: 14px; padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    border-top: 3px solid #e2e8f0;
+    text-align: center;
 }
+.stat-num { font-size: 2rem; font-weight: 900; line-height: 1; }
+.stat-label { font-size: .72rem; color: #64748b; margin-top: .25rem; font-weight: 600; }
+.stat-sub { font-size: .7rem; color: #94a3b8; margin-top: .1rem; }
+
 .cf-card {
-    background: white;
-    border-radius: 16px;
-    padding: 1.25rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 12px rgba(0,0,0,.05);
+    background: white; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1rem; box-shadow: 0 2px 12px rgba(0,0,0,.05);
 }
 .card-title {
-    font-size: 1rem;
-    font-weight: 800;
-    color: #1e3a5f;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: .5rem;
+    font-size: 1rem; font-weight: 800; color: #1e3a5f;
+    margin-bottom: 1rem; display: flex; align-items: center; gap: .5rem;
 }
-.pending-badge {
-    background: #fee2e2;
-    color: #dc2626;
-    font-size: .72rem;
-    font-weight: 800;
-    padding: 2px 10px;
+.badge-pill {
+    font-size: .7rem; font-weight: 800; padding: 2px 10px;
     border-radius: 20px;
 }
+.badge-danger  { background: #fee2e2; color: #dc2626; }
+.badge-success { background: #dcfce7; color: #166534; }
+.badge-blue    { background: #dbeafe; color: #1e40af; }
 
 /* Customer row */
 .customer-row {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: .9rem 0;
-    border-bottom: 1px solid #f0f4f8;
+    display: flex; align-items: center; gap: .85rem;
+    padding: .85rem 0; border-bottom: 1px solid #f0f4f8;
     flex-wrap: wrap;
 }
 .customer-row:last-child { border-bottom: none; }
-.customer-info { flex: 1; min-width: 200px; }
-.customer-name {
-    font-weight: 800;
-    font-size: .95rem;
-    color: #1a1a1a;
+.c-avatar {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: #1e3a5f; color: white; display: flex;
+    align-items: center; justify-content: center;
+    font-weight: 900; font-size: 1rem; flex-shrink: 0;
 }
-.customer-meta {
-    font-size: .78rem;
-    color: #64748b;
-    margin-top: 2px;
+.c-info { flex: 1; min-width: 180px; }
+.c-name { font-weight: 800; font-size: .92rem; }
+.c-meta { font-size: .75rem; color: #64748b; margin-top: 1px; }
+.c-stats { display: flex; gap: .5rem; flex-wrap: wrap; }
+.c-stat {
+    font-size: .7rem; font-weight: 700; padding: 2px 7px;
+    border-radius: 8px; background: #f0f4f8; color: #64748b;
 }
-.pkg-tag {
-    font-size: .72rem;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 20px;
-    background: #dbeafe;
-    color: #1e40af;
-    white-space: nowrap;
-}
+.c-actions { display: flex; gap: .4rem; flex-wrap: wrap; }
+
+/* Buttons */
 .btn-approve {
-    background: #22c55e;
-    border: none;
-    color: white;
-    font-weight: 700;
-    border-radius: 8px;
-    padding: .4rem .9rem;
-    font-size: .82rem;
-    cursor: pointer;
+    background: #22c55e; border: none; color: white;
+    font-weight: 700; border-radius: 8px; padding: .4rem .8rem;
+    font-size: .8rem; cursor: pointer; white-space: nowrap;
 }
-.btn-approve:hover { background: #16a34a; }
 .btn-reject {
-    background: none;
-    border: 1.5px solid #fca5a5;
-    color: #dc2626;
-    font-weight: 700;
-    border-radius: 8px;
-    padding: .4rem .9rem;
-    font-size: .82rem;
-    cursor: pointer;
+    background: none; border: 1.5px solid #fca5a5; color: #dc2626;
+    font-weight: 700; border-radius: 8px; padding: .4rem .8rem;
+    font-size: .8rem; cursor: pointer; white-space: nowrap;
 }
-.btn-reject:hover { background: #fef2f2; }
-.approved-tick {
-    color: #22c55e;
-    font-weight: 800;
-    font-size: .85rem;
+.btn-view {
+    background: #1e3a5f; border: none; color: white;
+    font-weight: 700; border-radius: 8px; padding: .4rem .8rem;
+    font-size: .8rem; text-decoration: none; white-space: nowrap;
 }
-.empty {
-    text-align: center;
-    padding: 2rem;
-    color: #64748b;
+.btn-suspend {
+    background: none; border: 1.5px solid #fcd34d; color: #92400e;
+    font-weight: 700; border-radius: 8px; padding: .4rem .8rem;
+    font-size: .8rem; cursor: pointer; white-space: nowrap;
 }
+.btn-reactivate {
+    background: #22c55e; border: none; color: white;
+    font-weight: 700; border-radius: 8px; padding: .4rem .8rem;
+    font-size: .8rem; cursor: pointer; white-space: nowrap;
+}
+
+/* Search */
+.search-row { display: flex; gap: .5rem; margin-bottom: 1rem; }
+.search-input {
+    flex: 1; border-radius: 10px; padding: 9px 13px;
+    border: 1.5px solid #e2e8f0; font-size: .88rem;
+}
+.search-input:focus { border-color: #1e3a5f; outline: none; }
+.btn-search {
+    background: #1e3a5f; border: none; color: white;
+    border-radius: 10px; padding: 9px 14px; font-size: .85rem;
+    font-weight: 700; cursor: pointer;
+}
+.pkg-select {
+    border-radius: 8px; border: 1.5px solid #e2e8f0;
+    padding: .35rem .5rem; font-size: .78rem; color: #1a1a1a;
+}
+.suspended-row { opacity: .6; }
+.empty { text-align: center; padding: 2rem; color: #64748b; }
+
+/* MRR highlight */
+.mrr-card {
+    background: linear-gradient(135deg, #1e3a5f, #2d5a9e);
+    border-radius: 14px; padding: 1rem 1.25rem;
+    color: white; margin-bottom: 1.25rem;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.mrr-label { font-size: .82rem; color: rgba(255,255,255,.75); font-weight: 600; }
+.mrr-value { font-size: 2rem; font-weight: 900; color: #ff7a00; }
 </style>
 
 <div class="main-wrap">
@@ -124,78 +133,185 @@ body { background: #f0f4f8; color: #1a1a1a; }
         {% if messages %}{% for category, message in messages %}
         <div class="alert alert-{{ 'danger' if category == 'error' else category }}
                     alert-dismissible fade show">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
         {% endfor %}{% endif %}
     {% endwith %}
 
     <div class="page-header">
-        <h2>⚙️ CondoFront Admin</h2>
-        <p>จัดการการสมัครสมาชิกและการอนุมัติ</p>
+        <div>
+            <h2>⚙️ CondoFront Admin</h2>
+            <p>Platform Management Dashboard</p>
+        </div>
+        <a href="{{ url_for('admin.packages') }}"
+           style="background:#ff7a00; border:none; color:#1a1a1a;
+                  font-weight:800; border-radius:10px; padding:.55rem 1rem;
+                  font-size:.88rem; text-decoration:none; white-space:nowrap;">
+            📦 Manage Packages
+        </a>
+    </div>
+
+    <!-- MRR -->
+    <div class="mrr-card">
+        <div>
+            <div class="mrr-label">Monthly Recurring Revenue (MRR)</div>
+            <div class="mrr-value">฿{{ '{:,.0f}'.format(revenue.mrr or 0) }}</div>
+        </div>
+        <div style="text-align:right;">
+            <div style="font-size:.82rem; color:rgba(255,255,255,.75);">Active Customers</div>
+            <div style="font-size:2rem; font-weight:900; color:white;">
+                {{ stats.total_customers or 0 }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats grid -->
+    <div class="stats-grid">
+        <div class="stat-card" style="border-top-color:#1e3a5f;">
+            <div class="stat-num" style="color:#1e3a5f;">{{ stats.total_properties or 0 }}</div>
+            <div class="stat-label">Properties</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#f59e0b;">
+            <div class="stat-num" style="color:#f59e0b;">{{ stats.pending_count or 0 }}</div>
+            <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#8b5cf6;">
+            <div class="stat-num" style="color:#8b5cf6;">{{ stats.total_residents or 0 }}</div>
+            <div class="stat-label">Residents</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#ff7a00;">
+            <div class="stat-num" style="color:#ff7a00;">{{ stats.total_parcels or 0 }}</div>
+            <div class="stat-label">Parcels</div>
+            <div class="stat-sub">{{ stats.waiting_parcels or 0 }} waiting</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#22c55e;">
+            <div class="stat-num" style="color:#22c55e;">{{ stats.total_bookings or 0 }}</div>
+            <div class="stat-label">Bookings</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#3b82f6;">
+            <div class="stat-num" style="color:#3b82f6;">{{ stats.total_services or 0 }}</div>
+            <div class="stat-label">Services</div>
+        </div>
     </div>
 
     <!-- Pending approvals -->
+    {% if pending %}
     <div class="cf-card">
         <div class="card-title">
-            ⏳ {{ 'Pending Approval' if lang == 'en' else 'รออนุมัติ' }}
-            {% if pending %}
-            <span class="pending-badge">{{ pending|length }} รายการ</span>
-            {% endif %}
+            ⏳ Pending Approval
+            <span class="badge-pill badge-danger">{{ pending|length }}</span>
         </div>
-
-        {% if pending %}
-            {% for c in pending %}
-            <div class="customer-row">
-                <div class="customer-info">
-                    <div class="customer-name">{{ c.customer_name }}</div>
-                    <div class="customer-meta">
-                        {{ c.property_name or '-' }} ·
-                        {{ c.email }} ·
-                        {{ c.mobile or '-' }}
-                    </div>
-                    <div class="customer-meta">
-                        ผู้ติดต่อ: {{ c.fullname or '-' }}
-                    </div>
+        {% for c in pending %}
+        <div class="customer-row">
+            <div class="c-avatar">{{ c.customer_name[0].upper() if c.customer_name else '?' }}</div>
+            <div class="c-info">
+                <div class="c-name">{{ c.customer_name }}</div>
+                <div class="c-meta">
+                    {{ c.property_name or '-' }} · {{ c.email }}
+                    {% if c.mobile %} · {{ c.mobile }}{% endif %}
                 </div>
-                <span class="pkg-tag">{{ c.package_name or 'Free' }}</span>
+                <div class="c-meta">
+                    Contact: {{ c.fullname or '-' }} ·
+                    Registered: {{ c.created_at.strftime('%d/%m/%Y') if c.created_at else '-' }}
+                </div>
+            </div>
+            <span class="badge-pill badge-blue">{{ c.package_name or 'Free' }}</span>
+            <div class="c-actions">
                 <form method="POST"
                       action="{{ url_for('admin.approve', customer_id=c.idno) }}"
                       style="display:inline;">
-                    <button type="submit" class="btn-approve">✅ อนุมัติ</button>
+                    <button type="submit" class="btn-approve">✅ Approve</button>
                 </form>
                 <form method="POST"
                       action="{{ url_for('admin.reject', customer_id=c.idno) }}"
                       style="display:inline;"
-                      onsubmit="return confirm('ปฏิเสธการสมัครของ {{ c.customer_name }}?');">
-                    <button type="submit" class="btn-reject">✕ ปฏิเสธ</button>
+                      onsubmit="return confirm('Reject {{ c.customer_name }}?');">
+                    <button type="submit" class="btn-reject">✕ Reject</button>
                 </form>
             </div>
-            {% endfor %}
-        {% else %}
-        <div class="empty">🎉 ไม่มีรายการรออนุมัติ</div>
-        {% endif %}
+        </div>
+        {% endfor %}
     </div>
+    {% endif %}
 
-    <!-- Recently approved -->
+    <!-- All customers -->
     <div class="cf-card">
-        <div class="card-title">✅ อนุมัติแล้ว (20 รายการล่าสุด)</div>
+        <div class="card-title">
+            🏢 All Customers
+            <span class="badge-pill badge-success">{{ customers|length }}</span>
+        </div>
 
-        {% if approved %}
-            {% for c in approved %}
-            <div class="customer-row">
-                <div class="customer-info">
-                    <div class="customer-name">{{ c.customer_name }}</div>
-                    <div class="customer-meta">
-                        {{ c.property_name or '-' }} · {{ c.email }}
-                    </div>
-                </div>
-                <span class="pkg-tag">{{ c.package_name or 'Free' }}</span>
-                <span class="approved-tick">✓ อนุมัติแล้ว</span>
+        <form method="GET" action="{{ url_for('admin.dashboard') }}" class="search-row">
+            <input type="text" name="q" class="search-input"
+                   placeholder="🔍 Search by name, email or property..."
+                   value="{{ search or '' }}">
+            <button type="submit" class="btn-search">Search</button>
+        </form>
+
+        {% if customers %}
+        {% for c in customers %}
+        <div class="customer-row {{ 'suspended-row' if not c.is_active }}">
+            <div class="c-avatar"
+                 style="background:{{ '#94a3b8' if not c.is_active else '#1e3a5f' }};">
+                {{ c.customer_name[0].upper() if c.customer_name else '?' }}
             </div>
-            {% endfor %}
+            <div class="c-info">
+                <div class="c-name">
+                    {{ c.customer_name }}
+                    {% if not c.is_active %}
+                    <span style="font-size:.72rem; color:#dc2626; font-weight:700;">
+                        [SUSPENDED]
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="c-meta">{{ c.property_name or '-' }} · {{ c.email }}</div>
+                <div class="c-stats">
+                    <span class="c-stat">🏠 {{ c.room_count or 0 }} rooms</span>
+                    <span class="c-stat">👥 {{ c.user_count or 0 }} users</span>
+                    <span class="c-stat">📦 {{ c.parcel_count or 0 }} parcels</span>
+                    <span class="c-stat">
+                        ฿{{ '{:,.0f}'.format(c.monthly_fee or 0) }}/mo
+                    </span>
+                </div>
+            </div>
+
+            <!-- Package change -->
+            <form method="POST"
+                  action="{{ url_for('admin.change_package', customer_id=c.idno) }}"
+                  style="display:inline-flex; align-items:center; gap:.35rem;">
+                <select name="package_id" class="pkg-select"
+                        onchange="this.form.submit()">
+                    {% for pkg in packages %}
+                    <option value="{{ pkg.idno }}"
+                        {{ 'selected' if c.package_name == pkg.package_name }}>
+                        {{ pkg.package_name }} ฿{{ pkg.monthly_fee|int }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+
+            <div class="c-actions">
+                <a href="{{ url_for('admin.customer_detail', customer_id=c.idno) }}"
+                   class="btn-view">👁 View</a>
+                {% if c.is_active %}
+                <form method="POST"
+                      action="{{ url_for('admin.suspend', customer_id=c.idno) }}"
+                      style="display:inline;"
+                      onsubmit="return confirm('Suspend {{ c.customer_name }}?');">
+                    <button type="submit" class="btn-suspend">⏸ Suspend</button>
+                </form>
+                {% else %}
+                <form method="POST"
+                      action="{{ url_for('admin.reactivate', customer_id=c.idno) }}"
+                      style="display:inline;">
+                    <button type="submit" class="btn-reactivate">▶ Reactivate</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
         {% else %}
-        <div class="empty">ยังไม่มีลูกค้าที่อนุมัติแล้ว</div>
+        <div class="empty">No customers found</div>
         {% endif %}
     </div>
 

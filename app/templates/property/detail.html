@@ -1,0 +1,420 @@
+{% extends "shared/base.html" %}
+{% block content %}
+{% set lang = session.get('lang', 'th') %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.main-wrap { padding: 1.25rem 1rem; max-width: 1000px; margin: 0 auto; }
+
+.page-header {
+    background: #1e3a5f; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1.25rem; color: white;
+    display: flex; align-items: center;
+    justify-content: space-between; flex-wrap: wrap; gap: .75rem;
+}
+.page-header h2 { font-size: 1.2rem; font-weight: 800; margin: 0; color: white; }
+.page-header p  { font-size: .82rem; color: rgba(255,255,255,.7); margin: .2rem 0 0; }
+.back-link {
+    color: #ff7a00; text-decoration: none;
+    font-size: .88rem; font-weight: 700; white-space: nowrap;
+}
+
+/* Two column layout */
+.two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+@media(max-width: 700px) {
+    .two-col { grid-template-columns: 1fr; }
+}
+
+.cf-card {
+    background: white; border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05); overflow: hidden;
+}
+.card-header {
+    padding: .85rem 1.1rem; border-bottom: 1.5px solid #f0f4f8;
+    display: flex; align-items: center; justify-content: space-between;
+    background: #f8fafc;
+}
+.card-title {
+    font-size: .9rem; font-weight: 800; color: #1e3a5f;
+    display: flex; align-items: center; gap: .4rem;
+}
+.card-count {
+    font-size: .72rem; color: #94a3b8; font-weight: 600;
+}
+.btn-add {
+    background: #ff7a00; border: none; color: #1a1a1a;
+    font-weight: 800; border-radius: 8px; padding: .35rem .75rem;
+    font-size: .78rem; cursor: pointer; text-decoration: none;
+    white-space: nowrap;
+}
+.btn-import {
+    background: none; border: 1.5px solid #e2e8f0; color: #64748b;
+    font-weight: 700; border-radius: 8px; padding: .35rem .75rem;
+    font-size: .78rem; cursor: pointer; text-decoration: none;
+    white-space: nowrap;
+}
+.btn-import:hover { border-color: #1e3a5f; color: #1e3a5f; }
+
+/* Room limit bar */
+.limit-bar {
+    padding: .65rem 1.1rem; background: #f8fafc;
+    border-bottom: 1px solid #f0f4f8;
+    display: flex; align-items: center; gap: .75rem;
+}
+.prog-track {
+    flex: 1; height: 6px; background: #e2e8f0;
+    border-radius: 10px; overflow: hidden;
+}
+.prog-fill {
+    height: 100%; background: #22c55e;
+    border-radius: 10px; transition: .3s;
+}
+.prog-fill.warn { background: #f59e0b; }
+.prog-fill.full { background: #ef4444; }
+.prog-label { font-size: .75rem; font-weight: 700; color: #64748b; white-space: nowrap; }
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; }
+th {
+    text-align: left; font-size: .72rem; font-weight: 700;
+    color: #94a3b8; padding: .6rem 1.1rem;
+    text-transform: uppercase; letter-spacing: .3px;
+    border-bottom: 1px solid #f0f4f8;
+}
+td {
+    padding: .7rem 1.1rem; border-bottom: 1px solid #f0f4f8;
+    font-size: .85rem; vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafbfc; }
+
+.room-no { font-weight: 800; color: #1e3a5f; }
+.room-owner { color: #64748b; font-size: .8rem; }
+.staff-name { font-weight: 700; }
+.staff-email { font-size: .75rem; color: #94a3b8; }
+.role-tag {
+    font-size: .68rem; font-weight: 700; padding: 2px 7px;
+    border-radius: 20px; white-space: nowrap;
+}
+.role-1 { background: #dbeafe; color: #1e40af; }
+.role-2 { background: #dcfce7; color: #166534; }
+.role-3 { background: #fef3c7; color: #92400e; }
+
+.btn-del {
+    background: none; border: none; color: #dc2626;
+    font-size: .8rem; cursor: pointer; padding: .2rem .4rem;
+    border-radius: 6px;
+}
+.btn-del:hover { background: #fef2f2; }
+
+.empty-row td {
+    text-align: center; color: #94a3b8;
+    padding: 1.5rem; font-size: .85rem;
+}
+
+/* Add staff modal */
+.form-control, .form-select {
+    border-radius: 10px; border: 1.5px solid #e2e8f0;
+    padding: 9px 12px; font-size: .9rem; width: 100%;
+    color: #1e293b; margin-bottom: .65rem;
+}
+.form-control:focus, .form-select:focus { border-color: #1e3a5f; outline: none; }
+.form-label { font-weight: 700; font-size: .82rem; margin-bottom: .3rem; display: block; }
+.btn-save {
+    background: #ff7a00; border: none; color: #1a1a1a;
+    font-weight: 800; border-radius: 10px; padding: .65rem 1.25rem;
+    cursor: pointer; font-size: .9rem;
+}
+</style>
+
+<div class="main-wrap">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                    alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="page-header">
+        <div>
+            <h2>🏢 {{ prop.property_name }}</h2>
+            <p>
+                {% if prop.property_code %}{{ prop.property_code }} · {% endif %}
+                {{ prop.address or '' }}
+            </p>
+        </div>
+        <div style="display:flex; gap:.5rem; align-items:center;">
+            {% if current_user.role_id == 1 %}
+            <a href="{{ url_for('property.dashboard') }}" class="back-link">
+                ← {{ 'Properties' if lang == 'en' else 'โครงการ' }}
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="two-col">
+
+        <!-- ── ROOMS ─────────────────────────────── -->
+        <div class="cf-card">
+            <div class="card-header">
+                <div class="card-title">
+                    🏠 {{ 'Rooms' if lang == 'en' else 'ห้องทั้งหมด' }}
+                    <span class="card-count">{{ room_count }}{% if max_room %}/{{ max_room }}{% endif %}</span>
+                </div>
+                <div style="display:flex; gap:.4rem;">
+                    {% if can_add %}
+                    <a href="{{ url_for('property.rooms') }}"
+                       class="btn-import">
+                        📥 {{ 'Import' if lang == 'en' else 'นำเข้า' }}
+                    </a>
+                    <button class="btn-add" data-bs-toggle="modal"
+                            data-bs-target="#addRoomModal">
+                        ➕ {{ 'Add' if lang == 'en' else 'เพิ่ม' }}
+                    </button>
+                    {% else %}
+                    <span style="font-size:.75rem; color:#dc2626; font-weight:700;">
+                        ⚠️ {{ 'Room limit reached' if lang == 'en' else 'ถึงลิมิตห้องแล้ว' }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if max_room %}
+            <div class="limit-bar">
+                <span class="prog-label">
+                    {{ room_count }}/{{ max_room }}
+                </span>
+                <div class="prog-track">
+                    {% set pct = (room_count / max_room * 100) | round(0) | int %}
+                    <div class="prog-fill
+                        {% if pct >= 100 %}full
+                        {% elif pct >= 80 %}warn{% endif %}"
+                        style="width:{{ pct if pct <= 100 else 100 }}%;"></div>
+                </div>
+                <span class="prog-label" style="color:{{ '#ef4444' if pct >= 100 else '#64748b' }};">
+                    {{ pct }}%
+                </span>
+            </div>
+            {% endif %}
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>{{ 'Room' if lang == 'en' else 'ห้อง' }}</th>
+                        <th>{{ 'Owner' if lang == 'en' else 'เจ้าของ' }}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% if rooms %}
+                    {% for r in rooms %}
+                    <tr>
+                        <td>
+                            <div class="room-no">
+                                {{ r.building or '' }}{{ r.room_no }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="room-owner">
+                                {{ r.owner_name or '-' }}
+                            </div>
+                        </td>
+                        <td style="text-align:right;">
+                            <form method="POST"
+                                  action="{{ url_for('property.delete_room', room_id=r.idno) }}"
+                                  onsubmit="return confirm('{{ 'Delete room?' if lang == 'en' else 'ลบห้องนี้?' }}');">
+                                <button type="submit" class="btn-del">🗑</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                <tr class="empty-row">
+                    <td colspan="3">
+                        {{ 'No rooms yet — add or import' if lang == 'en' else 'ยังไม่มีห้อง — เพิ่มหรือนำเข้า' }}
+                    </td>
+                </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ── STAFF ─────────────────────────────── -->
+        <div class="cf-card">
+            <div class="card-header">
+                <div class="card-title">
+                    👥 {{ 'Staff' if lang == 'en' else 'พนักงาน' }}
+                    <span class="card-count">{{ staff|length }}</span>
+                </div>
+                <button class="btn-add" data-bs-toggle="modal"
+                        data-bs-target="#addStaffModal">
+                    ➕ {{ 'Add' if lang == 'en' else 'เพิ่ม' }}
+                </button>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>{{ 'Name' if lang == 'en' else 'ชื่อ' }}</th>
+                        <th>{{ 'Role' if lang == 'en' else 'ตำแหน่ง' }}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% if staff %}
+                    {% for u in staff %}
+                    <tr>
+                        <td>
+                            <div class="staff-name">{{ u.fullname }}</div>
+                            <div class="staff-email">{{ u.email }}</div>
+                        </td>
+                        <td>
+                            <span class="role-tag role-{{ u.role_id if u.role_id else 2 }}">
+                                {{ u.role_name }}
+                            </span>
+                        </td>
+                        <td style="text-align:right;">
+                            {% if u.idno != current_user.id %}
+                            <form method="POST"
+                                  action="{{ url_for('property.delete_user', user_id=u.idno) }}"
+                                  onsubmit="return confirm('{{ 'Remove this staff?' if lang == 'en' else 'ลบพนักงานนี้?' }}');">
+                                <button type="submit" class="btn-del">🗑</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                <tr class="empty-row">
+                    <td colspan="3">
+                        {{ 'No staff yet' if lang == 'en' else 'ยังไม่มีพนักงาน' }}
+                    </td>
+                </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+    </div><!-- end two-col -->
+</div>
+
+<!-- Add Room Modal -->
+<div class="modal fade" id="addRoomModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;">
+            <div class="modal-header" style="border-bottom:1.5px solid #f0f4f8;">
+                <h5 class="modal-title" style="font-weight:800; color:#1e3a5f;">
+                    🏠 {{ 'Add Room' if lang == 'en' else 'เพิ่มห้อง' }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('property.add_room_detail',
+                                                    property_id=prop.idno) }}">
+                <div class="modal-body" style="padding:1.25rem;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:.5rem;">
+                        <div>
+                            <label class="form-label">
+                                {{ 'Building' if lang == 'en' else 'อาคาร' }}
+                            </label>
+                            <input type="text" name="building" class="form-control"
+                                   placeholder="{{ 'A, B, C...' if lang == 'en' else 'A, B, C...' }}">
+                        </div>
+                        <div>
+                            <label class="form-label">
+                                {{ 'Room No.' if lang == 'en' else 'เลขห้อง' }} *
+                            </label>
+                            <input type="text" name="room_no" class="form-control"
+                                   placeholder="101" required>
+                        </div>
+                    </div>
+                    <label class="form-label">
+                        {{ 'Owner Name' if lang == 'en' else 'ชื่อเจ้าของ' }}
+                    </label>
+                    <input type="text" name="owner_name" class="form-control"
+                           placeholder="{{ 'Optional' if lang == 'en' else 'ไม่บังคับ' }}">
+                    <label class="form-label">
+                        {{ 'Owner Email' if lang == 'en' else 'อีเมลเจ้าของ' }}
+                    </label>
+                    <input type="email" name="owner_email" class="form-control"
+                           placeholder="{{ 'Optional' if lang == 'en' else 'ไม่บังคับ' }}">
+                </div>
+                <div class="modal-footer" style="border-top:1.5px solid #f0f4f8;">
+                    <button type="button" class="btn btn-light"
+                            data-bs-dismiss="modal">
+                        {{ 'Cancel' if lang == 'en' else 'ยกเลิก' }}
+                    </button>
+                    <button type="submit" class="btn-save btn">
+                        💾 {{ 'Save' if lang == 'en' else 'บันทึก' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Staff Modal -->
+<div class="modal fade" id="addStaffModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;">
+            <div class="modal-header" style="border-bottom:1.5px solid #f0f4f8;">
+                <h5 class="modal-title" style="font-weight:800; color:#1e3a5f;">
+                    👥 {{ 'Add Staff' if lang == 'en' else 'เพิ่มพนักงาน' }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('property.add_user') }}">
+                <input type="hidden" name="redirect_property" value="{{ prop.idno }}">
+                <div class="modal-body" style="padding:1.25rem;">
+                    <label class="form-label">
+                        {{ 'Full Name' if lang == 'en' else 'ชื่อ-นามสกุล' }} *
+                    </label>
+                    <input type="text" name="fullname" class="form-control"
+                           placeholder="{{ 'Full name' if lang == 'en' else 'ชื่อ-นามสกุล' }}"
+                           required>
+                    <label class="form-label">
+                        {{ 'Email' if lang == 'en' else 'อีเมล' }} *
+                    </label>
+                    <input type="email" name="email" class="form-control"
+                           placeholder="email@example.com" required>
+                    <label class="form-label">
+                        {{ 'Phone' if lang == 'en' else 'เบอร์โทร' }}
+                    </label>
+                    <input type="text" name="mobile" class="form-control"
+                           placeholder="{{ 'Optional' if lang == 'en' else 'ไม่บังคับ' }}">
+                    <label class="form-label">
+                        {{ 'Role' if lang == 'en' else 'ตำแหน่ง' }} *
+                    </label>
+                    <select name="role_id" class="form-select" required>
+                        <option value="1">{{ 'Manager' if lang == 'en' else 'ผู้จัดการ' }}</option>
+                        <option value="2" selected>{{ 'Reception' if lang == 'en' else 'แผนกต้อนรับ' }}</option>
+                        <option value="3">{{ 'Security' if lang == 'en' else 'รักษาความปลอดภัย' }}</option>
+                    </select>
+                    <label class="form-label">
+                        {{ 'Password' if lang == 'en' else 'รหัสผ่าน' }} *
+                    </label>
+                    <input type="text" name="password" class="form-control"
+                           placeholder="{{ 'Temporary password' if lang == 'en' else 'รหัสผ่านชั่วคราว' }}"
+                           required>
+                </div>
+                <div class="modal-footer" style="border-top:1.5px solid #f0f4f8;">
+                    <button type="button" class="btn btn-light"
+                            data-bs-dismiss="modal">
+                        {{ 'Cancel' if lang == 'en' else 'ยกเลิก' }}
+                    </button>
+                    <button type="submit" class="btn-save btn">
+                        💾 {{ 'Add Staff' if lang == 'en' else 'เพิ่มพนักงาน' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

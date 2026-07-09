@@ -159,24 +159,54 @@ body { background: #f0f4f8; color: #1a1a1a; }
     font-weight: 800;
 }
 .btn-upgrade {
-    background: #ff7a00;
+    background: linear-gradient(135deg, #ff7a00, #ff9a00);
     border: none;
-    color: white;
-    font-weight: 800;
-    border-radius: 10px;
-    padding: 11px;
+    color: #1a1a1a;
+    font-weight: 900;
+    border-radius: 12px;
+    padding: 14px;
     width: 100%;
-    font-size: .92rem;
+    font-size: 1rem;
     margin-top: .9rem;
     text-decoration: none;
     text-align: center;
     display: block;
+    letter-spacing: .3px;
+    box-shadow: 0 4px 15px rgba(255,122,0,.4);
+    transition: all .2s;
+    position: relative;
+    overflow: hidden;
 }
-.btn-upgrade:hover { background: #eb6d00; color: #1a1a1a; }
+.btn-upgrade::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg,
+        rgba(255,255,255,.2) 0%,
+        rgba(255,255,255,0) 60%);
+    pointer-events: none;
+}
+.btn-upgrade:hover {
+    background: linear-gradient(135deg, #ff9a00, #ffb300);
+    color: #1a1a1a;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255,122,0,.5);
+}
+.btn-upgrade:active { transform: translateY(0); }
 .btn-upgrade.disabled {
     background: #e2e8f0;
     color: #94a3b8;
     cursor: default;
+    box-shadow: none;
+    transform: none;
+}
+/* Pulse animation for non-current plans */
+@keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 4px 15px rgba(255,122,0,.4); }
+    50%       { box-shadow: 0 4px 25px rgba(255,122,0,.7); }
+}
+.btn-upgrade:not(.disabled) {
+    animation: pulse-glow 2s ease-in-out infinite;
 }
 </style>
 
@@ -195,8 +225,8 @@ body { background: #f0f4f8; color: #1a1a1a; }
     {% endwith %}
 
     <div class="page-header">
-        <h2>💳 แพ็กเกจของคุณ</h2>
-        <p>ดูแพ็กเกจปัจจุบันและตัวเลือกอัปเกรด</p>
+        <h2>💳 {{ 'Your Plan' if lang == 'en' else 'แพ็กเกจของคุณ' }}</h2>
+        <p>{{ 'View current plan and upgrade options' if lang == 'en' else 'ดูแพ็กเกจปัจจุบันและตัวเลือกอัปเกรด' }}</p>
     </div>
 
     {% if current_sub %}
@@ -217,7 +247,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
         <div class="usage-row">
             <div class="usage-item">
                 <div class="usage-label">
-                    <span>ห้อง</span>
+                    <span>{{ 'Rooms' if lang == 'en' else 'ห้อง' }}</span>
                     <strong>{{ usage.room }} / {{ current_sub.max_room or '∞' }}</strong>
                 </div>
                 {% if current_sub.max_room %}
@@ -231,7 +261,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
 
             <div class="usage-item">
                 <div class="usage-label">
-                    <span>พนักงาน</span>
+                    <span>{{ 'Staff' if lang == 'en' else 'พนักงาน' }}</span>
                     <strong>{{ usage.user }} / {{ current_sub.max_user or '∞' }}</strong>
                 </div>
                 {% if current_sub.max_user %}
@@ -245,7 +275,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
 
             <div class="usage-item">
                 <div class="usage-label">
-                    <span>พัสดุทั้งหมด</span>
+                    <span>{{ 'Total Parcels' if lang == 'en' else 'พัสดุทั้งหมด' }}</span>
                     <strong>{{ usage.parcel }} / {{ current_sub.max_parcel or '∞' }}</strong>
                 </div>
                 {% if current_sub.max_parcel %}
@@ -256,24 +286,48 @@ body { background: #f0f4f8; color: #1a1a1a; }
                 </div>
                 {% endif %}
             </div>
+
+            <!-- Property usage -->
+            {% if current_sub.max_property %}
+            <div class="usage-item">
+                <div class="usage-label">
+                    <span>🏢 {{ 'Properties' if lang == 'en' else 'โครงการ' }}</span>
+                    <strong>{{ usage.property }} / {{ current_sub.max_property }}</strong>
+                </div>
+                {% set pct = (usage.property / current_sub.max_property * 100) | round(0, 'floor') %}
+                <div class="usage-track">
+                    <div class="usage-fill {% if pct >= 100 %}full{% elif pct >= 80 %}warn{% endif %}"
+                         style="width:{{ pct if pct <= 100 else 100 }}%;"></div>
+                </div>
+                {% if usage.property < current_sub.max_property %}
+                <div style="margin-top:.35rem;">
+                    <a href="{{ url_for('property.new_property') }}"
+                       style="font-size:.75rem; color:#1e3a5f; font-weight:700;
+                              text-decoration:none;">
+                        ➕ {{ 'Add New Property →' if lang == 'en' else 'เพิ่มโครงการใหม่ →' }}
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
     </div>
     {% else %}
     <div class="cf-card">
         <p style="color:#64748b; text-align:center; margin:0;">
-            ยังไม่มีแพ็กเกจที่ใช้งานอยู่ — กรุณาตั้งค่าโครงการก่อน
+            {{ 'No active package — please setup your property first' if lang == 'en' else 'ยังไม่มีแพ็กเกจที่ใช้งานอยู่ — กรุณาตั้งค่าโครงการก่อน' }}
         </p>
     </div>
     {% endif %}
 
     <!-- Available packages -->
     <div class="cf-card">
-        <div class="card-title">แพ็กเกจทั้งหมด</div>
+        <div class="card-title">{{ 'All Plans' if lang == 'en' else 'แพ็กเกจทั้งหมด' }}</div>
         <div class="pkg-grid">
             {% for pkg in all_packages %}
             <div class="pkg-card {% if current_sub and pkg.idno == current_sub.package_id %}current{% endif %}">
                 {% if current_sub and pkg.idno == current_sub.package_id %}
-                <span class="pkg-current-tag">แพ็กเกจปัจจุบัน</span>
+                <span class="pkg-current-tag">{{ 'Current Plan' if lang == 'en' else 'แพ็กเกจปัจจุบัน' }}</span>
                 {% endif %}
 
                 <div class="pkg-name">{{ pkg.package_name }}</div>
@@ -286,17 +340,17 @@ body { background: #f0f4f8; color: #1a1a1a; }
                 </div>
 
                 <ul class="pkg-features">
-                    <li>ห้อง {{ pkg.max_room or 'ไม่จำกัด' }} ห้อง</li>
-                    <li>พนักงาน {{ pkg.max_user or 'ไม่จำกัด' }} คน</li>
-                    <li>พัสดุ {{ pkg.max_parcel or 'ไม่จำกัด' }} ชิ้น</li>
+                    <li>{{ 'Rooms' if lang == 'en' else 'ห้อง' }}: {{ pkg.max_room or ('Unlimited' if lang == 'en' else 'ไม่จำกัด') }}</li>
+                    <li>{{ 'Staff' if lang == 'en' else 'พนักงาน' }}: {{ pkg.max_user or ('Unlimited' if lang == 'en' else 'ไม่จำกัด') }}</li>
+                    <li>{{ 'Parcels' if lang == 'en' else 'พัสดุ' }}: {{ pkg.max_parcel or ('Unlimited' if lang == 'en' else 'ไม่จำกัด') }}</li>
                 </ul>
 
                 {% if current_sub and pkg.idno == current_sub.package_id %}
-                <div class="btn-upgrade disabled">แพ็กเกจปัจจุบัน</div>
+                <div class="btn-upgrade disabled">{{ 'Current Plan' if lang == 'en' else 'แพ็กเกจปัจจุบัน' }}</div>
                 {% else %}
                 <a href="https://line.me/ti/p/your-line-id"
                    target="_blank" class="btn-upgrade">
-                    ติดต่อเพื่ออัปเกรด →
+                    ⚡ {{ 'Upgrade Now — Unlock More →' if lang == 'en' else 'อัปเกรดเลย — ปลดล็อกเพิ่มเติม →' }}
                 </a>
                 {% endif %}
             </div>

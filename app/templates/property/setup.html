@@ -122,10 +122,66 @@ body { background: #f0f4f8; color: #1a1a1a; }
     {% endwith %}
 
     <div class="page-header">
-        <h2>🏢 ขั้นตอนที่ 1 — ข้อมูลโครงการ</h2>
-        <p>กรอกข้อมูลโครงการหรือคอนโดมิเนียมของคุณ<br>
-           สามารถแก้ไขได้ภายหลัง</p>
+        <h2>🏢 {{ 'Property Setup' if lang == 'en' else 'ข้อมูลโครงการ' }}</h2>
+        <p>{{ 'Manage your properties' if lang == 'en' else 'จัดการโครงการของคุณ' }}</p>
     </div>
+
+    <!-- All properties list (multi-property customers) -->
+    {% if all_properties %}
+    <div class="cf-card" style="margin-bottom:1rem;">
+        <div style="display:flex; align-items:center; justify-content:space-between;
+                    margin-bottom:.85rem;">
+            <div style="font-weight:800; color:#1e3a5f; font-size:.95rem;">
+                🏢 {{ 'Your Properties' if lang == 'en' else 'โครงการทั้งหมด' }}
+                <span style="font-size:.75rem; color:#64748b; font-weight:600;">
+                    ({{ prop_count }}/{{ max_property }})
+                </span>
+            </div>
+            {% if can_add_more %}
+            <a href="{{ url_for('property.new_property') }}"
+               style="background:#ff7a00; border:none; color:#1a1a1a;
+                      font-weight:800; border-radius:8px; padding:.4rem .85rem;
+                      font-size:.82rem; text-decoration:none;">
+                ➕ {{ 'Add Property' if lang == 'en' else 'เพิ่มโครงการ' }}
+            </a>
+            {% else %}
+            <span style="font-size:.78rem; color:#dc2626; font-weight:700;">
+                ⚠️ {{ 'Limit reached — upgrade to add more' if lang == 'en' else 'ถึงลิมิตแล้ว — อัปเกรดเพื่อเพิ่ม' }}
+            </span>
+            {% endif %}
+        </div>
+
+        {% for p in all_properties %}
+        <div style="display:flex; align-items:center; gap:.75rem;
+                    padding:.65rem 0; border-bottom:1px solid #f0f4f8;">
+            <div style="flex:1;">
+                <div style="font-weight:700; font-size:.9rem;">
+                    {{ p.property_name }}
+                    {% if p.idno == current_user.property_id %}
+                    <span style="background:#dbeafe; color:#1e40af; font-size:.68rem;
+                                 font-weight:700; padding:1px 7px; border-radius:20px;
+                                 margin-left:.35rem;">
+                        {{ 'Current' if lang == 'en' else 'ใช้งานอยู่' }}
+                    </span>
+                    {% endif %}
+                </div>
+                <div style="font-size:.73rem; color:#64748b; margin-top:2px;">
+                    🏠 {{ p.room_count }} {{ 'rooms' if lang == 'en' else 'ห้อง' }}
+                    · 👥 {{ p.staff_count }} {{ 'staff' if lang == 'en' else 'พนักงาน' }}
+                </div>
+            </div>
+            {% if p.idno != current_user.property_id %}
+            <a href="{{ url_for('property.switch_property', property_id=p.idno) }}"
+               style="background:#1e3a5f; border:none; color:white;
+                      font-weight:700; border-radius:8px; padding:.35rem .75rem;
+                      font-size:.78rem; text-decoration:none; white-space:nowrap;">
+                {{ 'Switch' if lang == 'en' else 'เปลี่ยน' }} →
+            </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
     <form method="POST" action="{{ url_for('property.setup') }}">
 

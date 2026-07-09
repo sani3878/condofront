@@ -1,0 +1,85 @@
+{% extends "shared/base.html" %}
+{% block content %}
+{% set lang = session.get('lang', 'th') %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.wrap { padding: 1.25rem 1rem; max-width: 540px; margin: 0 auto; }
+.page-header {
+    background: #1e3a5f; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1.25rem; color: white;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.page-header h2 { font-size: 1.1rem; font-weight: 800; margin: 0; color: white; }
+.back-link { color: #ff7a00; text-decoration: none; font-size: .88rem; font-weight: 700; }
+.cf-card {
+    background: white; border-radius: 16px; padding: 1.25rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05);
+}
+.form-label { font-weight: 700; font-size: .85rem; margin-bottom: .3rem; display: block; }
+.form-hint  { font-size: .75rem; color: #94a3b8; margin-bottom: .5rem; }
+.form-control {
+    border-radius: 10px; border: 1.5px solid #e2e8f0;
+    padding: 10px 13px; font-size: .92rem; width: 100%;
+    color: #1e293b; margin-bottom: .85rem;
+}
+.form-control:focus { border-color: #1e3a5f; outline: none; }
+.btn-save {
+    background: #ff7a00; border: none; color: #1a1a1a;
+    font-weight: 800; border-radius: 12px; padding: 12px;
+    width: 100%; font-size: .95rem; cursor: pointer;
+}
+</style>
+
+<div class="wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                    alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="page-header">
+        <h2>✏️ {{ 'Edit Property' if lang == 'en' else 'แก้ไขข้อมูลโครงการ' }}</h2>
+        <a href="{{ url_for('property.detail', property_id=prop.idno) }}"
+           class="back-link">← {{ 'Back' if lang == 'en' else 'กลับ' }}</a>
+    </div>
+
+    <div class="cf-card">
+        <form method="POST"
+              action="{{ url_for('property.edit_property', property_id=prop.idno) }}">
+
+            <label class="form-label">
+                {{ 'Property Name' if lang == 'en' else 'ชื่อโครงการ' }} *
+            </label>
+            <div class="form-hint">
+                {{ 'e.g. Lumpini Park, The Base Pattaya' if lang == 'en' else 'เช่น ลุมพินี พาร์ค, ศุภาลัย ริเวอร์ไซด์' }}
+            </div>
+            <input type="text" name="property_name" class="form-control"
+                   value="{{ prop.property_name }}" required autofocus>
+
+            <label class="form-label">
+                {{ 'Property Code' if lang == 'en' else 'รหัสโครงการ' }}
+            </label>
+            <div class="form-hint">
+                {{ 'Short reference code (optional)' if lang == 'en' else 'รหัสย่อ (ไม่บังคับ)' }}
+            </div>
+            <input type="text" name="property_code" class="form-control"
+                   value="{{ prop.property_code or '' }}"
+                   placeholder="e.g. LPN-PK">
+
+            <label class="form-label">
+                {{ 'Address' if lang == 'en' else 'ที่อยู่' }}
+            </label>
+            <textarea name="address" class="form-control" rows="3"
+                      placeholder="{{ 'Full address (optional)' if lang == 'en' else 'ที่อยู่เต็ม (ไม่บังคับ)' }}">{{ prop.address or '' }}</textarea>
+
+            <button type="submit" class="btn-save">
+                💾 {{ 'Save Changes' if lang == 'en' else 'บันทึกการเปลี่ยนแปลง' }}
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

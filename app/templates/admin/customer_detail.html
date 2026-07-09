@@ -1,0 +1,243 @@
+{% extends "shared/base.html" %}
+{% block content %}
+{% set lang = session.get('lang', 'en') %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.main-wrap { padding: 1.25rem 1rem; max-width: 900px; margin: 0 auto; }
+.back-link {
+    display: inline-flex; align-items: center; gap: .4rem;
+    color: #1e3a5f; text-decoration: none;
+    font-size: .88rem; font-weight: 700; margin-bottom: 1rem;
+}
+.page-header {
+    background: #1e3a5f; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1.25rem; color: white;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: .75rem;
+}
+.page-header h2 { font-size: 1.1rem; font-weight: 800; margin: 0; color: white; }
+.cf-card {
+    background: white; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1rem; box-shadow: 0 2px 12px rgba(0,0,0,.05);
+}
+.card-title {
+    font-size: .95rem; font-weight: 800; color: #1e3a5f;
+    margin-bottom: 1rem;
+}
+.info-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: .75rem;
+}
+@media(max-width:500px) { .info-grid { grid-template-columns: 1fr; } }
+.info-item { }
+.info-label { font-size: .72rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
+.info-value { font-size: .92rem; font-weight: 700; color: #1a1a1a; margin-top: 2px; }
+
+/* Activity stats */
+.activity-row { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.act-box {
+    flex: 1; min-width: 80px; background: #f0f4f8; border-radius: 10px;
+    padding: .75rem; text-align: center;
+}
+.act-num { font-size: 1.5rem; font-weight: 900; color: #1e3a5f; }
+.act-label { font-size: .7rem; color: #64748b; font-weight: 600; }
+
+/* User rows */
+.user-row {
+    display: flex; align-items: center; gap: .75rem;
+    padding: .65rem 0; border-bottom: 1px solid #f0f4f8;
+}
+.user-row:last-child { border-bottom: none; }
+.u-name { font-weight: 700; font-size: .88rem; flex: 1; }
+.u-meta { font-size: .75rem; color: #64748b; }
+.role-tag {
+    font-size: .7rem; font-weight: 700; padding: 2px 8px;
+    border-radius: 20px; background: #dbeafe; color: #1e40af;
+    white-space: nowrap;
+}
+
+/* Room rows */
+.room-row {
+    display: flex; align-items: center; gap: .75rem;
+    padding: .55rem 0; border-bottom: 1px solid #f0f4f8;
+    font-size: .85rem;
+}
+.room-row:last-child { border-bottom: none; }
+.room-no { font-weight: 800; color: #1e3a5f; min-width: 60px; }
+.room-owner { flex: 1; color: #64748b; }
+.waiting-badge {
+    background: #fef3c7; color: #92400e;
+    font-size: .7rem; font-weight: 700;
+    padding: 1px 7px; border-radius: 20px;
+}
+
+.pkg-select {
+    border-radius: 8px; border: 1.5px solid #e2e8f0;
+    padding: .5rem .75rem; font-size: .88rem; color: #1a1a1a;
+    width: 100%;
+}
+.btn-save {
+    background: #ff7a00; border: none; color: #1a1a1a;
+    font-weight: 800; border-radius: 10px; padding: .6rem 1.25rem;
+    cursor: pointer; font-size: .9rem; margin-top: .5rem;
+}
+.btn-suspend {
+    background: none; border: 1.5px solid #fcd34d; color: #92400e;
+    font-weight: 700; border-radius: 8px; padding: .5rem 1rem;
+    cursor: pointer; font-size: .85rem;
+}
+.btn-reactivate {
+    background: #22c55e; border: none; color: white;
+    font-weight: 700; border-radius: 8px; padding: .5rem 1rem;
+    cursor: pointer; font-size: .85rem;
+}
+</style>
+
+<div class="main-wrap">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                    alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <a href="{{ url_for('admin.dashboard') }}" class="back-link">← Back to Admin</a>
+
+    <div class="page-header">
+        <div>
+            <h2>🏢 {{ customer.customer_name }}</h2>
+            <p style="color:rgba(255,255,255,.7); margin:.25rem 0 0; font-size:.82rem;">
+                {{ customer.property_name or 'No property' }} · {{ customer.email }}
+            </p>
+        </div>
+        <div>
+            {% if customer.is_active %}
+            <form method="POST"
+                  action="{{ url_for('admin.suspend', customer_id=customer.idno) }}"
+                  onsubmit="return confirm('Suspend this customer?');">
+                <button type="submit" class="btn-suspend">⏸ Suspend</button>
+            </form>
+            {% else %}
+            <form method="POST"
+                  action="{{ url_for('admin.reactivate', customer_id=customer.idno) }}">
+                <button type="submit" class="btn-reactivate">▶ Reactivate</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Activity stats -->
+    <div class="activity-row">
+        <div class="act-box">
+            <div class="act-num" style="color:#ff7a00;">{{ activity.parcels or 0 }}</div>
+            <div class="act-label">📦 Parcels</div>
+        </div>
+        <div class="act-box">
+            <div class="act-num" style="color:#3b82f6;">{{ activity.visitors or 0 }}</div>
+            <div class="act-label">🚶 Visitors</div>
+        </div>
+        <div class="act-box">
+            <div class="act-num" style="color:#8b5cf6;">{{ activity.services or 0 }}</div>
+            <div class="act-label">🔧 Services</div>
+        </div>
+        <div class="act-box">
+            <div class="act-num" style="color:#22c55e;">{{ activity.bookings or 0 }}</div>
+            <div class="act-label">🏢 Bookings</div>
+        </div>
+    </div>
+
+    <!-- Customer info + package -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+
+        <div class="cf-card">
+            <div class="card-title">📋 Customer Info</div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Company</div>
+                    <div class="info-value">{{ customer.customer_name }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Property</div>
+                    <div class="info-value">{{ customer.property_name or '-' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Email</div>
+                    <div class="info-value" style="font-size:.82rem;">{{ customer.email }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Status</div>
+                    <div class="info-value">
+                        {% if customer.is_active %}
+                        <span style="color:#22c55e;">✅ Active</span>
+                        {% else %}
+                        <span style="color:#dc2626;">⏸ Suspended</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cf-card">
+            <div class="card-title">📦 Subscription</div>
+            <div class="info-item" style="margin-bottom:.75rem;">
+                <div class="info-label">Current Plan</div>
+                <div class="info-value" style="font-size:1.1rem; color:#ff7a00;">
+                    {{ customer.package_name or 'Free' }}
+                    — ฿{{ customer.monthly_fee|int if customer.monthly_fee else 0 }}/mo
+                </div>
+            </div>
+            <form method="POST"
+                  action="{{ url_for('admin.change_package', customer_id=customer.idno) }}">
+                <div class="info-label" style="margin-bottom:.35rem;">Change Plan</div>
+                <select name="package_id" class="pkg-select">
+                    {% for pkg in packages %}
+                    <option value="{{ pkg.idno }}"
+                        {{ 'selected' if customer.package_name == pkg.package_name }}>
+                        {{ pkg.package_name }} — ฿{{ pkg.monthly_fee|int }}/mo
+                    </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn-save">💾 Update Plan</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Staff users -->
+    <div class="cf-card">
+        <div class="card-title">👥 Users ({{ users|length }})</div>
+        {% for u in users %}
+        <div class="user-row">
+            <div>
+                <div class="u-name">{{ u.fullname }}</div>
+                <div class="u-meta">{{ u.email }}</div>
+            </div>
+            <span class="role-tag">{{ u.role_name }}</span>
+            <span style="font-size:.72rem; color:{{ '#22c55e' if u.is_active else '#dc2626' }}; font-weight:700;">
+                {{ '✅ Active' if u.is_active else '❌ Inactive' }}
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Rooms -->
+    <div class="cf-card">
+        <div class="card-title">🏠 Rooms ({{ rooms|length }}{% if rooms|length == 50 %}+{% endif %})</div>
+        {% for r in rooms %}
+        <div class="room-row">
+            <div class="room-no">{{ r.building or '' }}{{ r.room_no }}</div>
+            <div class="room-owner">{{ r.owner_name or 'No owner' }}</div>
+            {% if r.waiting_parcels > 0 %}
+            <span class="waiting-badge">📦 {{ r.waiting_parcels }}</span>
+            {% endif %}
+            <span style="font-size:.7rem; color:{{ '#22c55e' if r.is_active else '#dc2626' }};">
+                {{ '●' if r.is_active else '○' }}
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

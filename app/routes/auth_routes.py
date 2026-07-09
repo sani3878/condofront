@@ -141,7 +141,7 @@ def register():
                     (customer_id, property_id, role_id,
                      email, password_hash, fullname, mobile, is_active,
                      email_verified, verify_token, verify_sent_at)
-                VALUES (%s, %s, 2, %s, %s, %s, %s, TRUE,
+                VALUES (%s, %s, 1, %s, %s, %s, %s, TRUE,
                         FALSE, %s, NOW())
             """, [customer_id, property_id, email,
                   generate_password_hash(password),
