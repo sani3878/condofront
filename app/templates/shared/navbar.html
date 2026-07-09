@@ -16,6 +16,7 @@
   {% set lbl_staff    = "👥 Staff" %}
   {% set lbl_settings = "⚙️ Settings" %}
   {% set lbl_contact  = "💬 Contact Us" %}
+  {% set lbl_announce = "📢 Announcements" %}
   {% set lbl_logout   = "Logout" %}
 {% else %}
   {% set lbl_home     = "🏠 หน้าหลัก" %}
@@ -28,6 +29,7 @@
   {% set lbl_staff    = "👥 พนักงาน" %}
   {% set lbl_settings = "⚙️ ตั้งค่า" %}
   {% set lbl_contact  = "💬 ติดต่อเรา" %}
+  {% set lbl_announce = "📢 ประกาศ" %}
   {% set lbl_logout   = "ออกจากระบบ" %}
 {% endif %}
 
@@ -245,19 +247,21 @@
            class="cf-nav-link {% if ap == 'facility' %}active{% endif %}">
             {{ lbl_facility }}
         </a>
-        <div class="cf-nav-divider"></div>
-        <a href="{{ url_for('property.users') }}"
-           class="cf-nav-link {% if ap == 'staff' %}active{% endif %}">
-            {{ lbl_staff }}
+        <a href="{{ url_for('announcement.list_announcements') }}"
+           class="cf-nav-link {% if ap == 'announcement' %}active{% endif %}">
+            {{ lbl_announce }}
         </a>
+        <div class="cf-nav-divider"></div>
+
         <a href="{{ url_for('property.dashboard') }}"
            class="cf-nav-link {% if ap == 'settings' %}active{% endif %}">
             {{ lbl_settings }}
         </a>
-        <a href="{{ url_for('auth.contact') }}"
-           class="cf-nav-link {% if ap == 'contact' %}active{% endif %}">
-            {{ lbl_contact }}
+        <a href="{{ url_for('property.billing') }}"
+           class="cf-nav-link {% if ap == 'billing' %}active{% endif %}">
+            {{ '💳 Package' if lang == 'en' else '💳 แพ็กเกจ' }}
         </a>
+
     </div>
 
     <!-- Right side -->
@@ -319,18 +323,16 @@
         {{ lbl_facility }}
     </a>
     <div class="cf-mobile-divider"></div>
-    <a href="{{ url_for('property.users') }}"
-       class="cf-mobile-link {% if ap == 'staff' %}active{% endif %}">
-        {{ lbl_staff }}
-    </a>
+
     <a href="{{ url_for('property.dashboard') }}"
        class="cf-mobile-link {% if ap == 'settings' %}active{% endif %}">
         {{ lbl_settings }}
     </a>
-    <a href="{{ url_for('auth.contact') }}"
-       class="cf-mobile-link {% if ap == 'contact' %}active{% endif %}">
-        {{ lbl_contact }}
+    <a href="{{ url_for('property.billing') }}"
+       class="cf-mobile-link {% if ap == 'billing' %}active{% endif %}">
+        💳 {{ 'Package & Billing' if lang == 'en' else 'แพ็กเกจ & บิล' }}
     </a>
+
     <div class="cf-mobile-divider"></div>
     <!-- Language in mobile -->
     <div class="cf-mobile-lang">

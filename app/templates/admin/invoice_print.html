@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice {{ invoice.invoice_no }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: white; color: #1a1a1a;
+            padding: 2.5rem;
+            max-width: 720px; margin: 0 auto;
+        }
+
+        /* Header */
+        .inv-header {
+            display: flex; justify-content: space-between;
+            align-items: flex-start; margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 3px solid #1e3a5f;
+        }
+        .inv-logo { font-size: 1.8rem; font-weight: 900; color: #1e3a5f; }
+        .inv-logo span { color: #ff7a00; }
+        .inv-tagline { font-size: .75rem; color: #94a3b8; margin-top: 2px; }
+        .inv-title { text-align: right; }
+        .inv-title h1 {
+            font-size: 2rem; font-weight: 900; color: #1e3a5f;
+            letter-spacing: 2px;
+        }
+        .inv-no {
+            font-size: .9rem; color: #64748b; margin-top: .25rem;
+            font-family: monospace; font-weight: 700;
+        }
+
+        /* Status badge */
+        .status-badge {
+            display: inline-block; padding: .35rem 1rem;
+            border-radius: 20px; font-weight: 800; font-size: .85rem;
+            margin-top: .5rem;
+        }
+        .paid      { background: #dcfce7; color: #166534; }
+        .unpaid    { background: #fee2e2; color: #991b1b; }
+        .cancelled { background: #f1f5f9; color: #64748b; }
+
+        /* Bill to / From */
+        .parties {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 2rem; margin-bottom: 2rem;
+        }
+        .party-label {
+            font-size: .72rem; font-weight: 700; color: #94a3b8;
+            text-transform: uppercase; letter-spacing: .5px;
+            margin-bottom: .5rem;
+        }
+        .party-name { font-weight: 800; font-size: 1rem; color: #1a1a1a; }
+        .party-detail { font-size: .85rem; color: #64748b; margin-top: .25rem; }
+
+        /* Invoice details table */
+        .inv-table {
+            width: 100%; border-collapse: collapse;
+            margin-bottom: 1.5rem;
+        }
+        .inv-table th {
+            background: #1e3a5f; color: white;
+            padding: .75rem 1rem; text-align: left;
+            font-size: .82rem; font-weight: 700;
+        }
+        .inv-table td {
+            padding: .85rem 1rem; border-bottom: 1px solid #f0f4f8;
+            font-size: .88rem;
+        }
+        .inv-table tr:last-child td { border-bottom: none; }
+        .text-right { text-align: right; }
+        .amount-col { font-weight: 800; color: #1e3a5f; }
+
+        /* Total */
+        .total-box {
+            background: #f8fafc; border-radius: 12px;
+            padding: 1.25rem; text-align: right;
+            margin-bottom: 2rem;
+        }
+        .total-label { font-size: .82rem; color: #64748b; margin-bottom: .35rem; }
+        .total-amount {
+            font-size: 2rem; font-weight: 900; color: #1e3a5f;
+        }
+        .total-amount span { font-size: 1rem; color: #64748b; font-weight: 600; }
+
+        /* Dates row */
+        .dates-row {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 1rem; margin-bottom: 2rem;
+        }
+        .date-box {
+            background: #f8fafc; border-radius: 10px; padding: .75rem;
+            text-align: center;
+        }
+        .date-label { font-size: .7rem; color: #94a3b8; font-weight: 600;
+                      text-transform: uppercase; margin-bottom: .25rem; }
+        .date-val   { font-size: .9rem; font-weight: 700; color: #1a1a1a; }
+
+        /* Note */
+        .note-box {
+            border: 1.5px dashed #e2e8f0; border-radius: 10px;
+            padding: .85rem 1rem; margin-bottom: 2rem;
+            font-size: .82rem; color: #64748b;
+        }
+
+        /* Footer */
+        .inv-footer {
+            border-top: 2px solid #f0f4f8; padding-top: 1.25rem;
+            text-align: center; color: #94a3b8; font-size: .78rem;
+        }
+        .inv-footer strong { color: #1e3a5f; }
+
+        /* Print button */
+        .print-btn {
+            background: #1e3a5f; color: white; border: none;
+            border-radius: 10px; padding: .65rem 1.5rem;
+            font-size: .9rem; font-weight: 700; cursor: pointer;
+            margin-bottom: 2rem; display: block;
+        }
+        @media print {
+            .print-btn { display: none; }
+            body { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>
+
+    <!-- Header -->
+    <div class="inv-header">
+        <div>
+            <div class="inv-logo">Condo<span>Front</span></div>
+            <div class="inv-tagline">Connect. Automate. Optimize.</div>
+            <div class="inv-tagline" style="margin-top:.25rem;">
+                Workflow Co., Ltd.
+            </div>
+        </div>
+        <div class="inv-title">
+            <h1>INVOICE</h1>
+            <div class="inv-no">{{ invoice.invoice_no }}</div>
+            <span class="status-badge {{ invoice.status }}">
+                {% if invoice.status == 'paid' %}✅ PAID
+                {% elif invoice.status == 'unpaid' %}⏳ UNPAID
+                {% else %}❌ CANCELLED{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <!-- Parties -->
+    <div class="parties">
+        <div>
+            <div class="party-label">From</div>
+            <div class="party-name">CondoFront / Workflow Co., Ltd.</div>
+            <div class="party-detail">billing@condofront.app</div>
+            <div class="party-detail">condofront.app</div>
+        </div>
+        <div>
+            <div class="party-label">Bill To</div>
+            <div class="party-name">{{ invoice.customer_name }}</div>
+            <div class="party-detail">{{ invoice.property_name or '' }}</div>
+            <div class="party-detail">{{ invoice.customer_email or '' }}</div>
+            {% if invoice.address %}
+            <div class="party-detail">{{ invoice.address }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Dates -->
+    <div class="dates-row">
+        <div class="date-box">
+            <div class="date-label">Invoice Date</div>
+            <div class="date-val">
+                {{ invoice.created_at.strftime('%d/%m/%Y') if invoice.created_at else '-' }}
+            </div>
+        </div>
+        <div class="date-box">
+            <div class="date-label">Due Date</div>
+            <div class="date-val" style="color:#dc2626;">
+                {{ invoice.due_date.strftime('%d/%m/%Y') if invoice.due_date else '-' }}
+            </div>
+        </div>
+        <div class="date-box">
+            <div class="date-label">Paid Date</div>
+            <div class="date-val" style="color:#22c55e;">
+                {{ invoice.paid_at.strftime('%d/%m/%Y') if invoice.paid_at else '-' }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Line items -->
+    <table class="inv-table">
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th>Period</th>
+                <th class="text-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <strong>{{ invoice.package_name or 'CondoFront Subscription' }}</strong>
+                    <div style="font-size:.78rem; color:#64748b; margin-top:2px;">
+                        Property: {{ invoice.property_name or 'N/A' }}
+                    </div>
+                </td>
+                <td>
+                    {{ invoice.period_start.strftime('%d/%m/%Y') if invoice.period_start else '-' }}
+                    —
+                    {{ invoice.period_end.strftime('%d/%m/%Y') if invoice.period_end else '-' }}
+                </td>
+                <td class="text-right amount-col">
+                    ฿{{ '{:,.2f}'.format(invoice.amount or 0) }}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Total -->
+    <div class="total-box">
+        <div class="total-label">Total Amount Due</div>
+        <div class="total-amount">
+            ฿{{ '{:,.2f}'.format(invoice.amount or 0) }}
+            <span>THB</span>
+        </div>
+    </div>
+
+    {% if invoice.note %}
+    <div class="note-box">
+        <strong>Note:</strong> {{ invoice.note }}
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="inv-footer">
+        <strong>CondoFront</strong> — Connect. Automate. Optimize.<br>
+        For billing inquiries: billing@condofront.app · condofront.app<br>
+        Thank you for your business! 🙏
+    </div>
+
+</body>
+</html>

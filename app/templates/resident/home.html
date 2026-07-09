@@ -118,7 +118,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
     border-radius: 20px;
     transition: .15s;
 }
-.lang-btn.active { background: #ff7a00; color: #1a1a1a; }
+.lang-btn.active { background: #ff7a00; color: white; }
 
 /* ── APP GRID ── */
 .app-grid {
@@ -391,6 +391,14 @@ body { background: #f0f4f8; color: #1a1a1a; }
             <div class="tile-label" style="color:#ff7a00;">
                 {{ 'My Visitors' if lang == 'en' else 'ผู้มาเยี่ยม' }}
             </div>
+        </a>
+
+        <a href="{{ url_for('announcement.resident_view') }}" class="app-tile">
+            {% if unread_ann > 0 %}
+            <span class="tile-badge orange">{{ unread_ann }}</span>
+            {% endif %}
+            <div class="tile-icon"><i class="bi bi-megaphone" style="font-size:2rem;"></i></div>
+            <div class="tile-label">{{ 'Announcements' if lang == 'en' else 'ประกาศ' }}</div>
         </a>
 
         <a href="{{ url_for('auth.contact') }}" class="app-tile">

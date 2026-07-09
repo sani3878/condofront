@@ -12,6 +12,9 @@ class Config:
     DB_PORT = int(os.environ.get('PGPORT') or os.environ.get('DB_PORT', 5432))
     SESSION_PERMANENT = True
     REMEMBER_COOKIE_DURATION = 30  # days
+    PROMPTPAY_ID   = os.environ.get('PROMPTPAY_ID', '0000000000')
+    UPLOAD_FOLDER  = os.environ.get('UPLOAD_FOLDER', 'app/static/uploads')
+    MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5MB max upload
 
     # Email — SMTP SSL port 465 (works on Railway, no port blocking)
     SMTP_HOST        = os.environ.get('SMTP_HOST', 'mail.ijsiam.com')

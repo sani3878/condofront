@@ -1,0 +1,338 @@
+{% extends "shared/base.html" %}
+{% block content %}
+{% set lang = session.get('lang', 'th') %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.wrap { padding: 1.25rem 1rem; max-width: 480px; margin: 0 auto; }
+.page-header {
+    background: #1e3a5f; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1.25rem; color: white;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.page-header h2 { font-size: 1.1rem; font-weight: 800; margin: 0; color: white; }
+.back-link { color: #ff7a00; text-decoration: none; font-size: .88rem; font-weight: 700; }
+
+/* Invoice summary */
+.inv-summary {
+    background: white; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1rem; box-shadow: 0 2px 12px rgba(0,0,0,.06);
+}
+.inv-row {
+    display: flex; justify-content: space-between;
+    font-size: .88rem; padding: .4rem 0;
+    border-bottom: 1px solid #f0f4f8;
+}
+.inv-row:last-child { border-bottom: none; }
+.inv-label { color: #64748b; }
+.inv-value { font-weight: 700; color: #1a1a1a; }
+.inv-total {
+    display: flex; justify-content: space-between;
+    font-size: 1.1rem; font-weight: 900; padding: .75rem 0 .25rem;
+    color: #1e3a5f;
+}
+.savings-badge {
+    background: #f0fdf4; color: #166534; border: 1px solid #86efac;
+    border-radius: 10px; padding: .5rem .85rem;
+    font-size: .82rem; font-weight: 700; text-align: center;
+    margin-bottom: .75rem;
+}
+
+/* QR section */
+.qr-card {
+    background: white; border-radius: 16px; padding: 1.5rem;
+    margin-bottom: 1rem; box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    text-align: center;
+}
+.qr-title { font-size: .95rem; font-weight: 800; color: #1e3a5f; margin-bottom: .25rem; }
+.qr-sub { font-size: .78rem; color: #64748b; margin-bottom: 1rem; }
+.qr-wrap {
+    display: flex; justify-content: center; margin-bottom: 1rem;
+}
+#qrcode canvas { border-radius: 12px; }
+.promptpay-logo {
+    font-size: .82rem; color: #64748b; margin-bottom: .5rem;
+}
+.promptpay-id {
+    font-size: 1.1rem; font-weight: 900; color: #1e3a5f;
+    font-family: monospace; letter-spacing: 2px;
+    background: #f0f4f8; border-radius: 8px; padding: .4rem .85rem;
+    display: inline-block; margin-bottom: .75rem;
+}
+.amount-display {
+    font-size: 1.8rem; font-weight: 900; color: #ff7a00;
+    margin-bottom: .25rem;
+}
+.ref-display {
+    font-size: .78rem; color: #94a3b8; font-family: monospace;
+}
+.btn-save-qr {
+    background: #1e3a5f; border: none; color: white;
+    font-weight: 700; border-radius: 10px; padding: .55rem 1.25rem;
+    font-size: .85rem; cursor: pointer; margin-top: .75rem;
+}
+
+/* Upload section */
+.upload-card {
+    background: white; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1rem; box-shadow: 0 2px 12px rgba(0,0,0,.06);
+}
+.step-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #ff7a00; color: white; font-size: .75rem; font-weight: 900;
+    margin-right: .4rem; flex-shrink: 0;
+}
+.step-title {
+    font-size: .9rem; font-weight: 800; color: #1e3a5f;
+    display: flex; align-items: center; margin-bottom: .75rem;
+}
+.upload-zone {
+    border: 2px dashed #cbd5e1; border-radius: 12px;
+    padding: 1.5rem; text-align: center; cursor: pointer;
+    transition: .2s; background: #f8fafc;
+    margin-bottom: .75rem;
+}
+.upload-zone:hover { border-color: #1e3a5f; background: #f0f4ff; }
+.upload-zone.has-file { border-color: #22c55e; background: #f0fdf4; }
+.upload-icon { font-size: 2rem; margin-bottom: .35rem; }
+.upload-text { font-size: .82rem; color: #64748b; }
+.upload-file-name { font-size: .82rem; color: #22c55e; font-weight: 700; margin-top: .35rem; }
+
+.btn-submit {
+    width: 100%; padding: 14px; border: none; border-radius: 12px;
+    background: linear-gradient(135deg, #ff7a00, #ff9a00);
+    color: white; font-size: 1rem; font-weight: 900; cursor: pointer;
+    box-shadow: 0 4px 15px rgba(255,122,0,.4);
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+@keyframes pulse-glow {
+    0%,100% { box-shadow: 0 4px 15px rgba(255,122,0,.4); }
+    50%      { box-shadow: 0 4px 25px rgba(255,122,0,.7); }
+}
+.btn-submit:hover { transform: translateY(-2px); }
+
+.note-box {
+    background: #fffbeb; border: 1.5px solid #fcd34d;
+    border-radius: 12px; padding: .85rem;
+    font-size: .78rem; color: #92400e; margin-bottom: 1rem;
+    line-height: 1.6;
+}
+</style>
+
+<div class="wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                    alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="page-header">
+        <h2>🧾 {{ 'Payment' if lang == 'en' else 'ชำระเงิน' }}</h2>
+        <a href="{{ url_for('billing.upgrade') }}" class="back-link">
+            ← {{ 'Back' if lang == 'en' else 'กลับ' }}
+        </a>
+    </div>
+
+    <!-- Invoice summary -->
+    <div class="inv-summary">
+        <div class="inv-row">
+            <span class="inv-label">{{ 'Package' if lang == 'en' else 'แพ็กเกจ' }}</span>
+            <span class="inv-value">{{ pkg.package_name }}</span>
+        </div>
+        <div class="inv-row">
+            <span class="inv-label">{{ 'Billing Period' if lang == 'en' else 'รอบบิล' }}</span>
+            <span class="inv-value">
+                {{ price_info.label }}
+                ({{ price_info.months }} {{ 'month' if price_info.months == 1 else 'months' if lang == 'en' else 'เดือน' }})
+            </span>
+        </div>
+        <div class="inv-row">
+            <span class="inv-label">{{ 'Period' if lang == 'en' else 'ระยะเวลา' }}</span>
+            <span class="inv-value">
+                {{ period_start.strftime('%d/%m/%Y') }}
+                – {{ period_end.strftime('%d/%m/%Y') }}
+            </span>
+        </div>
+        <div class="inv-row">
+            <span class="inv-label">{{ 'Due Date' if lang == 'en' else 'กำหนดชำระ' }}</span>
+            <span class="inv-value" style="color:#dc2626;">
+                {{ due_date.strftime('%d/%m/%Y') }}
+            </span>
+        </div>
+        <div class="inv-row">
+            <span class="inv-label">{{ 'Invoice No.' if lang == 'en' else 'เลขใบแจ้งหนี้' }}</span>
+            <span class="inv-value" style="font-family:monospace;">{{ invoice_no }}</span>
+        </div>
+        {% if price_info.savings > 0 %}
+        <div class="savings-badge">
+            🎉 {{ 'You save ฿' if lang == 'en' else 'คุณประหยัด ฿' }}{{ price_info.savings }}
+            {{ 'compared to monthly!' if lang == 'en' else 'เมื่อเทียบกับรายเดือน!' }}
+        </div>
+        {% endif %}
+        <div class="inv-total">
+            <span>{{ 'Total' if lang == 'en' else 'ยอดรวม' }}</span>
+            <span>฿{{ '{:,.2f}'.format(price_info.amount) }}</span>
+        </div>
+    </div>
+
+    <!-- PromptPay QR -->
+    <div class="qr-card">
+        <div class="qr-title">
+            📱 {{ 'Scan to Pay via PromptPay' if lang == 'en' else 'สแกน PromptPay เพื่อชำระเงิน' }}
+        </div>
+        <div class="qr-sub">
+            {{ 'Works with all Thai banking apps' if lang == 'en' else 'รองรับทุกแอปธนาคารไทย' }}
+        </div>
+
+        <!-- QR image — generated server-side -->
+        <div class="qr-wrap" id="qrWrap">
+            <div id="qrLoading"
+                 style="width:220px; height:220px; display:flex;
+                        align-items:center; justify-content:center;
+                        background:#f8fafc; border-radius:12px;
+                        color:#64748b; font-size:.85rem;">
+                ⏳ {{ 'Generating QR...' if lang == 'en' else 'กำลังสร้าง QR...' }}
+            </div>
+            <img id="qrImage" src="" alt="PromptPay QR"
+                 style="display:none; width:220px; height:220px;
+                        border-radius:12px; border:2px solid #e2e8f0;">
+        </div>
+
+        <div class="promptpay-logo">🏦 PromptPay</div>
+        <div class="promptpay-id">{{ promptpay_id }}</div>
+        <div class="amount-display">฿{{ '{:,.2f}'.format(price_info.amount) }}</div>
+        <div class="ref-display">REF: {{ invoice_no }}</div>
+
+        <!-- Copy payload button -->
+        <div style="margin-top:.75rem; display:flex; gap:.5rem; justify-content:center; flex-wrap:wrap;">
+            <button class="btn-save-qr" onclick="saveQRImage()">
+                <i class="bi bi-qr-code"></i>
+                {{ 'Save QR Image' if lang == 'en' else 'บันทึกรูป QR' }}
+            </button>
+            <button class="btn-save-qr" onclick="copyPayload()"
+                    style="background:#f0f4f8; color:#1e3a5f;"
+                    id="copyPayloadBtn">
+                📋 {{ 'Copy Code' if lang == 'en' else 'คัดลอกโค้ด' }}
+            </button>
+        </div>
+
+        <div id="verifiedBadge" style="display:none; margin-top:.75rem;
+             background:#f0fdf4; border:1.5px solid #86efac;
+             border-radius:10px; padding:.65rem; text-align:center;
+             color:#166534; font-weight:700; font-size:.85rem;">
+            ✅ {{ 'QR Code Ready — Scan with your banking app' if lang == 'en' else 'QR Code พร้อมแล้ว — สแกนด้วยแอปธนาคาร' }}
+        </div>
+    </div>
+
+    <div class="note-box">
+        💡 <strong>{{ 'Instructions:' if lang == 'en' else 'คำแนะนำ:' }}</strong><br>
+        1. {{ 'Scan the QR code with your banking app' if lang == 'en' else 'สแกน QR ด้วยแอปธนาคาร' }}<br>
+        2. {{ 'Verify amount: ฿' if lang == 'en' else 'ตรวจสอบยอด: ฿' }}{{ '{:,.2f}'.format(price_info.amount) }}<br>
+        3. {{ 'Complete payment and take a screenshot' if lang == 'en' else 'ชำระเงินและถ่ายภาพหน้าจอสลิป' }}<br>
+        4. {{ 'Upload the slip below' if lang == 'en' else 'อัปโหลดสลิปด้านล่าง' }}<br>
+        5. {{ 'We will verify within 24 hours' if lang == 'en' else 'เราจะตรวจสอบภายใน 24 ชั่วโมง' }}
+    </div>
+
+    <!-- Slip upload -->
+    <div class="upload-card">
+        <div class="step-title">
+            <span class="step-num">📎</span>
+            {{ 'Upload Payment Slip' if lang == 'en' else 'อัปโหลดสลิปการโอนเงิน' }}
+        </div>
+
+        <form method="POST" action="{{ url_for('billing.submit_payment') }}"
+              enctype="multipart/form-data" id="paymentForm">
+            <input type="hidden" name="package_id"   value="{{ pkg.idno }}">
+            <input type="hidden" name="plan_type"     value="{{ plan_type }}">
+            <input type="hidden" name="amount"        value="{{ price_info.amount }}">
+            <input type="hidden" name="invoice_no"    value="{{ invoice_no }}">
+            <input type="hidden" name="period_start"  value="{{ period_start }}">
+            <input type="hidden" name="period_end"    value="{{ period_end }}">
+            <input type="hidden" name="due_date"      value="{{ due_date }}">
+
+            <div class="upload-zone" id="dropZone" onclick="document.getElementById('slipFile').click()">
+                <div class="upload-icon">📷</div>
+                <div class="upload-text">
+                    {{ 'Tap to upload slip (JPG, PNG, PDF)' if lang == 'en' else 'แตะเพื่ออัปโหลดสลิป (JPG, PNG, PDF)' }}
+                </div>
+                <div class="upload-file-name" id="fileName"></div>
+            </div>
+            <input type="file" id="slipFile" name="slip"
+                   accept=".jpg,.jpeg,.png,.pdf"
+                   onchange="showFileName(this)" style="display:none;">
+
+            <button type="submit" class="btn-submit">
+                ✅ {{ 'Submit Payment' if lang == 'en' else 'ส่งหลักฐานการชำระเงิน' }}
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+let qrPayload  = '';
+let qrImageSrc = '';
+
+// Fetch real PromptPay QR from server on page load
+window.addEventListener('load', function() {
+    const amount = '{{ price_info.amount }}';
+    const ref    = '{{ invoice_no }}';
+
+    fetch(`/billing/promptpay-qr?amount=${amount}&ref=${ref}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                qrPayload  = data.payload;
+                qrImageSrc = data.image;
+
+                // Show QR image
+                const img = document.getElementById('qrImage');
+                img.src = data.image;
+                img.style.display = 'block';
+                document.getElementById('qrLoading').style.display = 'none';
+                document.getElementById('verifiedBadge').style.display = 'block';
+            } else {
+                document.getElementById('qrLoading').textContent =
+                    '⚠️ {{ "Could not generate QR. Please use PromptPay ID above." if lang == "en" else "ไม่สามารถสร้าง QR ได้ กรุณาใช้เบอร์ PromptPay ด้านบน" }}';
+            }
+        })
+        .catch(() => {
+            document.getElementById('qrLoading').textContent =
+                '⚠️ {{ "Could not generate QR. Please use PromptPay ID above." if lang == "en" else "ไม่สามารถสร้าง QR ได้ กรุณาใช้เบอร์ PromptPay ด้านบน" }}';
+        });
+});
+
+function saveQRImage() {
+    if (!qrImageSrc) {
+        alert('{{ "QR not ready yet" if lang == "en" else "QR ยังไม่พร้อม" }}');
+        return;
+    }
+    const link = document.createElement('a');
+    link.download = '{{ invoice_no }}-promptpay-qr.png';
+    link.href = qrImageSrc;
+    link.click();
+}
+
+function copyPayload() {
+    if (!qrPayload) return;
+    navigator.clipboard.writeText(qrPayload).then(function() {
+        const btn = document.getElementById('copyPayloadBtn');
+        btn.textContent = '✅ {{ "Copied!" if lang == "en" else "คัดลอกแล้ว!" }}';
+        setTimeout(() => {
+            btn.innerHTML = '📋 {{ "Copy Code" if lang == "en" else "คัดลอกโค้ด" }}';
+        }, 2000);
+    });
+}
+
+function showFileName(input) {
+    if (input.files && input.files[0]) {
+        const name = input.files[0].name;
+        document.getElementById('fileName').textContent = '✅ ' + name;
+        document.getElementById('dropZone').classList.add('has-file');
+    }
+}
+</script>
+{% endblock %}

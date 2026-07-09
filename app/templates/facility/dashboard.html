@@ -13,7 +13,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
 }
 .page-header h2 { font-size: 1.2rem; font-weight: 800; margin: 0; color: white; }
 .btn-header {
-    background: #ff7a00; border: none; color: #1a1a1a;
+    background: #ff7a00; border: none; color: white;
     font-weight: 800; border-radius: 10px;
     padding: .55rem 1rem; font-size: .88rem; text-decoration: none;
     white-space: nowrap;
@@ -107,14 +107,14 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
 
 /* Settings button — prominent orange */
 .btn-settings-icon {
-    background: #ff7a00; border: none; color: #1a1a1a;
+    background: #ff7a00; border: none; color: white;
     font-weight: 900; border-radius: 8px; padding: .45rem .7rem;
     font-size: .85rem; text-decoration: none; text-align: center;
     display: flex; align-items: center; justify-content: center;
     box-shadow: 0 2px 6px rgba(255,122,0,.3);
     flex-shrink: 0;
 }
-.btn-settings-icon:hover { background: #eb6d00; color: #1a1a1a; }
+.btn-settings-icon:hover { background: #eb6d00; color: white; }
 </style>
 
 <div class="main-wrap">
@@ -160,7 +160,7 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
         </div>
         <div class="stat-box">
             <div class="stat-num" style="color:#f59e0b;">{{ pending }}</div>
-            <div class="stat-label">{{ 'Pending' if lang == 'en' else '{{ 'Pending' if lang == 'en' else 'รออนุมัติ' }}' }}</div>
+            <div class="stat-label">{{ 'Pending' if lang == 'en' else 'รออนุมัติ' }}</div>
         </div>
     </div>
 

@@ -77,7 +77,7 @@ body { background: #f0f4f8; }
     width: 100%;
 }
 .btn-save {
-    background: #ff7a00; border: none; color: #1a1a1a;
+    background: #ff7a00; border: none; color: white;
     font-weight: 800; border-radius: 10px; padding: .6rem 1.25rem;
     cursor: pointer; font-size: .9rem; margin-top: .5rem;
 }
@@ -146,6 +146,45 @@ body { background: #f0f4f8; }
         <div class="act-box">
             <div class="act-num" style="color:#22c55e;">{{ activity.bookings or 0 }}</div>
             <div class="act-label">🏢 Bookings</div>
+        </div>
+    </div>
+
+    <!-- Notes + Impersonate -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+        <div class="cf-card">
+            <div class="card-title">📝 Internal Notes</div>
+            <form method="POST"
+                  action="{{ url_for('admin.save_note', customer_id=customer.idno) }}">
+                <textarea name="note" class="pkg-select"
+                          style="width:100%; height:100px; resize:none; font-size:.85rem;"
+                          placeholder="Private notes about this customer...">{{ customer.notes or '' }}</textarea>
+                <button type="submit"
+                        style="margin-top:.5rem; background:#1e3a5f; border:none;
+                               color:white; font-weight:700; border-radius:8px;
+                               padding:.4rem .85rem; font-size:.82rem; cursor:pointer;">
+                    💾 Save Note
+                </button>
+            </form>
+        </div>
+        <div class="cf-card">
+            <div class="card-title">👁 View As Customer</div>
+            <p style="font-size:.82rem; color:#64748b; margin-bottom:.75rem;">
+                Login as this customer to see exactly what they see.
+            </p>
+            {% for u in users %}
+            {% if u.role_name == 'Manager' %}
+            <a href="{{ url_for('admin.impersonate', user_id=u.idno) }}"
+               style="display:block; background:#8b5cf6; color:white;
+                      border-radius:8px; padding:.5rem .85rem; font-size:.82rem;
+                      font-weight:700; text-decoration:none; text-align:center;"
+               onclick="return confirm('Login as {{ u.fullname }}?')">
+                👁 View as {{ u.fullname }}
+            </a>
+            {% endif %}
+            {% endfor %}
+            {% if not users %}
+            <p style="font-size:.82rem; color:#94a3b8;">No manager found</p>
+            {% endif %}
         </div>
     </div>
 

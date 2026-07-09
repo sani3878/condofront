@@ -1,0 +1,170 @@
+{% extends "shared/base.html" %}
+{% block content %}
+{% set lang = session.get('lang', 'th') %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.wrap { padding: 1.25rem 1rem; max-width: 600px; margin: 0 auto; }
+.page-header {
+    background: #1e3a5f; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1.25rem; color: white;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.page-header h2 { font-size: 1.1rem; font-weight: 800; margin: 0; color: white; }
+
+/* Current plan card */
+.plan-card {
+    background: linear-gradient(135deg, #1e3a5f, #2d5a9e);
+    border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem;
+    color: white;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: .75rem;
+}
+.plan-name { font-size: 1.3rem; font-weight: 900; }
+.plan-meta { font-size: .78rem; color: rgba(255,255,255,.7); margin-top: .25rem; }
+.btn-upgrade-now {
+    background: linear-gradient(135deg, #ff7a00, #ff9a00);
+    color: white; border: none; border-radius: 10px;
+    padding: .55rem 1.1rem; font-size: .88rem; font-weight: 900;
+    cursor: pointer; text-decoration: none; white-space: nowrap;
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+@keyframes pulse-glow {
+    0%,100% { box-shadow: 0 4px 12px rgba(255,122,0,.5); }
+    50%      { box-shadow: 0 4px 22px rgba(255,122,0,.8); }
+}
+
+/* Invoice list */
+.cf-card {
+    background: white; border-radius: 16px; overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05);
+}
+.card-header {
+    padding: 1rem 1.25rem; border-bottom: 1.5px solid #f0f4f8;
+    font-weight: 800; color: #1e3a5f; font-size: .95rem;
+}
+.inv-row {
+    padding: .85rem 1.25rem; border-bottom: 1px solid #f0f4f8;
+    display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+}
+.inv-row:last-child { border-bottom: none; }
+.inv-no { font-family: monospace; font-weight: 800; color: #1e3a5f; font-size: .85rem; }
+.inv-meta { flex: 1; min-width: 120px; }
+.inv-pkg { font-weight: 700; font-size: .85rem; }
+.inv-period { font-size: .72rem; color: #94a3b8; }
+.inv-amount { font-weight: 900; color: #1a1a1a; font-size: .9rem; }
+.status-pill {
+    font-size: .7rem; font-weight: 700; padding: 3px 10px;
+    border-radius: 20px; white-space: nowrap;
+}
+.s-paid      { background: #dcfce7; color: #166534; }
+.s-unpaid    { background: #fee2e2; color: #991b1b; }
+.s-pending   { background: #fef3c7; color: #92400e; }
+.s-cancelled { background: #f1f5f9; color: #64748b; }
+.s-rejected  { background: #fee2e2; color: #991b1b; }
+.slip-thumb {
+    width: 36px; height: 36px; border-radius: 8px;
+    object-fit: cover; border: 1.5px solid #e2e8f0; cursor: pointer;
+}
+.empty { text-align: center; padding: 3rem; color: #94a3b8; }
+</style>
+
+<div class="wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                    alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="page-header">
+        <h2>💳 {{ 'My Billing' if lang == 'en' else 'บิลของฉัน' }}</h2>
+        <a href="{{ url_for('property.billing') }}"
+           style="color:#ff7a00; text-decoration:none; font-size:.88rem; font-weight:700;">
+            ← {{ 'Back' if lang == 'en' else 'กลับ' }}
+        </a>
+    </div>
+
+    <!-- Current plan -->
+    {% if current_sub %}
+    <div class="plan-card">
+        <div>
+            <div class="plan-name">
+                📦 {{ current_sub.package_name }}
+            </div>
+            <div class="plan-meta">
+                {{ current_sub.max_room or '∞' }}
+                {{ 'rooms/property' if lang == 'en' else 'ห้อง/โครงการ' }}
+                ·
+                {{ current_sub.max_property or 1 }}
+                {{ 'propert' + ('y' if (current_sub.max_property or 1) == 1 else 'ies') if lang == 'en' else 'โครงการ' }}
+                {% if current_sub.end_date %}
+                · {{ 'Expires' if lang == 'en' else 'หมดอายุ' }}:
+                {{ current_sub.end_date.strftime('%d/%m/%Y') }}
+                {% endif %}
+            </div>
+        </div>
+        <a href="{{ url_for('billing.upgrade') }}" class="btn-upgrade-now">
+            ⚡ {{ 'Upgrade' if lang == 'en' else 'อัปเกรด' }}
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Invoice history -->
+    <div class="cf-card">
+        <div class="card-header">
+            🧾 {{ 'Billing History' if lang == 'en' else 'ประวัติการชำระเงิน' }}
+        </div>
+        {% if invoices %}
+        {% for inv in invoices %}
+        <div class="inv-row">
+            <div class="inv-meta">
+                <div class="inv-no">{{ inv.invoice_no }}</div>
+                <div class="inv-pkg">{{ inv.package_name or '-' }}</div>
+                <div class="inv-period">
+                    {{ inv.period_start.strftime('%d/%m/%y') if inv.period_start else '-' }}
+                    – {{ inv.period_end.strftime('%d/%m/%y') if inv.period_end else '-' }}
+                </div>
+            </div>
+            <div class="inv-amount">฿{{ '{:,.0f}'.format(inv.amount or 0) }}</div>
+
+            <!-- Payment status -->
+            {% if inv.payment_status == 'pending' %}
+            <span class="status-pill s-pending">
+                ⏳ {{ 'Verifying' if lang == 'en' else 'กำลังตรวจสอบ' }}
+            </span>
+            {% elif inv.payment_status == 'verified' or inv.status == 'paid' %}
+            <span class="status-pill s-paid">
+                ✅ {{ 'Paid' if lang == 'en' else 'ชำระแล้ว' }}
+            </span>
+            {% elif inv.payment_status == 'rejected' %}
+            <span class="status-pill s-rejected">
+                ❌ {{ 'Rejected' if lang == 'en' else 'ปฏิเสธ' }}
+            </span>
+            {% elif inv.status == 'unpaid' %}
+            <span class="status-pill s-unpaid">
+                ⏰ {{ 'Unpaid' if lang == 'en' else 'ยังไม่ชำระ' }}
+            </span>
+            {% else %}
+            <span class="status-pill s-cancelled">-</span>
+            {% endif %}
+
+            <!-- Slip thumbnail -->
+            {% if inv.slip_path %}
+            <img src="{{ url_for('static', filename=inv.slip_path) }}"
+                 class="slip-thumb" alt="slip"
+                 onclick="window.open(this.src)">
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="empty">
+            <div style="font-size:2.5rem; margin-bottom:.75rem;">🧾</div>
+            {{ 'No billing history yet' if lang == 'en' else 'ยังไม่มีประวัติการชำระเงิน' }}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

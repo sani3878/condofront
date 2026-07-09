@@ -1,0 +1,201 @@
+{% extends "shared/base.html" %}
+{% block content %}
+{% set lang = session.get('lang', 'th') %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.main-wrap { padding: 1.25rem 1rem; max-width: 800px; margin: 0 auto; }
+.page-header {
+    background: #1e3a5f; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1.25rem; color: white;
+    display: flex; align-items: center;
+    justify-content: space-between; flex-wrap: wrap; gap: .75rem;
+}
+.page-header h2 { font-size: 1.2rem; font-weight: 800; margin: 0; color: white; }
+.btn-new {
+    background: #ff7a00; border: none; color: white;
+    font-weight: 800; border-radius: 10px; padding: .55rem 1rem;
+    font-size: .88rem; cursor: pointer; white-space: nowrap;
+}
+.ann-card {
+    background: white; border-radius: 14px; padding: 1.1rem;
+    margin-bottom: .75rem; box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    border-left: 4px solid #e2e8f0;
+}
+.ann-card.target-all      { border-left-color: #3b82f6; }
+.ann-card.target-resident { border-left-color: #8b5cf6; }
+.ann-title { font-weight: 800; font-size: .95rem; margin-bottom: .35rem; }
+.ann-body  { font-size: .85rem; color: #475569; margin-bottom: .5rem; line-height: 1.5; }
+.ann-meta  { font-size: .72rem; color: #94a3b8; display: flex; gap: .75rem; flex-wrap: wrap; }
+.target-tag {
+    font-size: .7rem; font-weight: 700; padding: 2px 8px;
+    border-radius: 20px; white-space: nowrap;
+}
+.tag-all      { background: #dbeafe; color: #1e40af; }
+.tag-resident { background: #ede9fe; color: #5b21b6; }
+.read-count   { background: #f0fdf4; color: #166534; font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:20px; }
+.btn-del {
+    background: none; border: 1.5px solid #fca5a5; color: #dc2626;
+    border-radius: 8px; padding: .3rem .65rem; font-size: .75rem;
+    font-weight: 700; cursor: pointer;
+}
+.empty { text-align: center; padding: 3rem; color: #64748b;
+         background: white; border-radius: 14px; }
+.form-control, .form-select {
+    border-radius: 10px; border: 1.5px solid #e2e8f0;
+    padding: 9px 12px; font-size: .9rem; width: 100%; color: #1e293b;
+    margin-bottom: .65rem;
+}
+.form-label { font-weight: 700; font-size: .82rem; margin-bottom: .3rem; display: block; }
+.btn-save {
+    background: #ff7a00; border: none; color: white;
+    font-weight: 800; border-radius: 10px; padding: .65rem 1.25rem; cursor: pointer;
+}
+</style>
+
+<div class="main-wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                    alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="page-header">
+        <h2>📢 {{ 'Announcements' if lang == 'en' else 'ประกาศ' }}</h2>
+        <button class="btn-new" data-bs-toggle="modal" data-bs-target="#newModal">
+            ➕ {{ 'New Announcement' if lang == 'en' else 'สร้างประกาศใหม่' }}
+        </button>
+    </div>
+
+    {% if announcements %}
+        {% for a in announcements %}
+        <div class="ann-card target-{{ a.target }}">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:.5rem;">
+                <div style="flex:1;">
+                    <div class="ann-title">{{ a.title }}</div>
+                    <div class="ann-body">{{ a.body[:150] }}{% if a.body|length > 150 %}...{% endif %}</div>
+                    <div class="ann-meta">
+                        <span>{{ a.created_at.strftime('%d/%m/%y %H:%M') if a.created_at else '-' }}</span>
+                        <span>{{ a.created_by_name or '-' }}</span>
+                        {% if a.target == 'all' %}
+                        <span class="target-tag tag-all">
+                            🌐 {{ 'All' if lang == 'en' else 'ทุกคน' }}
+                        </span>
+                        {% else %}
+                        <span class="target-tag tag-resident">
+                            👤 {{ a.building or '' }}{{ a.room_no or 'Specific' }}
+                        </span>
+                        {% if a.send_email %}
+                        <span style="color:#22c55e; font-size:.7rem; font-weight:700;">📧 {{ 'Email sent' if lang == 'en' else 'ส่งอีเมลแล้ว' }}</span>
+                        {% endif %}
+                        {% endif %}
+                        <span class="read-count">
+                            👁 {{ a.read_count }} {{ 'read' if lang == 'en' else 'อ่านแล้ว' }}
+                        </span>
+                    </div>
+                </div>
+                <form method="POST"
+                      action="{{ url_for('announcement.delete', ann_id=a.idno) }}"
+                      onsubmit="return confirm('{{ 'Delete?' if lang == 'en' else 'ลบประกาศนี้?' }}');">
+                    <button type="submit" class="btn-del">🗑</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="empty">
+        <div style="font-size:2.5rem; margin-bottom:.75rem;">📢</div>
+        {{ 'No announcements yet' if lang == 'en' else 'ยังไม่มีประกาศ' }}
+    </div>
+    {% endif %}
+</div>
+
+<!-- New announcement modal -->
+<div class="modal fade" id="newModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:16px;">
+            <div class="modal-header" style="border-bottom:1.5px solid #f0f4f8;">
+                <h5 class="modal-title" style="font-weight:800; color:#1e3a5f;">
+                    📢 {{ 'New Announcement' if lang == 'en' else 'สร้างประกาศใหม่' }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('announcement.create') }}">
+                <div class="modal-body" style="padding:1.25rem;">
+
+                    <label class="form-label">{{ 'Title' if lang == 'en' else 'หัวข้อ' }} *</label>
+                    <input type="text" name="title" class="form-control"
+                           placeholder="{{ 'Announcement title...' if lang == 'en' else 'หัวข้อประกาศ...' }}"
+                           required>
+
+                    <label class="form-label">{{ 'Message' if lang == 'en' else 'เนื้อหา' }} *</label>
+                    <textarea name="body" class="form-control" rows="4"
+                              placeholder="{{ 'Type your message...' if lang == 'en' else 'พิมพ์เนื้อหาประกาศ...' }}"
+                              required></textarea>
+
+                    <label class="form-label">{{ 'Send To' if lang == 'en' else 'ส่งถึง' }}</label>
+                    <select name="target" class="form-select" id="targetSelect"
+                            onchange="toggleResident(this.value)">
+                        <option value="all">
+                            🌐 {{ 'All (Staff + Residents)' if lang == 'en' else 'ทุกคน (พนักงาน + ลูกบ้าน)' }}
+                        </option>
+                        <option value="resident">
+                            👤 {{ 'Specific Resident' if lang == 'en' else 'ลูกบ้านเฉพาะคน' }}
+                        </option>
+                    </select>
+
+                    <!-- Specific resident selector -->
+                    <div id="residentSelect" style="display:none;">
+                        <label class="form-label">{{ 'Select Resident' if lang == 'en' else 'เลือกลูกบ้าน' }}</label>
+                        <select name="target_user_id" class="form-select">
+                            <option value="">-- {{ 'Select' if lang == 'en' else 'เลือก' }} --</option>
+                            {% for r in residents %}
+                            <option value="{{ r.idno }}">
+                                {{ r.building or '' }}{{ r.room_no }} — {{ r.fullname }}
+                            </option>
+                            {% endfor %}
+                        </select>
+
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox"
+                                   name="send_email" value="true" id="sendEmail">
+                            <label class="form-check-label" for="sendEmail" style="font-size:.85rem;">
+                                📧 {{ 'Also send email notification' if lang == 'en' else 'ส่งอีเมลแจ้งเตือนด้วย' }}
+                            </label>
+                        </div>
+                    </div>
+
+                    <label class="form-label" style="margin-top:.5rem;">
+                        {{ 'Expires After (days)' if lang == 'en' else 'หมดอายุหลัง (วัน)' }}
+                    </label>
+                    <select name="expires_days" class="form-select">
+                        <option value="">{{ 'Never expires' if lang == 'en' else 'ไม่หมดอายุ' }}</option>
+                        <option value="1">1 {{ 'day' if lang == 'en' else 'วัน' }}</option>
+                        <option value="7">7 {{ 'days' if lang == 'en' else 'วัน' }}</option>
+                        <option value="30" selected>30 {{ 'days' if lang == 'en' else 'วัน' }}</option>
+                        <option value="90">90 {{ 'days' if lang == 'en' else 'วัน' }}</option>
+                    </select>
+                </div>
+                <div class="modal-footer" style="border-top:1.5px solid #f0f4f8;">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                        {{ 'Cancel' if lang == 'en' else 'ยกเลิก' }}
+                    </button>
+                    <button type="submit" class="btn-save btn">
+                        📢 {{ 'Publish' if lang == 'en' else 'เผยแพร่' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleResident(val) {
+    document.getElementById('residentSelect').style.display =
+        val === 'resident' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

@@ -53,11 +53,26 @@ def home():
         WHERE registered_by = %s AND status = 'pending'
     """, [current_user.id])['cnt'] if current_user.id else 0
 
+    # Unread announcements count
+    unread_ann = query_one("""
+        SELECT COUNT(*) AS cnt FROM tblannouncement a
+        WHERE a.property_id = %s
+          AND a.is_active = TRUE
+          AND (a.expires_at IS NULL OR a.expires_at > NOW())
+          AND (a.target = 'all' OR a.target_user_id = %s)
+          AND NOT EXISTS (
+              SELECT 1 FROM tblannouncement_read ar
+              WHERE ar.announcement_id = a.idno AND ar.user_id = %s
+          )
+    """, [current_user.property_id, current_user.id, current_user.id])
+    unread_ann = unread_ann['cnt'] if unread_ann else 0
+
     return render_template('resident/home.html',
         unit=unit,
         unit_members=unit_members,
         waiting=waiting,
-        pending_visitors=pending_visitors)
+        pending_visitors=pending_visitors,
+        unread_ann=unread_ann)
 
 
 @resident_bp.route('/unit')

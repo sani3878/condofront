@@ -841,3 +841,53 @@ def delete_user(user_id):
     if user:
         return redirect(url_for('property.detail', property_id=user['property_id']))
     return redirect(url_for('property.dashboard'))
+
+
+@property_bp.route('/room/reset-code/<int:room_id>', methods=['POST'])
+@login_required
+def reset_invite_code(room_id):
+    """Reset invite code for a room — old code instantly invalid."""
+    import secrets as _s
+    new_code = _s.token_urlsafe(6).upper()[:8]
+
+    db  = get_db()
+    cur = db.cursor()
+    room = query_one("""
+        SELECT r.property_id FROM tblroom r WHERE r.idno = %s
+    """, [room_id])
+
+    if not room:
+        flash('ไม่พบห้อง', 'danger')
+        return redirect(url_for('property.dashboard'))
+
+    cur.execute("""
+        UPDATE tblroom SET
+            invite_code     = %s,
+            invite_used     = FALSE,
+            invite_reset_at = NOW()
+        WHERE idno = %s
+    """, [new_code, room_id])
+    db.commit()
+    flash(f'รีเซ็ตรหัสเชิญสำเร็จ — รหัสใหม่: {new_code}', 'success')
+    return redirect(url_for('property.detail', property_id=room['property_id']))
+
+
+@property_bp.route('/rooms/print-labels')
+@login_required
+def print_room_labels():
+    """Print room reference labels for all rooms."""
+    rooms = query_all("""
+        SELECT idno, building, room_no, invite_code, owner_name
+        FROM tblroom
+        WHERE property_id = %s AND is_active = TRUE
+        ORDER BY building, room_no
+    """, [current_user.property_id])
+
+    property_info = query_one("""
+        SELECT property_name FROM tblproperty WHERE idno = %s
+    """, [current_user.property_id])
+
+    return render_template('property/room_labels.html',
+        rooms=rooms,
+        property_name=property_info['property_name'] if property_info else '',
+        hide_navbar=True)

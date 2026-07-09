@@ -1,0 +1,173 @@
+{% extends "shared/base.html" %}
+{% block content %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.main-wrap { padding: 1.25rem 1rem; max-width: 900px; margin: 0 auto; }
+.page-header {
+    background: #1e3a5f; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1.25rem; color: white;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.page-header h2 { font-size: 1.2rem; font-weight: 800; margin: 0; color: white; }
+.cf-card {
+    background: white; border-radius: 16px; overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05); margin-bottom: 1rem;
+}
+.slip-row {
+    padding: 1rem 1.25rem; border-bottom: 1px solid #f0f4f8;
+    display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap;
+}
+.slip-row:last-child { border-bottom: none; }
+.slip-thumb {
+    width: 80px; height: 80px; object-fit: cover;
+    border-radius: 10px; border: 1.5px solid #e2e8f0;
+    cursor: pointer; flex-shrink: 0;
+}
+.slip-no-img {
+    width: 80px; height: 80px; background: #f0f4f8; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; flex-shrink: 0;
+}
+.slip-info { flex: 1; min-width: 200px; }
+.slip-name { font-weight: 800; font-size: .95rem; }
+.slip-meta { font-size: .78rem; color: #64748b; margin-top: .25rem; line-height: 1.6; }
+.slip-amount { font-size: 1.2rem; font-weight: 900; color: #1e3a5f; }
+.status-pill {
+    font-size: .72rem; font-weight: 700; padding: 3px 10px;
+    border-radius: 20px; white-space: nowrap; display: inline-block;
+    margin-bottom: .5rem;
+}
+.s-pending  { background: #fef3c7; color: #92400e; }
+.s-verified { background: #dcfce7; color: #166534; }
+.s-rejected { background: #fee2e2; color: #991b1b; }
+.slip-actions { display: flex; flex-direction: column; gap: .4rem; min-width: 140px; }
+.btn-approve {
+    background: #22c55e; border: none; color: white;
+    font-weight: 800; border-radius: 8px; padding: .5rem .85rem;
+    font-size: .82rem; cursor: pointer; text-align: center;
+}
+.btn-reject {
+    background: none; border: 1.5px solid #fca5a5; color: #dc2626;
+    font-weight: 700; border-radius: 8px; padding: .5rem .85rem;
+    font-size: .82rem; cursor: pointer; text-align: center;
+}
+.reject-reason {
+    border-radius: 8px; border: 1.5px solid #e2e8f0;
+    padding: 6px 10px; font-size: .78rem; width: 100%;
+    display: none; margin-top: .3rem;
+}
+.empty { text-align: center; padding: 3rem; color: #94a3b8; }
+.back-link { color: #ff7a00; text-decoration: none; font-size: .88rem; font-weight: 700; }
+</style>
+
+<div class="main-wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                    alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="page-header">
+        <div>
+            <h2>📎 Payment Slip Verification</h2>
+        </div>
+        <a href="{{ url_for('admin.invoices') }}" class="back-link">← Invoices</a>
+    </div>
+
+    <div class="cf-card">
+        {% if slips %}
+        {% for s in slips %}
+        <div class="slip-row">
+            <!-- Slip image -->
+            {% if s.slip_path %}
+            <img src="{{ url_for('static', filename=s.slip_path) }}"
+                 class="slip-thumb" alt="slip"
+                 onclick="window.open(this.src, '_blank')">
+            {% else %}
+            <div class="slip-no-img">📄</div>
+            {% endif %}
+
+            <!-- Info -->
+            <div class="slip-info">
+                <div class="slip-name">{{ s.customer_name }}</div>
+                <div class="slip-meta">
+                    🏢 {{ s.property_name or '-' }}<br>
+                    📦 {{ s.package_name or '-' }}
+                    ({{ 'Annual' if s.plan_type == 'annual' else 'Monthly' }})<br>
+                    🧾 {{ s.invoice_no or '-' }}<br>
+                    🕐 {{ s.submitted_at.strftime('%d/%m/%Y %H:%M') if s.submitted_at else '-' }}
+                </div>
+                <div class="slip-amount">฿{{ '{:,.2f}'.format(s.amount or 0) }}</div>
+                {% if s.status == 'rejected' and s.rejected_reason %}
+                <div style="font-size:.75rem; color:#dc2626; margin-top:.25rem;">
+                    Rejected: {{ s.rejected_reason }}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Status + Actions -->
+            <div class="slip-actions">
+                <span class="status-pill s-{{ s.status }}">
+                    {% if s.status == 'pending' %}⏳ Pending
+                    {% elif s.status == 'verified' %}✅ Verified
+                    {% else %}❌ Rejected{% endif %}
+                </span>
+
+                {% if s.status == 'pending' %}
+                <form method="POST"
+                      action="{{ url_for('admin.verify_slip', payment_id=s.idno) }}">
+                    <input type="hidden" name="action" value="approve">
+                    <button type="submit" class="btn-approve">✅ Approve</button>
+                </form>
+
+                <form method="POST"
+                      action="{{ url_for('admin.verify_slip', payment_id=s.idno) }}"
+                      onsubmit="return checkReason(this)">
+                    <input type="hidden" name="action" value="reject">
+                    <button type="button" class="btn-reject"
+                            onclick="showReject(this)">✕ Reject</button>
+                    <input type="text" name="reason" class="reject-reason"
+                           placeholder="Reason for rejection..."
+                           id="reason-{{ s.idno }}">
+                    <button type="submit" class="btn-reject"
+                            style="display:none; margin-top:.3rem; font-size:.75rem;"
+                            id="confirm-{{ s.idno }}">
+                        Confirm Reject
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="empty">
+            <div style="font-size:2.5rem; margin-bottom:.75rem;">📎</div>
+            No payment slips to review
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function showReject(btn) {
+    const form = btn.closest('form');
+    form.querySelector('.reject-reason').style.display = 'block';
+    const confirmBtn = form.querySelector('[id^="confirm-"]');
+    if (confirmBtn) confirmBtn.style.display = 'block';
+    btn.style.display = 'none';
+}
+function checkReason(form) {
+    const reason = form.querySelector('.reject-reason');
+    if (reason && !reason.value.trim()) {
+        reason.style.borderColor = '#ef4444';
+        reason.placeholder = 'Please enter a reason';
+        return false;
+    }
+    return true;
+}
+</script>
+{% endblock %}

@@ -64,7 +64,7 @@ body { background: #f0f4f8; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
 @media(max-width:500px) { .form-grid { grid-template-columns: 1fr; } }
 .btn-save {
-    background: #ff7a00; border: none; color: #1a1a1a;
+    background: #ff7a00; border: none; color: white;
     font-weight: 800; border-radius: 10px; padding: .65rem 1.25rem;
     cursor: pointer; font-size: .9rem;
 }
@@ -124,6 +124,9 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
                 <span class="limit-tag">🏠 {{ p.max_room }} rooms</span>
                 <span class="limit-tag">👥 {{ p.max_user }} users</span>
                 <span class="limit-tag">📦 {{ p.max_parcel }} parcels</span>
+                <span class="limit-tag" style="background:#fff8f3; color:#ff7a00;">
+                    🎉 {{ p.annual_discount or 10 }}% annual
+                </span>
                 <span class="customers-tag">
                     {{ p.customer_count or 0 }} customers
                 </span>
@@ -133,6 +136,7 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
                         onclick="editPackage({{ p.idno }}, '{{ p.package_name }}',
                                  {{ p.monthly_fee or 0 }}, {{ p.max_room }},
                                  {{ p.max_user }}, {{ p.max_parcel }},
+                                 {{ p.annual_discount or 10 }},
                                  {{ 'true' if p.is_active else 'false' }})">
                     ✏️ Edit
                 </button>
@@ -162,6 +166,11 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
                     <label class="form-label">Max Rooms</label>
                     <input type="number" name="max_room" id="pkgRooms"
                            class="form-control" placeholder="50" min="1">
+                </div>
+                <div>
+                    <label class="form-label">Annual Discount (%)</label>
+                    <input type="number" name="annual_discount" id="pkgDiscount"
+                           class="form-control" placeholder="10" min="0" max="50" step="1">
                 </div>
                 <div>
                     <label class="form-label">Max Staff Users</label>
@@ -202,13 +211,14 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
 </div>
 
 <script>
-function editPackage(id, name, fee, rooms, users, parcels, active) {
-    document.getElementById('pkgId').value     = id;
-    document.getElementById('pkgName').value   = name;
-    document.getElementById('pkgFee').value    = fee;
-    document.getElementById('pkgRooms').value  = rooms;
-    document.getElementById('pkgUsers').value  = users;
-    document.getElementById('pkgParcels').value = parcels;
+function editPackage(id, name, fee, rooms, users, parcels, discount, active) {
+    document.getElementById('pkgId').value       = id;
+    document.getElementById('pkgName').value     = name;
+    document.getElementById('pkgFee').value      = fee;
+    document.getElementById('pkgRooms').value    = rooms;
+    document.getElementById('pkgUsers').value    = users;
+    document.getElementById('pkgParcels').value  = parcels;
+    document.getElementById('pkgDiscount').value = discount;
     document.getElementById('pkgActive').checked = active;
     document.getElementById('formTitle').textContent = '✏️ Edit Package: ' + name;
     document.getElementById('pkgForm').scrollIntoView({ behavior: 'smooth' });

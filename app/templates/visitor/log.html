@@ -20,7 +20,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
 }
 .page-header h2 { font-size: 1.2rem; font-weight: 800; margin: 0; color: white; }
 .btn-new {
-    background: #ff7a00; border: none; color: #1a1a1a;
+    background: #ff7a00; border: none; color: white;
     font-weight: 800; border-radius: 10px; padding: .55rem 1rem;
     font-size: .88rem; cursor: pointer; white-space: nowrap;
 }
@@ -167,7 +167,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
            class="stat-box" style="text-decoration:none; cursor:pointer;
            {% if show == 'pending' %}border-color:#f59e0b; background:#fffbeb;{% endif %}">
             <div class="stat-num" style="color:#f59e0b;">{{ pending|length }}</div>
-            <div class="stat-label">{{ 'Pending' if lang == 'en' else '{{ 'Pending' if lang == 'en' else 'รอเช็คอิน' }}' }}</div>
+            <div class="stat-label">{{ 'Pending' if lang == 'en' else 'รอเช็คอิน' }}</div>
         </a>
         <a href="{{ url_for('visitor.log', show='all') }}"
            class="stat-box" style="text-decoration:none; cursor:pointer;
@@ -196,7 +196,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
                    maxlength="12" autocomplete="off" style="flex:1;">
             <button type="button" id="visitorCameraBtn"
                     onclick="startVisitorCamera()"
-                    style="background:#ff7a00; border:none; color:#1a1a1a;
+                    style="background:#ff7a00; border:none; color:white;
                            font-weight:800; border-radius:10px;
                            padding:.6rem .9rem; font-size:.9rem;
                            white-space:nowrap; flex-shrink:0;

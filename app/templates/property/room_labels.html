@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Room Labels — {{ property_name }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #f0f4f8; padding: 1.5rem;
+        }
+        .print-bar {
+            background: #1e3a5f; color: white; border-radius: 12px;
+            padding: .85rem 1.25rem; margin-bottom: 1.5rem;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .print-bar h2 { font-size: 1rem; font-weight: 800; margin: 0; }
+        .btn-print {
+            background: #ff7a00; border: none; color: white;
+            font-weight: 800; border-radius: 8px; padding: .5rem 1.25rem;
+            font-size: .88rem; cursor: pointer;
+        }
+        .labels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1rem;
+        }
+        .label-card {
+            background: white;
+            border: 2px solid #1e3a5f;
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            break-inside: avoid;
+        }
+        .label-property {
+            font-size: .65rem; font-weight: 700; color: #64748b;
+            text-transform: uppercase; letter-spacing: .5px;
+            margin-bottom: .35rem;
+        }
+        .label-room {
+            font-size: 2rem; font-weight: 900; color: #1e3a5f;
+            letter-spacing: 2px; line-height: 1;
+            margin-bottom: .5rem;
+        }
+        .label-divider {
+            height: 1.5px; background: #e2e8f0;
+            margin: .5rem 0;
+        }
+        .label-ref-title {
+            font-size: .6rem; font-weight: 700; color: #94a3b8;
+            text-transform: uppercase; letter-spacing: .5px;
+            margin-bottom: .25rem;
+        }
+        .label-ref {
+            font-size: .95rem; font-weight: 900; color: #ff7a00;
+            font-family: monospace; letter-spacing: 2px;
+        }
+        .label-owner {
+            font-size: .65rem; color: #94a3b8;
+            margin-top: .35rem; font-style: italic;
+        }
+        .label-condo {
+            font-size: .55rem; color: #cbd5e1; margin-top: .5rem;
+            font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
+        }
+
+        @media print {
+            body { background: white; padding: .5rem; }
+            .print-bar { display: none; }
+            .labels-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: .5rem;
+            }
+            .label-card {
+                border: 1.5px solid #1e3a5f;
+                border-radius: 8px;
+                padding: .65rem;
+                page-break-inside: avoid;
+            }
+            .label-room { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="print-bar">
+    <h2>🖨️ Room Labels — {{ property_name }} ({{ rooms|length }} rooms)</h2>
+    <button class="btn-print" onclick="window.print()">🖨️ Print</button>
+</div>
+
+<div class="labels-grid">
+    {% for r in rooms %}
+    <div class="label-card">
+        <div class="label-property">{{ property_name }}</div>
+        <div class="label-room">{{ r.building or '' }}{{ r.room_no }}</div>
+        <div class="label-divider"></div>
+        <div class="label-ref-title">Resident App Code</div>
+        <div class="label-ref">{{ r.invite_code or 'N/A' }}</div>
+        {% if r.owner_name %}
+        <div class="label-owner">{{ r.owner_name }}</div>
+        {% endif %}
+        <div class="label-condo">CondoFront</div>
+    </div>
+    {% endfor %}
+</div>
+
+</body>
+</html>

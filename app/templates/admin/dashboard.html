@@ -143,12 +143,21 @@ body { background: #f0f4f8; color: #1a1a1a; }
             <h2>⚙️ CondoFront Admin</h2>
             <p>Platform Management Dashboard</p>
         </div>
-        <a href="{{ url_for('admin.packages') }}"
-           style="background:#ff7a00; border:none; color:#1a1a1a;
-                  font-weight:800; border-radius:10px; padding:.55rem 1rem;
-                  font-size:.88rem; text-decoration:none; white-space:nowrap;">
-            📦 Manage Packages
-        </a>
+        <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+            <a href="{{ url_for('admin.pending_slips') }}"
+               style="background:#22c55e; border:none; color:white;
+                      font-weight:800; border-radius:10px; padding:.55rem 1rem;
+                      font-size:.88rem; text-decoration:none; white-space:nowrap;">
+                📎 Review Slips
+                {% set pending_slips_count = 0 %}
+            </a>
+            <a href="{{ url_for('admin.packages') }}"
+               style="background:#ff7a00; border:none; color:white;
+                      font-weight:800; border-radius:10px; padding:.55rem 1rem;
+                      font-size:.88rem; text-decoration:none; white-space:nowrap;">
+                📦 Packages
+            </a>
+        </div>
     </div>
 
     <!-- MRR -->
@@ -241,7 +250,27 @@ body { background: #f0f4f8; color: #1a1a1a; }
             <span class="badge-pill badge-success">{{ customers|length }}</span>
         </div>
 
+        <!-- Filter tabs -->
+        <div style="display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:1rem;">
+            {% for f, label in [
+                ('active',          '✅ Active'),
+                ('free',            '🆓 Free Plan'),
+                ('unpaid',          '⏳ Unpaid'),
+                ('pending_payment', '📎 Pending Slip'),
+                ('suspended',       '⏸ Suspended'),
+            ] %}
+            <a href="{{ url_for('admin.dashboard', filter=f, q=search) }}"
+               style="font-size:.75rem; font-weight:700; padding:4px 12px;
+                      border-radius:20px; text-decoration:none; transition:.15s;
+                      background:{{ '#1e3a5f' if cust_filter == f else '#f0f4f8' }};
+                      color:{{ 'white' if cust_filter == f else '#64748b' }};">
+                {{ label }}
+            </a>
+            {% endfor %}
+        </div>
+
         <form method="GET" action="{{ url_for('admin.dashboard') }}" class="search-row">
+            <input type="hidden" name="filter" value="{{ cust_filter }}">
             <input type="text" name="q" class="search-input"
                    placeholder="🔍 Search by name, email or property..."
                    value="{{ search or '' }}">
@@ -272,6 +301,11 @@ body { background: #f0f4f8; color: #1a1a1a; }
                     <span class="c-stat">
                         ฿{{ '{:,.0f}'.format(c.monthly_fee or 0) }}/mo
                     </span>
+                    {% if c.unpaid_count and c.unpaid_count > 0 %}
+                    <span class="c-stat" style="background:#fee2e2; color:#991b1b;">
+                        ⏳ {{ c.unpaid_count }} unpaid
+                    </span>
+                    {% endif %}
                 </div>
             </div>
 

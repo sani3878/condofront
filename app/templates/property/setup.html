@@ -82,7 +82,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
     font-size: 1.1rem;
     transition: background .15s;
 }
-.btn-save:hover { background: #eb6d00; color: #1a1a1a; }
+.btn-save:hover { background: #eb6d00; color: white; }
 
 .btn-back {
     background: #f1f5f9;
@@ -139,7 +139,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
             </div>
             {% if can_add_more %}
             <a href="{{ url_for('property.new_property') }}"
-               style="background:#ff7a00; border:none; color:#1a1a1a;
+               style="background:#ff7a00; border:none; color:white;
                       font-weight:800; border-radius:8px; padding:.4rem .85rem;
                       font-size:.82rem; text-decoration:none;">
                 ➕ {{ 'Add Property' if lang == 'en' else 'เพิ่มโครงการ' }}
@@ -183,7 +183,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
     </div>
     {% endif %}
 
-    <form method="POST" action="{{ url_for('property.setup') }}">
+    <form method="POST" action="{{ url_for('property.dashboard') }}">
 
         <div class="cf-card">
             <p class="required-note">* จำเป็นต้องกรอก</p>

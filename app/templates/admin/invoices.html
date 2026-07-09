@@ -1,0 +1,318 @@
+{% extends "shared/base.html" %}
+{% block content %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.main-wrap { padding: 1.25rem 1rem; max-width: 1000px; margin: 0 auto; }
+.page-header {
+    background: #1e3a5f; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1.25rem; color: white;
+    display: flex; align-items: center;
+    justify-content: space-between; flex-wrap: wrap; gap: .75rem;
+}
+.page-header h2 { font-size: 1.2rem; font-weight: 800; margin: 0; color: white; }
+.btn-new {
+    background: #ff7a00; border: none; color: white;
+    font-weight: 800; border-radius: 10px; padding: .55rem 1rem;
+    font-size: .88rem; cursor: pointer;
+}
+.stats-row { display: flex; gap: .75rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.stat-card {
+    flex: 1; min-width: 140px; background: white; border-radius: 14px;
+    padding: 1rem; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    border-top: 3px solid #e2e8f0;
+}
+.stat-num { font-size: 1.8rem; font-weight: 900; }
+.stat-label { font-size: .72rem; color: #64748b; margin-top: .2rem; font-weight: 600; }
+.cf-card {
+    background: white; border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05); overflow: hidden;
+    margin-bottom: 1rem;
+}
+.card-header {
+    padding: 1rem 1.25rem; border-bottom: 1.5px solid #f0f4f8;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: .5rem;
+}
+.filter-row { display: flex; gap: .5rem; flex-wrap: wrap; }
+.filter-input {
+    border-radius: 10px; padding: 8px 12px; border: 1.5px solid #e2e8f0;
+    font-size: .85rem; color: #1e293b;
+}
+.btn-filter {
+    background: #1e3a5f; border: none; color: white;
+    border-radius: 10px; padding: 8px 14px; font-size: .85rem;
+    font-weight: 700; cursor: pointer;
+}
+table { width: 100%; border-collapse: collapse; }
+th {
+    background: #f8fafc; text-align: left; font-size: .72rem;
+    font-weight: 700; color: #64748b; padding: .75rem 1rem;
+    border-bottom: 1.5px solid #f0f4f8; text-transform: uppercase;
+}
+td { padding: .85rem 1rem; border-bottom: 1px solid #f0f4f8; font-size: .85rem; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafbfc; }
+.inv-no { font-weight: 800; color: #1e3a5f; font-family: monospace; }
+.status-pill {
+    font-size: .72rem; font-weight: 700; padding: 3px 10px;
+    border-radius: 20px; white-space: nowrap;
+}
+.s-unpaid    { background: #fee2e2; color: #991b1b; }
+.s-paid      { background: #dcfce7; color: #166534; }
+.s-cancelled { background: #f1f5f9; color: #64748b; }
+.btn-sm {
+    border: 1.5px solid #e2e8f0; background: none; color: #64748b;
+    border-radius: 8px; padding: .25rem .6rem; font-size: .75rem;
+    font-weight: 700; cursor: pointer; text-decoration: none;
+    white-space: nowrap;
+}
+.btn-paid { border-color: #22c55e; color: #22c55e; }
+.btn-paid:hover { background: #22c55e; color: white; }
+.btn-print { border-color: #1e3a5f; color: #1e3a5f; }
+.btn-print:hover { background: #1e3a5f; color: white; }
+.btn-cancel { border-color: #fca5a5; color: #dc2626; }
+.form-control, .form-select {
+    border-radius: 10px; border: 1.5px solid #e2e8f0;
+    padding: 9px 12px; font-size: .9rem; width: 100%; color: #1e293b;
+    margin-bottom: .65rem;
+}
+.form-label { font-weight: 700; font-size: .82rem; margin-bottom: .3rem; display: block; }
+.btn-save {
+    background: #ff7a00; border: none; color: white;
+    font-weight: 800; border-radius: 10px; padding: .65rem 1.25rem; cursor: pointer;
+}
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; }
+</style>
+
+<div class="main-wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                    alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="page-header">
+        <h2>🧾 Invoice Management</h2>
+        <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+            <a href="{{ url_for('admin.pending_slips') }}"
+               style="background:#22c55e; border:none; color:white;
+                      font-weight:800; border-radius:10px; padding:.55rem 1rem;
+                      font-size:.88rem; text-decoration:none;">
+                📎 Review Slips
+            </a>
+            <button class="btn-new" data-bs-toggle="modal" data-bs-target="#newInvoiceModal">
+                ➕ Generate Invoice
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+        <div class="stat-card" style="border-top-color:#ef4444;">
+            <div class="stat-num" style="color:#ef4444;">{{ stats.unpaid or 0 }}</div>
+            <div class="stat-label">Unpaid</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#22c55e;">
+            <div class="stat-num" style="color:#22c55e;">{{ stats.paid or 0 }}</div>
+            <div class="stat-label">Paid</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#ff7a00;">
+            <div class="stat-num" style="color:#ff7a00; font-size:1.4rem;">
+                ฿{{ '{:,.0f}'.format(stats.this_month or 0) }}
+            </div>
+            <div class="stat-label">This Month Revenue</div>
+        </div>
+    </div>
+
+    <!-- Invoice list -->
+    <div class="cf-card">
+        <div class="card-header">
+            <form method="GET" action="{{ url_for('admin.invoices') }}"
+                  class="filter-row">
+                <select name="status" class="filter-input"
+                        onchange="this.form.submit()">
+                    <option value="all" {{ 'selected' if status_filter == 'all' }}>All</option>
+                    <option value="unpaid" {{ 'selected' if status_filter == 'unpaid' }}>Unpaid</option>
+                    <option value="paid" {{ 'selected' if status_filter == 'paid' }}>Paid</option>
+                    <option value="cancelled" {{ 'selected' if status_filter == 'cancelled' }}>Cancelled</option>
+                </select>
+                <input type="text" name="q" class="filter-input"
+                       placeholder="🔍 Search customer..."
+                       value="{{ search or '' }}">
+                <button type="submit" class="btn-filter">Search</button>
+            </form>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Invoice #</th>
+                    <th>Customer</th>
+                    <th>Package</th>
+                    <th>Amount</th>
+                    <th>Period</th>
+                    <th>Due</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% if invoices %}
+            {% for inv in invoices %}
+            <tr>
+                <td><span class="inv-no">{{ inv.invoice_no }}</span></td>
+                <td>
+                    <div style="font-weight:700; font-size:.85rem;">{{ inv.customer_name }}</div>
+                    <div style="font-size:.72rem; color:#94a3b8;">{{ inv.property_name or '-' }}</div>
+                </td>
+                <td style="font-size:.82rem;">{{ inv.package_name or '-' }}</td>
+                <td style="font-weight:800; color:#1e3a5f;">
+                    ฿{{ '{:,.0f}'.format(inv.amount or 0) }}
+                </td>
+                <td style="font-size:.78rem; color:#64748b;">
+                    {{ inv.period_start.strftime('%d/%m/%y') if inv.period_start else '-' }}
+                    – {{ inv.period_end.strftime('%d/%m/%y') if inv.period_end else '-' }}
+                </td>
+                <td style="font-size:.82rem;">
+                    {{ inv.due_date.strftime('%d/%m/%Y') if inv.due_date else '-' }}
+                </td>
+                <td>
+                    <span class="status-pill s-{{ inv.status }}">
+                        {% if inv.status == 'paid' %}✅ Paid
+                        {% elif inv.status == 'unpaid' %}⏳ Unpaid
+                        {% else %}❌ Cancelled{% endif %}
+                    </span>
+                </td>
+                <td>
+                    <div style="display:flex; gap:.3rem; flex-wrap:wrap;">
+                        <a href="{{ url_for('admin.print_invoice', invoice_id=inv.idno) }}"
+                           target="_blank" class="btn-sm btn-print">🖨 Print</a>
+                        <form method="POST"
+                              action="{{ url_for('admin.email_invoice', invoice_id=inv.idno) }}"
+                              style="display:inline;">
+                            <button type="submit" class="btn-sm"
+                                    style="border-color:#3b82f6; color:#3b82f6;">
+                                📧 Email
+                            </button>
+                        </form>
+                        {% if inv.status == 'unpaid' %}
+                        <form method="POST"
+                              action="{{ url_for('admin.mark_invoice_paid', invoice_id=inv.idno) }}"
+                              style="display:inline;">
+                            <button type="submit" class="btn-sm btn-paid">✅ Paid</button>
+                        </form>
+                        <form method="POST"
+                              action="{{ url_for('admin.cancel_invoice', invoice_id=inv.idno) }}"
+                              style="display:inline;"
+                              onsubmit="return confirm('Cancel invoice?');">
+                            <button type="submit" class="btn-sm btn-cancel">✕</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+            {% else %}
+            <tr><td colspan="8" style="text-align:center; padding:2rem; color:#94a3b8;">
+                No invoices found
+            </td></tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Generate Invoice Modal -->
+<div class="modal fade" id="newInvoiceModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:16px;">
+            <div class="modal-header" style="border-bottom:1.5px solid #f0f4f8;">
+                <h5 class="modal-title" style="font-weight:800; color:#1e3a5f;">
+                    🧾 Generate Invoice
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.generate_invoice') }}">
+                <div class="modal-body" style="padding:1.25rem;">
+                    <label class="form-label">Customer *</label>
+                    <select name="customer_id" class="form-select"
+                            onchange="updatePackage(this)" required>
+                        <option value="">-- Select Customer --</option>
+                        {% for c in customers %}
+                        <option value="{{ c.idno }}"
+                                data-pkg="{{ c.package_id }}"
+                                data-fee="{{ c.monthly_fee or 0 }}"
+                                data-prop="{{ c.property_id or '' }}"
+                                data-pkgname="{{ c.package_name or '' }}">
+                            {{ c.customer_name }} — {{ c.property_name or 'No property' }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <input type="hidden" name="property_id" id="propId">
+                    <input type="hidden" name="package_id" id="pkgId">
+
+                    <div class="form-grid">
+                        <div>
+                            <label class="form-label">Amount (฿) *</label>
+                            <input type="number" name="amount" id="invAmount"
+                                   class="form-control" placeholder="599" required step="1">
+                        </div>
+                        <div>
+                            <label class="form-label">Package</label>
+                            <input type="text" id="pkgDisplay" class="form-control"
+                                   placeholder="Auto-filled" readonly
+                                   style="background:#f8fafc;">
+                        </div>
+                        <div>
+                            <label class="form-label">Period Start *</label>
+                            <input type="date" name="period_start" class="form-control" required
+                                   value="{{ now.strftime('%Y-%m-01') if now is defined else '' }}">
+                        </div>
+                        <div>
+                            <label class="form-label">Period End *</label>
+                            <input type="date" name="period_end" class="form-control" required>
+                        </div>
+                        <div>
+                            <label class="form-label">Due Date *</label>
+                            <input type="date" name="due_date" class="form-control" required>
+                        </div>
+                    </div>
+                    <label class="form-label">Note</label>
+                    <input type="text" name="note" class="form-control"
+                           placeholder="Optional note...">
+                </div>
+                <div class="modal-footer" style="border-top:1.5px solid #f0f4f8;">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-save btn">💾 Generate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function updatePackage(sel) {
+    const opt = sel.options[sel.selectedIndex];
+    document.getElementById('pkgId').value      = opt.dataset.pkg || '';
+    document.getElementById('propId').value     = opt.dataset.prop || '';
+    document.getElementById('invAmount').value  = opt.dataset.fee || '';
+    document.getElementById('pkgDisplay').value = opt.dataset.pkgname || '';
+}
+
+// Set default dates
+window.addEventListener('load', function() {
+    const now   = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end   = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const due   = new Date(now.getFullYear(), now.getMonth() + 1, 7);
+    const fmt   = d => d.toISOString().slice(0,10);
+    document.querySelector('[name=period_start]').value = fmt(start);
+    document.querySelector('[name=period_end]').value   = fmt(end);
+    document.querySelector('[name=due_date]').value     = fmt(due);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "shared/base.html" %}
+{% block content %}
+{% set lang = session.get('lang', 'en') %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.wrap { padding: 1.25rem 1rem; max-width: 480px; margin: 0 auto; }
+.page-header {
+    background: #1e3a5f; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1.25rem; color: white;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.page-header h2 { font-size: 1.1rem; font-weight: 800; margin: 0; color: white; }
+.back-link { color: #ff7a00; text-decoration: none; font-size: .88rem; font-weight: 700; }
+.ann-card {
+    background: white; border-radius: 14px; padding: 1.1rem;
+    margin-bottom: .75rem; box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    border-left: 4px solid #3b82f6; cursor: pointer; transition: .15s;
+}
+.ann-card.unread { border-left-color: #ff7a00; background: #fffbf7; }
+.ann-card.private { border-left-color: #8b5cf6; }
+.unread-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #ff7a00; display: inline-block; margin-right: .4rem;
+}
+.ann-title { font-weight: 800; font-size: .95rem; margin-bottom: .35rem; }
+.ann-body  { font-size: .85rem; color: #475569; line-height: 1.6; }
+.ann-date  { font-size: .72rem; color: #94a3b8; margin-top: .5rem; }
+.private-tag {
+    display: inline-block; font-size: .7rem; font-weight: 700;
+    padding: 1px 7px; border-radius: 20px;
+    background: #ede9fe; color: #5b21b6; margin-left: .35rem;
+}
+.empty { text-align: center; padding: 3rem; color: #64748b;
+         background: white; border-radius: 14px; }
+</style>
+
+<div class="wrap">
+    <div class="page-header">
+        <h2>📢 {{ 'Announcements' if lang == 'en' else 'ประกาศ' }}</h2>
+        <a href="{{ url_for('resident.home') }}" class="back-link">
+            ← {{ 'Back' if lang == 'en' else 'กลับ' }}
+        </a>
+    </div>
+
+    {% if announcements %}
+        {% for a in announcements %}
+        <div class="ann-card {{ 'unread' if not a.is_read }} {{ 'private' if a.target == 'resident' }}"
+             onclick="markRead({{ a.idno }}, this)">
+            <div class="ann-title">
+                {% if not a.is_read %}<span class="unread-dot"></span>{% endif %}
+                {{ a.title }}
+                {% if a.target == 'resident' %}
+                <span class="private-tag">
+                    🔒 {{ 'Private' if lang == 'en' else 'ส่วนตัว' }}
+                </span>
+                {% endif %}
+            </div>
+            <div class="ann-body">{{ a.body }}</div>
+            <div class="ann-date">
+                {{ a.created_at.strftime('%d/%m/%Y %H:%M') if a.created_at else '-' }}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="empty">
+        <div style="font-size:2.5rem; margin-bottom:.75rem;">📢</div>
+        {{ 'No announcements' if lang == 'en' else 'ไม่มีประกาศ' }}
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function markRead(annId, el) {
+    if (el.classList.contains('unread')) {
+        el.classList.remove('unread');
+        el.querySelector('.unread-dot') &&
+            el.querySelector('.unread-dot').remove();
+        fetch('/announcement/read/' + annId, { method: 'POST' });
+    }
+}
+</script>
+{% endblock %}

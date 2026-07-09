@@ -225,8 +225,17 @@ body { background: #f0f4f8; color: #1a1a1a; }
     {% endwith %}
 
     <div class="page-header">
-        <h2>💳 {{ 'Your Plan' if lang == 'en' else 'แพ็กเกจของคุณ' }}</h2>
-        <p>{{ 'View current plan and upgrade options' if lang == 'en' else 'ดูแพ็กเกจปัจจุบันและตัวเลือกอัปเกรด' }}</p>
+        <div>
+            <h2>💳 {{ 'Your Plan' if lang == 'en' else 'แพ็กเกจของคุณ' }}</h2>
+            <p>{{ 'View current plan and upgrade options' if lang == 'en' else 'ดูแพ็กเกจปัจจุบันและตัวเลือกอัปเกรด' }}</p>
+        </div>
+        <a href="{{ url_for('billing.history') }}"
+           style="background:white; color:#1e3a5f; border:2px solid white;
+                  font-weight:800; border-radius:10px; padding:.55rem 1rem;
+                  font-size:.88rem; text-decoration:none; white-space:nowrap;
+                  display:flex; align-items:center; gap:.35rem;">
+            🧾 {{ 'Billing History' if lang == 'en' else 'ประวัติการชำระเงิน' }}
+        </a>
     </div>
 
     {% if current_sub %}
@@ -348,8 +357,8 @@ body { background: #f0f4f8; color: #1a1a1a; }
                 {% if current_sub and pkg.idno == current_sub.package_id %}
                 <div class="btn-upgrade disabled">{{ 'Current Plan' if lang == 'en' else 'แพ็กเกจปัจจุบัน' }}</div>
                 {% else %}
-                <a href="https://line.me/ti/p/your-line-id"
-                   target="_blank" class="btn-upgrade">
+                <a href="{{ url_for('billing.upgrade') }}"
+                   class="btn-upgrade">
                     ⚡ {{ 'Upgrade Now — Unlock More →' if lang == 'en' else 'อัปเกรดเลย — ปลดล็อกเพิ่มเติม →' }}
                 </a>
                 {% endif %}
@@ -357,6 +366,8 @@ body { background: #f0f4f8; color: #1a1a1a; }
             {% endfor %}
         </div>
     </div>
+
+    <!-- My billing history link -->
 
 </div>
 {% endblock %}

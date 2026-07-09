@@ -13,6 +13,7 @@
   {% set lbl_visitor    = "Visitors" %}
   {% set lbl_service    = "Services" %}
   {% set lbl_facility   = "Facilities" %}
+  {% set lbl_announce   = "Announcements" %}
   {% set lbl_staff      = "Staff" %}
   {% set lbl_settings   = "Settings" %}
   {% set lbl_contact    = "Contact Us" %}
@@ -28,6 +29,7 @@
   {% set lbl_visitor    = "ผู้มาติดต่อ" %}
   {% set lbl_service    = "แจ้งบริการ" %}
   {% set lbl_facility   = "สิ่งอำนวยฯ" %}
+  {% set lbl_announce   = "ประกาศ" %}
   {% set lbl_staff      = "พนักงาน" %}
   {% set lbl_settings   = "ตั้งค่า" %}
   {% set lbl_contact    = "ติดต่อเรา" %}
@@ -213,7 +215,6 @@ body { background: #f0f4f8; color: #1a1a1a; }
 
         <!-- Service requests -->
         <a href="{{ url_for('service.list_requests') }}" class="app-tile">
-            {% set open_count = 0 %}
             <div class="tile-icon">🔧</div>
             <div class="tile-label">{{ lbl_service }}</div>
         </a>
@@ -224,22 +225,16 @@ body { background: #f0f4f8; color: #1a1a1a; }
             <div class="tile-label">{{ lbl_facility }}</div>
         </a>
 
-        <!-- Staff -->
-        <a href="{{ url_for('property.users') }}" class="app-tile">
-            <div class="tile-icon">👥</div>
-            <div class="tile-label">{{ lbl_staff }}</div>
+        <!-- Announcements -->
+        <a href="{{ url_for('announcement.list_announcements') }}" class="app-tile">
+            <div class="tile-icon">📢</div>
+            <div class="tile-label">{{ lbl_announce }}</div>
         </a>
 
         <!-- Settings -->
         <a href="{{ url_for('property.dashboard') }}" class="app-tile">
             <div class="tile-icon">⚙️</div>
             <div class="tile-label">{{ lbl_settings }}</div>
-        </a>
-
-        <!-- Contact -->
-        <a href="{{ url_for('auth.contact') }}" class="app-tile">
-            <div class="tile-icon">💬</div>
-            <div class="tile-label">{{ lbl_contact }}</div>
         </a>
 
         <!-- Billing -->

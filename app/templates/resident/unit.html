@@ -92,7 +92,7 @@ body { background: #f0f4f8; color: #1a1a1a; }
     justify-content: center;
     flex-shrink: 0;
 }
-.member-you .member-avatar { background: #ff7a00; color: #1a1a1a; }
+.member-you .member-avatar { background: #ff7a00; color: white; }
 .member-info { flex: 1; }
 .member-name { font-weight: 700; font-size: .92rem; }
 .member-tag {
@@ -223,6 +223,22 @@ body { background: #f0f4f8; color: #1a1a1a; }
         <button class="btn-copy" id="copyBtn" onclick="copyCode()">
             <i class="bi bi-clipboard"></i> {{ lbl_copy }}
         </button>
+
+        <!-- Reset invite code -->
+        <form method="POST"
+              action="{{ url_for('property.reset_invite_code', room_id=unit.idno) }}"
+              onsubmit="return confirm('{{ 'Reset invite code? Anyone with the old code can no longer register.' if lang == 'en' else 'รีเซ็ตรหัสเชิญ? รหัสเก่าจะใช้ไม่ได้ทันที' }}');"
+              style="margin-top:.5rem;">
+            <button type="submit"
+                    style="width:100%; background:none; border:1.5px solid #fcd34d;
+                           color:#92400e; border-radius:10px; padding:.65rem;
+                           font-weight:700; font-size:.88rem; cursor:pointer;">
+                🔄 {{ 'Reset Invite Code' if lang == 'en' else 'รีเซ็ตรหัสเชิญ' }}
+            </button>
+        </form>
+        <div style="font-size:.72rem; color:#94a3b8; text-align:center; margin-top:.35rem;">
+            {{ 'Use this if a previous tenant still has the old code' if lang == 'en' else 'ใช้เมื่อผู้เช่าเก่ายังมีรหัสเดิมอยู่' }}
+        </div>
 
         <!-- Save full invite card as image -->
         <button id="saveInviteBtn" onclick="saveInviteCard()"

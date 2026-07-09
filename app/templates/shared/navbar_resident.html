@@ -41,7 +41,7 @@
     border-radius: 20px;
     transition: .15s;
 }
-.res-lang-btn.active { background: #ff7a00; color: #1a1a1a; }
+.res-lang-btn.active { background: #ff7a00; color: white; }
 
 /* Hamburger */
 .res-hamburger {
@@ -144,6 +144,10 @@
     <a href="{{ url_for('resident.unit') }}"
        class="res-mobile-link {% if ap == 'unit' %}active{% endif %}">
         👥 {{ 'My Unit' if lang == 'en' else 'ห้องของฉัน' }}
+    </a>
+    <a href="{{ url_for('announcement.resident_view') }}"
+       class="res-mobile-link {% if ap == 'announcement' %}active{% endif %}">
+        📢 {{ 'Announcements' if lang == 'en' else 'ประกาศ' }}
     </a>
     <a href="{{ url_for('auth.contact') }}"
        class="res-mobile-link {% if ap == 'contact' %}active{% endif %}">

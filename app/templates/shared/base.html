@@ -16,7 +16,9 @@
 {% set lang = session.get('lang', 'th') %}
 
 {% if current_user.is_authenticated and not hide_navbar %}
-    {% if current_user.is_resident %}
+    {% if current_user.is_superadmin %}
+    {% include "shared/navbar_admin.html" %}
+    {% elif current_user.is_resident %}
     {% include "shared/navbar_resident.html" %}
     {% else %}
     {% include "shared/navbar.html" %}

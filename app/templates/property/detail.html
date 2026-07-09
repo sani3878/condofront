@@ -46,7 +46,7 @@ body { background: #f0f4f8; }
     font-size: .72rem; color: #94a3b8; font-weight: 600;
 }
 .btn-add {
-    background: #ff7a00; border: none; color: #1a1a1a;
+    background: #ff7a00; border: none; color: white;
     font-weight: 800; border-radius: 8px; padding: .35rem .75rem;
     font-size: .78rem; cursor: pointer; text-decoration: none;
     white-space: nowrap;
@@ -125,7 +125,7 @@ tr:hover td { background: #fafbfc; }
 .form-control:focus, .form-select:focus { border-color: #1e3a5f; outline: none; }
 .form-label { font-weight: 700; font-size: .82rem; margin-bottom: .3rem; display: block; }
 .btn-save {
-    background: #ff7a00; border: none; color: #1a1a1a;
+    background: #ff7a00; border: none; color: white;
     font-weight: 800; border-radius: 10px; padding: .65rem 1.25rem;
     cursor: pointer; font-size: .9rem;
 }
@@ -227,11 +227,25 @@ tr:hover td { background: #fafbfc; }
                             </div>
                         </td>
                         <td style="text-align:right;">
-                            <form method="POST"
-                                  action="{{ url_for('property.delete_room', room_id=r.idno) }}"
-                                  onsubmit="return confirm('{{ 'Delete room?' if lang == 'en' else 'ลบห้องนี้?' }}');">
-                                <button type="submit" class="btn-del">🗑</button>
-                            </form>
+                            <div style="display:flex; gap:.3rem; justify-content:flex-end;">
+                                <form method="POST"
+                                      action="{{ url_for('property.reset_invite_code', room_id=r.idno) }}"
+                                      onsubmit="return confirm('{{ 'Reset invite code? Old code will stop working.' if lang == 'en' else 'รีเซ็ตรหัสเชิญ? รหัสเก่าจะใช้ไม่ได้ทันที' }}');">
+                                    <button type="submit"
+                                            style="background:none; border:1.5px solid #fcd34d;
+                                                   color:#92400e; border-radius:6px;
+                                                   padding:.2rem .5rem; font-size:.72rem;
+                                                   font-weight:700; cursor:pointer;"
+                                            title="{{ 'Reset invite code' if lang == 'en' else 'รีเซ็ตรหัสเชิญ' }}">
+                                        🔄
+                                    </button>
+                                </form>
+                                <form method="POST"
+                                      action="{{ url_for('property.delete_room', room_id=r.idno) }}"
+                                      onsubmit="return confirm('{{ 'Delete room?' if lang == 'en' else 'ลบห้องนี้?' }}');">
+                                    <button type="submit" class="btn-del">🗑</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}

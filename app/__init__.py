@@ -61,6 +61,10 @@ def create_app(env='default'):
     app.register_blueprint(visitor_bp)
     app.register_blueprint(service_bp)
     app.register_blueprint(facility_bp)
+    from .routes.announcement_routes import announcement_bp
+    app.register_blueprint(announcement_bp)
+    from .routes.billing_routes import billing_bp
+    app.register_blueprint(billing_bp)
 
     # User loader for Flask-Login
     from .models import User

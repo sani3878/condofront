@@ -1,0 +1,315 @@
+{% extends "shared/base.html" %}
+{% block content %}
+{% set lang = session.get('lang', 'th') %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.wrap { padding: 1.25rem 1rem; max-width: 680px; margin: 0 auto; }
+.page-header {
+    background: #1e3a5f; border-radius: 16px; padding: 1.5rem;
+    margin-bottom: 1.5rem; color: white; text-align: center;
+}
+.page-header h2 { font-size: 1.3rem; font-weight: 900; margin: 0; color: white; }
+.page-header p  { font-size: .85rem; color: rgba(255,255,255,.7); margin: .4rem 0 0; }
+
+/* Plan type selector */
+.plan-type-selector {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: .75rem; margin-bottom: 1.5rem;
+}
+.plan-type-card {
+    border: 2.5px solid #e2e8f0; border-radius: 14px;
+    padding: 1rem 1.25rem; cursor: pointer;
+    transition: .2s; background: white; text-align: center;
+    position: relative;
+}
+.plan-type-card:hover { border-color: #1e3a5f; }
+.plan-type-card.selected {
+    border-color: #1e3a5f; background: #1e3a5f;
+    box-shadow: 0 4px 16px rgba(30,58,95,.25);
+}
+.plan-type-card.selected .plan-type-label { color: white; }
+.plan-type-card.selected .plan-type-sub   { color: rgba(255,255,255,.75); }
+.plan-type-card.selected-annual {
+    border-color: #1e3a5f; background: #1e3a5f;
+    box-shadow: 0 4px 16px rgba(30,58,95,.25);
+}
+.plan-type-card.selected-annual .plan-type-label { color: white; }
+.plan-type-card.selected-annual .plan-type-sub   { color: rgba(255,255,255,.75); }
+.plan-type-label { font-size: 1rem; font-weight: 900; color: #1a1a1a; }
+.plan-type-sub { font-size: .78rem; color: #64748b; margin-top: .2rem; }
+.discount-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #ff7a00, #ff9a00);
+    color: white; font-size: .82rem; font-weight: 900;
+    padding: 4px 12px; border-radius: 20px;
+    margin-top: .4rem; letter-spacing: .3px;
+}
+.plan-type-card input[type=radio] { display: none; }
+
+/* Package cards */
+.packages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem; margin-bottom: 1.5rem;
+}
+.pkg-card {
+    background: white; border-radius: 18px; padding: 1.5rem;
+    border: 2px solid #e2e8f0; transition: .2s; cursor: pointer;
+    position: relative;
+}
+.pkg-card:hover { border-color: #1e3a5f; transform: translateY(-2px);
+                  box-shadow: 0 8px 24px rgba(30,58,95,.12); }
+.pkg-card.selected { border-color: #1e3a5f; border-width: 2.5px;
+                     box-shadow: 0 4px 20px rgba(30,58,95,.15); }
+.pkg-card.popular {
+    border-color: #ff7a00; border-width: 2.5px;
+}
+.popular-tag {
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    background: #ff7a00; color: white; font-size: .72rem; font-weight: 900;
+    padding: 3px 14px; border-radius: 20px; white-space: nowrap;
+}
+.pkg-name { font-size: 1.1rem; font-weight: 900; color: #1e3a5f; margin-bottom: .25rem; }
+.pkg-price { font-size: 2.2rem; font-weight: 900; color: #1a1a1a; line-height: 1; }
+.pkg-price span { font-size: .9rem; color: #64748b; font-weight: 600; }
+.pkg-annual-price {
+    font-size: .82rem; color: #64748b; margin-top: .25rem; min-height: 1.2rem;
+}
+.pkg-savings {
+    display: inline-block; font-size: .72rem; font-weight: 800;
+    color: #22c55e; background: #f0fdf4; padding: 2px 8px;
+    border-radius: 20px; margin-top: .3rem;
+}
+.pkg-divider { height: 1px; background: #f0f4f8; margin: 1rem 0; }
+.pkg-feature {
+    font-size: .82rem; color: #475569; padding: .25rem 0;
+    display: flex; align-items: center; gap: .5rem;
+}
+.pkg-feature::before { content: '✓'; color: #22c55e; font-weight: 900; }
+.pkg-feature.unlimited::before { content: '∞'; color: #1e3a5f; }
+
+.btn-select {
+    width: 100%; margin-top: 1.25rem; padding: .75rem;
+    border-radius: 12px; border: none; font-weight: 900;
+    font-size: .95rem; cursor: pointer; transition: .2s;
+}
+.btn-select.active {
+    background: linear-gradient(135deg, #1e3a5f, #2d5a9e);
+    color: white;
+    box-shadow: 0 4px 15px rgba(30,58,95,.3);
+}
+.btn-select.inactive {
+    background: #f0f4f8; color: #94a3b8;
+}
+.btn-select.current-plan {
+    background: #f0fdf4; color: #166534;
+    border: 1.5px solid #86efac; cursor: default;
+}
+</style>
+
+<div class="wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                    alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="page-header">
+        <h2>⚡ {{ 'Choose Your Plan' if lang == 'en' else 'เลือกแพ็กเกจของคุณ' }}</h2>
+        <p>{{ 'Upgrade to unlock more properties and rooms' if lang == 'en' else 'อัปเกรดเพื่อปลดล็อกโครงการและห้องเพิ่มเติม' }}</p>
+    </div>
+
+    <!-- Plan type selector -->
+    <div class="plan-type-selector">
+        <div class="plan-type-card selected" id="cardMonthly"
+             onclick="selectPlanType('monthly')">
+            <div class="plan-type-label">
+                📅 {{ 'Monthly' if lang == 'en' else 'รายเดือน' }}
+            </div>
+            <div class="plan-type-sub">
+                {{ 'Pay month by month' if lang == 'en' else 'ชำระทุกเดือน' }}
+            </div>
+        </div>
+        <div class="plan-type-card" id="cardAnnual"
+             onclick="selectPlanType('annual')">
+            <div class="plan-type-label">
+                🗓️ {{ 'Annual' if lang == 'en' else 'รายปี' }}
+            </div>
+            <div class="plan-type-sub">
+                {{ 'Pay once per year' if lang == 'en' else 'ชำระปีละครั้ง' }}
+            </div>
+            <div>
+                <span class="discount-badge" id="annualDiscountBadge">
+                    🎉 10% {{ 'Discount' if lang == 'en' else 'ส่วนลด' }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Package cards -->
+    <div class="packages-grid">
+        {% for pkg in packages %}
+        {% set is_current = current_sub and current_sub.package_name == pkg.package_name %}
+        <div class="pkg-card {{ 'selected popular' if pkg.package_name == 'Pro' and not is_current }}"
+             id="card-{{ pkg.idno }}"
+             onclick="selectPackage({{ pkg.idno }}, {{ pkg.monthly_fee or 0 }}, '{{ pkg.package_name }}')">
+
+            {% if pkg.package_name == 'Pro' and not is_current %}
+            <div class="popular-tag">⭐ Most Popular</div>
+            {% endif %}
+
+            <div class="pkg-name">{{ pkg.package_name }}</div>
+
+            <div class="pkg-price" id="price-{{ pkg.idno }}">
+                ฿{{ '{:,.0f}'.format(pkg.monthly_fee or 0) }}
+                <span>/{{ 'mo' if lang == 'en' else 'เดือน' }}</span>
+            </div>
+            <div class="pkg-annual-price" id="annual-{{ pkg.idno }}"></div>
+
+            <div class="pkg-divider"></div>
+
+            <div class="pkg-feature">
+                {{ pkg.max_property or 1 }}
+                {{ 'propert' + ('ies' if (pkg.max_property or 1) > 1 else 'y') if lang == 'en' else 'โครงการ' }}
+            </div>
+            <div class="pkg-feature">
+                {% if pkg.max_room %}
+                {{ pkg.max_room }} {{ 'rooms/property' if lang == 'en' else 'ห้อง/โครงการ' }}
+                {% else %}
+                <span class="pkg-feature unlimited">{{ 'Unlimited rooms' if lang == 'en' else 'ห้องไม่จำกัด' }}</span>
+                {% endif %}
+            </div>
+            <div class="pkg-feature unlimited">
+                {{ 'Unlimited staff' if lang == 'en' else 'พนักงานไม่จำกัด' }}
+            </div>
+            <div class="pkg-feature unlimited">
+                {{ 'Unlimited parcels' if lang == 'en' else 'พัสดุไม่จำกัด' }}
+            </div>
+
+            {% if is_current %}
+            <button class="btn-select current-plan" disabled>
+                ✅ {{ 'Current Plan' if lang == 'en' else 'แพ็กเกจปัจจุบัน' }}
+            </button>
+            {% elif pkg.monthly_fee == 0 %}
+            <button class="btn-select inactive" disabled>
+                {{ 'Free Plan' if lang == 'en' else 'แพ็กเกจฟรี' }}
+            </button>
+            {% else %}
+            <button class="btn-select inactive" id="btn-{{ pkg.idno }}"
+                    onclick="event.stopPropagation(); proceedToCheckout({{ pkg.idno }})">
+                {{ 'Select Plan' if lang == 'en' else 'เลือกแพ็กเกจนี้' }} →
+            </button>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Hidden form to submit -->
+    <form method="POST" action="{{ url_for('billing.checkout') }}" id="checkoutForm">
+        <input type="hidden" name="package_id" id="selectedPkg">
+        <input type="hidden" name="plan_type" id="selectedPlan" value="monthly">
+    </form>
+</div>
+
+<script>
+let selectedPkgId   = null;
+let currentPlanType = 'monthly';
+
+const prices = {
+    {% for pkg in packages %}
+    {{ pkg.idno }}: {{ pkg.monthly_fee or 0 }},
+    {% endfor %}
+};
+
+const discounts = {
+    {% for pkg in packages %}
+    {{ pkg.idno }}: {{ pkg.annual_discount or 10 }},
+    {% endfor %}
+};
+
+function selectPlanType(type) {
+    currentPlanType = type;
+    document.getElementById('selectedPlan').value = type;
+
+    const cardMonthly = document.getElementById('cardMonthly');
+    const cardAnnual  = document.getElementById('cardAnnual');
+
+    if (type === 'annual') {
+        cardAnnual.classList.add('selected-annual');
+        cardAnnual.classList.remove('selected');
+        cardMonthly.classList.remove('selected', 'selected-annual');
+    } else {
+        cardMonthly.classList.add('selected');
+        cardMonthly.classList.remove('selected-annual');
+        cardAnnual.classList.remove('selected', 'selected-annual');
+    }
+    updateAllPrices();
+}
+
+function updateDiscountBadge() {
+    const disc = selectedPkgId ? (discounts[selectedPkgId] || 10) : 10;
+    const badge = document.getElementById('annualDiscountBadge');
+    if (badge) {
+        badge.textContent = '🎉 ' + disc + '% {{ "Discount" if lang == "en" else "ส่วนลด" }}';
+        badge.style.display = disc > 0 ? 'inline-block' : 'none';
+    }
+}
+
+function updateAllPrices() {
+    for (const [id, fee] of Object.entries(prices)) {
+        const priceEl  = document.getElementById('price-' + id);
+        const annualEl = document.getElementById('annual-' + id);
+        if (!priceEl) continue;
+        const disc = (discounts[id] || 10) / 100;
+        if (currentPlanType === 'annual' && fee > 0 && disc > 0) {
+            const annual  = (fee * 12 * (1 - disc)).toFixed(0);
+            const savings = (fee * 12 * disc).toFixed(0);
+            const pct     = Math.round(disc * 100);
+            priceEl.innerHTML  = '฿' + Number(annual).toLocaleString() +
+                '<span>/{{ "yr" if lang == "en" else "ปี" }}</span>';
+            annualEl.innerHTML = '<span class="pkg-savings">🎉 {{ "Save ฿" if lang == "en" else "ประหยัด ฿" }}' +
+                Number(savings).toLocaleString() + ' (' + pct + '% off)</span>';
+        } else {
+            priceEl.innerHTML  = '฿' + Number(fee).toLocaleString() +
+                '<span>/{{ "mo" if lang == "en" else "เดือน" }}</span>';
+            annualEl.innerHTML = '';
+        }
+    }
+    updateDiscountBadge();
+}
+
+function selectPackage(id, fee, name) {
+    if (fee === 0) return;
+    document.querySelectorAll('.pkg-card').forEach(c => c.classList.remove('selected', 'popular'));
+    document.getElementById('card-' + id).classList.add('selected');
+    document.querySelectorAll('.btn-select:not(.current-plan):not(.inactive)').forEach(b => {
+        b.classList.add('inactive');
+        b.classList.remove('active');
+    });
+    const btn = document.getElementById('btn-' + id);
+    if (btn) { btn.classList.remove('inactive'); btn.classList.add('active'); }
+    selectedPkgId = id;
+    document.getElementById('selectedPkg').value = id;
+    updateDiscountBadge();  // update badge for selected package
+    updateAllPrices();      // refresh prices with correct discount
+}
+
+function proceedToCheckout(id) {
+    document.getElementById('selectedPkg').value  = id;
+    document.getElementById('selectedPlan').value = currentPlanType;
+    document.getElementById('checkoutForm').submit();
+}
+
+window.addEventListener('load', function() {
+    {% for pkg in packages %}
+    {% if pkg.package_name == 'Pro' and pkg.monthly_fee > 0 %}
+    selectPackage({{ pkg.idno }}, {{ pkg.monthly_fee }}, '{{ pkg.package_name }}');
+    {% endif %}
+    {% endfor %}
+});
+</script>
+{% endblock %}

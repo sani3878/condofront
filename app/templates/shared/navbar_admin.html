@@ -1,0 +1,141 @@
+<style>
+.admin-navbar {
+    background: #0f1f35;
+    padding: 0 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    box-shadow: 0 2px 8px rgba(0,0,0,.4);
+    min-height: 54px;
+    border-bottom: 2px solid #ff7a00;
+}
+.admin-logo img { height: 28px; display: block; }
+.admin-nav-links {
+    display: flex; align-items: center; gap: 1.5rem;
+}
+.admin-link {
+    color: rgba(255,255,255,.7); text-decoration: none;
+    font-size: .88rem; font-weight: 600; transition: .15s;
+    white-space: nowrap;
+}
+.admin-link:hover { color: white; }
+.admin-link.active { color: #ff7a00; }
+.admin-right {
+    display: flex; align-items: center; gap: .75rem;
+}
+.admin-badge {
+    background: #ff7a00; color: white;
+    font-size: .7rem; font-weight: 900;
+    padding: 3px 10px; border-radius: 20px;
+}
+.admin-user {
+    color: rgba(255,255,255,.7); font-size: .82rem;
+    font-weight: 600; white-space: nowrap;
+}
+.btn-admin-logout {
+    background: rgba(255,255,255,.12);
+    border: 1.5px solid rgba(255,255,255,.25);
+    color: white; font-size: .82rem; font-weight: 700;
+    border-radius: 8px; padding: .35rem .85rem;
+    text-decoration: none; transition: .15s; white-space: nowrap;
+}
+.btn-admin-logout:hover { background: rgba(255,255,255,.22); color: white; }
+
+/* Hamburger — mobile only */
+.admin-hamburger {
+    display: none;
+    background: none; border: 1.5px solid rgba(255,255,255,.3);
+    border-radius: 8px; color: white; padding: .3rem .55rem;
+    font-size: 1.1rem; cursor: pointer; line-height: 1;
+}
+
+/* Mobile drawer — hidden by default */
+.admin-mobile-menu {
+    display: none;
+    flex-direction: column;
+    background: #0f1f35;
+    padding: .5rem .75rem .75rem;
+    border-bottom: 2px solid #ff7a00;
+    position: sticky; top: 54px; z-index: 199;
+}
+.admin-mobile-menu.open { display: flex; }
+.admin-mobile-link {
+    color: rgba(255,255,255,.85); text-decoration: none;
+    font-size: .95rem; font-weight: 600;
+    padding: .65rem .75rem; border-radius: 10px; transition: .15s;
+}
+.admin-mobile-link:hover { background: rgba(255,255,255,.08); color: white; }
+.admin-mobile-divider { height: 1px; background: rgba(255,255,255,.1); margin: .3rem 0; }
+
+/* Responsive breakpoint */
+@media(max-width: 768px) {
+    .admin-nav-links { display: none !important; }
+    .admin-user      { display: none; }
+    .admin-hamburger { display: block; }
+}
+@media(min-width: 769px) {
+    .admin-hamburger { display: none !important; }
+    .admin-mobile-menu { display: none !important; }
+}
+</style>
+
+{% set ap = active_page | default('') %}
+
+<nav class="admin-navbar">
+    <a href="{{ url_for('admin.dashboard') }}" class="admin-logo">
+        <img src="{{ url_for('static', filename='img/logo-white.png') }}" alt="CondoFront">
+    </a>
+
+    <!-- Desktop links -->
+    <div class="admin-nav-links">
+        <a href="{{ url_for('admin.dashboard') }}"
+           class="admin-link {{ 'active' if ap == 'admin' }}">
+            📊 Dashboard
+        </a>
+        <a href="{{ url_for('admin.packages') }}"
+           class="admin-link {{ 'active' if ap == 'packages' }}">
+            📦 Packages
+        </a>
+        <a href="{{ url_for('admin.invoices') }}"
+           class="admin-link {{ 'active' if ap == 'invoices' }}">
+            🧾 Invoices
+        </a>
+        <a href="{{ url_for('admin.pending_slips') }}"
+           class="admin-link {{ 'active' if ap == 'slips' }}"
+           style="{{ 'color:#fbbf24;' if ap != 'slips' else '' }}">
+            📎 Billable
+        </a>
+        <a href="{{ url_for('admin.announcements') }}"
+           class="admin-link {{ 'active' if ap == 'announcements' }}">
+            📢 Announcements
+        </a>
+    </div>
+
+    <!-- Right side -->
+    <div class="admin-right">
+        <span class="admin-badge">SuperAdmin</span>
+        <span class="admin-user">{{ current_user.fullname }}</span>
+        <button class="admin-hamburger" onclick="toggleAdminMenu()">☰</button>
+        <a href="{{ url_for('auth.logout') }}" class="btn-admin-logout">Logout</a>
+    </div>
+</nav>
+
+<!-- Mobile drawer — only renders on mobile via CSS -->
+<div class="admin-mobile-menu" id="adminMobileMenu">
+    <a href="{{ url_for('admin.dashboard') }}"   class="admin-mobile-link">📊 Dashboard</a>
+    <a href="{{ url_for('admin.packages') }}"    class="admin-mobile-link">📦 Packages</a>
+    <a href="{{ url_for('admin.invoices') }}"    class="admin-mobile-link">🧾 Invoices</a>
+    <a href="{{ url_for('admin.pending_slips') }}" class="admin-mobile-link">📎 Billable</a>
+    <a href="{{ url_for('admin.announcements') }}" class="admin-mobile-link">📢 Announcements</a>
+    <div class="admin-mobile-divider"></div>
+    <a href="{{ url_for('auth.logout') }}"       class="admin-mobile-link">🚪 Logout</a>
+</div>
+
+<script>
+function toggleAdminMenu() {
+    document.getElementById('adminMobileMenu').classList.toggle('open');
+}
+</script>

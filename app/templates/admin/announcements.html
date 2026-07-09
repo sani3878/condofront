@@ -1,0 +1,79 @@
+{% extends "shared/base.html" %}
+{% block content %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.main-wrap { padding: 1.25rem 1rem; max-width: 700px; margin: 0 auto; }
+.page-header {
+    background: #1e3a5f; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1.25rem; color: white;
+}
+.page-header h2 { font-size: 1.2rem; font-weight: 800; margin: 0; color: white; }
+.page-header p  { font-size:.82rem; color:rgba(255,255,255,.7); margin:.25rem 0 0; }
+.cf-card {
+    background: white; border-radius: 16px; padding: 1.25rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05);
+}
+.form-label { font-weight: 700; font-size: .85rem; margin-bottom: .3rem; display: block; }
+.form-control, .form-select {
+    border-radius: 10px; border: 1.5px solid #e2e8f0;
+    padding: 10px 13px; font-size: .9rem; width: 100%;
+    color: #1e293b; margin-bottom: .75rem;
+}
+.form-control:focus, .form-select:focus { border-color: #1e3a5f; outline: none; }
+.btn-save {
+    background: #ff7a00; border: none; color: white;
+    font-weight: 800; border-radius: 12px; padding: 12px;
+    width: 100%; font-size: .95rem; cursor: pointer;
+}
+.info-box {
+    background: #fffbeb; border: 1.5px solid #fcd34d;
+    border-radius: 12px; padding: .85rem 1rem;
+    font-size: .82rem; color: #92400e; margin-bottom: 1rem;
+}
+</style>
+
+<div class="main-wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                    alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="page-header">
+        <h2>📢 System Announcements</h2>
+        <p>Send announcements to all CondoFront customers</p>
+    </div>
+
+    <div class="info-box">
+        💡 System announcements will appear on the dashboard of all approved juristic customers.
+        Use this for platform updates, maintenance notices, or important news.
+    </div>
+
+    <div class="cf-card">
+        <form method="POST" action="#">
+            <label class="form-label">Title *</label>
+            <input type="text" name="title" class="form-control"
+                   placeholder="e.g. System maintenance on July 15" required>
+
+            <label class="form-label">Message *</label>
+            <textarea name="body" class="form-control" rows="5"
+                      placeholder="Type your announcement..." required></textarea>
+
+            <label class="form-label">Expires After</label>
+            <select name="expires_days" class="form-select">
+                <option value="7">7 days</option>
+                <option value="30" selected>30 days</option>
+                <option value="90">90 days</option>
+            </select>
+
+            <button type="submit" class="btn-save">
+                📢 Send to All Customers
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
