@@ -503,3 +503,47 @@ def contact():
         prefill_name=prefill_name,
         prefill_email=prefill_email,
         prefill_mobile=prefill_mobile)
+
+
+@auth_bp.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    """User profile — change password without forgot password flow."""
+    from werkzeug.security import check_password_hash, generate_password_hash
+    from flask import session
+
+    lang = session.get('lang', 'th')
+
+    if request.method == 'POST':
+        current_pw = request.form.get('current_password', '')
+        new_pw     = request.form.get('new_password', '')
+        confirm_pw = request.form.get('confirm_password', '')
+
+        # Validate
+        if not check_password_hash(current_user.password_hash, current_pw):
+            flash('รหัสผ่านปัจจุบันไม่ถูกต้อง' if lang == 'th'
+                  else 'Current password is incorrect', 'danger')
+            return redirect(url_for('auth.profile'))
+
+        if len(new_pw) < 6:
+            flash('รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร' if lang == 'th'
+                  else 'New password must be at least 6 characters', 'danger')
+            return redirect(url_for('auth.profile'))
+
+        if new_pw != confirm_pw:
+            flash('รหัสผ่านใหม่ไม่ตรงกัน' if lang == 'th'
+                  else 'New passwords do not match', 'danger')
+            return redirect(url_for('auth.profile'))
+
+        db  = get_db()
+        cur = db.cursor()
+        cur.execute("""
+            UPDATE tbluser SET password_hash = %s WHERE idno = %s
+        """, [generate_password_hash(new_pw), current_user.id])
+        db.commit()
+
+        flash('✅ เปลี่ยนรหัสผ่านสำเร็จ' if lang == 'th'
+              else '✅ Password changed successfully', 'success')
+        return redirect(url_for('auth.profile'))
+
+    return render_template('auth/profile.html')

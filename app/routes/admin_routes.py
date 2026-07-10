@@ -266,7 +266,8 @@ def customer_detail(customer_id):
 
     users = query_all("""
         SELECT u.idno, u.fullname, u.email, u.mobile,
-               u.is_active, u.created_at, r.role_name
+               u.is_active, u.created_at, u.role_id,
+               r.role_name
         FROM tbluser u
         JOIN tblrole r ON u.role_id = r.idno
         WHERE u.customer_id = %s
@@ -608,13 +609,48 @@ def verify_slip(payment_id):
             WHERE idno = %s
         """, [current_user.id, payment_id])
 
-        # Mark invoice paid
-        if payment['invoice_id']:
+        # Auto-generate invoice if not already linked
+        invoice_id = payment['invoice_id']
+        if not invoice_id:
+            try:
+                last = query_one("SELECT COALESCE(MAX(idno),0) AS n FROM tblinvoice")
+                inv_no = f'INV-{(last["n"] or 0) + 1:05d}'
+            except Exception:
+                inv_no = f'INV-{payment_id:05d}'
+
+            from datetime import date
+            today = date.today()
+            months = 12 if payment['plan_type'] == 'annual' else 1
+            import calendar as _cal
+            m = today.month + months
+            y = today.year + (m - 1) // 12
+            m = ((m - 1) % 12) + 1
+            d = min(today.day, _cal.monthrange(y, m)[1])
+            end_date = date(y, m, d)
+
+            cur.execute("""
+                INSERT INTO tblinvoice
+                    (customer_id, property_id, package_id, invoice_no,
+                     amount, period_start, period_end, due_date,
+                     status, payment_id, created_by, paid_at, paid_by)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,'paid',%s,%s,NOW(),%s)
+                RETURNING idno
+            """, [payment['customer_id'], payment['property_id'],
+                  payment['package_id'], inv_no, payment['amount'],
+                  today, end_date, today,
+                  payment_id, current_user.id, current_user.id])
+            invoice_id = cur.fetchone()['idno']
+
+            # Link back to payment
+            cur.execute("UPDATE tblpayment SET invoice_id = %s WHERE idno = %s",
+                        [invoice_id, payment_id])
+        else:
+            # Mark existing invoice paid
             cur.execute("""
                 UPDATE tblinvoice SET
                     status = 'paid', paid_at = NOW(), paid_by = %s
                 WHERE idno = %s
-            """, [current_user.id, payment['invoice_id']])
+            """, [current_user.id, invoice_id])
 
         # Activate / update subscription
         months = 12 if payment['plan_type'] == 'annual' else 1
@@ -793,7 +829,6 @@ def impersonate(user_id):
         flash('ไม่พบผู้ใช้', 'danger')
         return redirect(url_for('admin.dashboard'))
 
-    # Store admin session so we can return
     from flask import session
     session['admin_id'] = current_user.id
 

@@ -274,7 +274,7 @@
                class="cf-lang-btn {% if lang == 'en' %}active{% endif %}">EN</a>
         </div>
 
-        <span class="cf-nav-user">{{ current_user.fullname }}</span>
+        <a href="{{ url_for('auth.profile') }}" class="cf-nav-user" style="text-decoration:none; cursor:pointer;" title="My Profile">{{ current_user.fullname }} 👤</a>
         {% if current_plan %}
         <a href="{{ url_for('property.billing') }}" class="cf-nav-plan">
             {{ current_plan }}

@@ -46,17 +46,32 @@ body { background: #f0f4f8; }
     {% if announcements %}
         {% for a in announcements %}
         <div class="ann-card {{ 'unread' if not a.is_read }} {{ 'private' if a.target == 'resident' }}"
-             onclick="markRead({{ a.idno }}, this)">
-            <div class="ann-title">
-                {% if not a.is_read %}<span class="unread-dot"></span>{% endif %}
-                {{ a.title }}
-                {% if a.target == 'resident' %}
-                <span class="private-tag">
-                    🔒 {{ 'Private' if lang == 'en' else 'ส่วนตัว' }}
-                </span>
-                {% endif %}
+             id="ann-{{ a.idno }}">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:.5rem;">
+                <div class="ann-title">
+                    {% if not a.is_read %}<span class="unread-dot"></span>{% endif %}
+                    {{ a.title }}
+                    {% if a.target == 'resident' %}
+                    <span class="private-tag">
+                        🔒 {{ 'Private' if lang == 'en' else 'ส่วนตัว' }}
+                    </span>
+                    {% endif %}
+                </div>
+                <button onclick="toggleAnn({{ a.idno }}, this)"
+                        style="background:none; border:none; color:#94a3b8;
+                               cursor:pointer; font-size:.8rem; white-space:nowrap;
+                               padding:.1rem .3rem; flex-shrink:0;">
+                    {{ 'More ▾' if lang == 'en' else 'เพิ่มเติม ▾' }}
+                </button>
             </div>
-            <div class="ann-body">{{ a.body }}</div>
+            <!-- Preview — first 100 chars -->
+            <div class="ann-preview ann-body">
+                {{ a.body[:100] }}{% if a.body|length > 100 %}...{% endif %}
+            </div>
+            <!-- Full body — hidden by default -->
+            <div class="ann-full ann-body" style="display:none;">
+                {{ a.body }}
+            </div>
             <div class="ann-date">
                 {{ a.created_at.strftime('%d/%m/%Y %H:%M') if a.created_at else '-' }}
             </div>
@@ -71,11 +86,23 @@ body { background: #f0f4f8; }
 </div>
 
 <script>
-function markRead(annId, el) {
-    if (el.classList.contains('unread')) {
-        el.classList.remove('unread');
-        el.querySelector('.unread-dot') &&
-            el.querySelector('.unread-dot').remove();
+function toggleAnn(annId, btn) {
+    const card    = document.getElementById('ann-' + annId);
+    const preview = card.querySelector('.ann-preview');
+    const full    = card.querySelector('.ann-full');
+    const isOpen  = full.style.display !== 'none';
+
+    preview.style.display = isOpen ? 'block' : 'none';
+    full.style.display    = isOpen ? 'none'  : 'block';
+    btn.textContent = isOpen
+        ? '{{ "More ▾" if lang == "en" else "เพิ่มเติม ▾" }}'
+        : '{{ "Less ▴" if lang == "en" else "ย่อ ▴" }}';
+
+    // Mark as read when expanded
+    if (!isOpen && card.classList.contains('unread')) {
+        card.classList.remove('unread');
+        const dot = card.querySelector('.unread-dot');
+        if (dot) dot.remove();
         fetch('/announcement/read/' + annId, { method: 'POST' });
     }
 }

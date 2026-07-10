@@ -126,13 +126,14 @@ tr:hover td { background: #fafbfc; }
                 </span>
                 <a href="{{ url_for('property.billing') }}"
                    style="background: linear-gradient(135deg, #ff7a00, #ff9a00);
-                          color: #1a1a1a; font-weight: 900; border-radius: 20px;
+                          color: white; font-weight: 900; border-radius: 20px;
                           padding: .35rem 1rem; text-decoration: none;
-                          font-size: .78rem; letter-spacing: .3px;
+                          font-size: .82rem; letter-spacing: .3px;
                           box-shadow: 0 3px 12px rgba(255,122,0,.5);
                           animation: pulse-upgrade 2s ease-in-out infinite;
-                          display: inline-block;">
-                    ⚡ {{ 'Upgrade' if lang == 'en' else 'อัปเกรด' }}
+                          display: inline-flex; align-items: center; gap: .3rem;">
+                    <span style="font-size:.9rem;">⚡</span>
+                    <span>{{ 'Upgrade' if lang == 'en' else 'อัปเกรด' }}</span>
                 </a>
             </div>
             {% endif %}

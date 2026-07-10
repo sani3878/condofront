@@ -1,0 +1,115 @@
+{% extends "shared/base.html" %}
+{% block content %}
+{% set lang = session.get('lang', 'th') %}
+<style>
+* { box-sizing: border-box; }
+body { background: #f0f4f8; }
+.wrap { padding: 1.25rem 1rem; max-width: 480px; margin: 0 auto; }
+.page-header {
+    background: #1e3a5f; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1.25rem; color: white;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.page-header h2 { font-size: 1.1rem; font-weight: 800; margin: 0; color: white; }
+.back-link { color: #ff7a00; text-decoration: none; font-size: .88rem; font-weight: 700; }
+.cf-card {
+    background: white; border-radius: 16px; padding: 1.25rem;
+    margin-bottom: 1rem; box-shadow: 0 2px 12px rgba(0,0,0,.05);
+}
+.card-title { font-size: .95rem; font-weight: 800; color: #1e3a5f; margin-bottom: 1rem; }
+.form-label { font-weight: 700; font-size: .85rem; margin-bottom: .3rem; display: block; }
+.form-control {
+    border-radius: 10px; border: 1.5px solid #e2e8f0;
+    padding: 10px 13px; font-size: .92rem; width: 100%;
+    color: #1e293b; margin-bottom: .75rem;
+}
+.form-control:focus { border-color: #1e3a5f; outline: none; }
+.btn-save {
+    background: #ff7a00; border: none; color: white;
+    font-weight: 800; border-radius: 12px; padding: 12px;
+    width: 100%; font-size: .95rem; cursor: pointer;
+}
+.info-row {
+    display: flex; justify-content: space-between;
+    padding: .6rem 0; border-bottom: 1px solid #f0f4f8;
+    font-size: .88rem;
+}
+.info-row:last-child { border-bottom: none; }
+.info-label { color: #64748b; font-weight: 600; }
+.info-value { font-weight: 700; color: #1a1a1a; }
+</style>
+
+<div class="wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}
+                    alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="page-header">
+        <h2>👤 {{ 'My Profile' if lang == 'en' else 'โปรไฟล์ของฉัน' }}</h2>
+        <a href="{{ url_for('main.home') }}" class="back-link">
+            ← {{ 'Back' if lang == 'en' else 'กลับ' }}
+        </a>
+    </div>
+
+    <!-- Profile info -->
+    <div class="cf-card">
+        <div class="card-title">
+            📋 {{ 'Account Information' if lang == 'en' else 'ข้อมูลบัญชี' }}
+        </div>
+        <div class="info-row">
+            <span class="info-label">{{ 'Name' if lang == 'en' else 'ชื่อ' }}</span>
+            <span class="info-value">{{ current_user.fullname }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">{{ 'Email' if lang == 'en' else 'อีเมล' }}</span>
+            <span class="info-value">{{ current_user.email }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">{{ 'Role' if lang == 'en' else 'ตำแหน่ง' }}</span>
+            <span class="info-value">{{ current_user.role_name }}</span>
+        </div>
+        {% if current_user.mobile %}
+        <div class="info-row">
+            <span class="info-label">{{ 'Phone' if lang == 'en' else 'โทรศัพท์' }}</span>
+            <span class="info-value">{{ current_user.mobile }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Change password -->
+    <div class="cf-card">
+        <div class="card-title">
+            🔑 {{ 'Change Password' if lang == 'en' else 'เปลี่ยนรหัสผ่าน' }}
+        </div>
+        <form method="POST" action="{{ url_for('auth.profile') }}">
+            <label class="form-label">
+                {{ 'Current Password' if lang == 'en' else 'รหัสผ่านปัจจุบัน' }} *
+            </label>
+            <input type="password" name="current_password" class="form-control"
+                   placeholder="••••••••" required autocomplete="current-password">
+
+            <label class="form-label">
+                {{ 'New Password' if lang == 'en' else 'รหัสผ่านใหม่' }} *
+            </label>
+            <input type="password" name="new_password" class="form-control"
+                   placeholder="{{ 'Min 6 characters' if lang == 'en' else 'อย่างน้อย 6 ตัวอักษร' }}"
+                   required minlength="6" autocomplete="new-password">
+
+            <label class="form-label">
+                {{ 'Confirm New Password' if lang == 'en' else 'ยืนยันรหัสผ่านใหม่' }} *
+            </label>
+            <input type="password" name="confirm_password" class="form-control"
+                   placeholder="••••••••" required autocomplete="new-password">
+
+            <button type="submit" class="btn-save">
+                🔑 {{ 'Change Password' if lang == 'en' else 'เปลี่ยนรหัสผ่าน' }}
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

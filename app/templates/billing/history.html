@@ -133,7 +133,7 @@ body { background: #f0f4f8; }
             <!-- Payment status -->
             {% if inv.payment_status == 'pending' %}
             <span class="status-pill s-pending">
-                ⏳ {{ 'Verifying' if lang == 'en' else 'กำลังตรวจสอบ' }}
+                ⏳ {{ 'Verifying Slip' if lang == 'en' else 'กำลังตรวจสอบ' }}
             </span>
             {% elif inv.payment_status == 'verified' or inv.status == 'paid' %}
             <span class="status-pill s-paid">
@@ -143,6 +143,13 @@ body { background: #f0f4f8; }
             <span class="status-pill s-rejected">
                 ❌ {{ 'Rejected' if lang == 'en' else 'ปฏิเสธ' }}
             </span>
+            {% elif inv.status == 'unpaid' and not inv.slip_path %}
+            <a href="{{ url_for('billing.upgrade') }}"
+               class="status-pill"
+               style="background:#fff3cd; color:#856404;
+                      text-decoration:none; cursor:pointer;">
+                📎 {{ 'Upload Receipt' if lang == 'en' else 'อัปโหลดสลิป' }}
+            </a>
             {% elif inv.status == 'unpaid' %}
             <span class="status-pill s-unpaid">
                 ⏰ {{ 'Unpaid' if lang == 'en' else 'ยังไม่ชำระ' }}

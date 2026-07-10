@@ -858,7 +858,8 @@ def reset_invite_code(room_id):
 
     if not room:
         flash('ไม่พบห้อง', 'danger')
-        return redirect(url_for('property.dashboard'))
+        return redirect(url_for('resident.home') if current_user.is_resident
+                        else url_for('property.dashboard'))
 
     cur.execute("""
         UPDATE tblroom SET
@@ -868,8 +869,14 @@ def reset_invite_code(room_id):
         WHERE idno = %s
     """, [new_code, room_id])
     db.commit()
-    flash(f'รีเซ็ตรหัสเชิญสำเร็จ — รหัสใหม่: {new_code}', 'success')
-    return redirect(url_for('property.detail', property_id=room['property_id']))
+
+    if current_user.is_resident:
+        flash(f'✅ Reset successful! New code: {new_code}', 'success')
+        return redirect(url_for('resident.unit'))
+    else:
+        flash(f'รีเซ็ตรหัสเชิญสำเร็จ — รหัสใหม่: {new_code}', 'success')
+        return redirect(url_for('property.detail',
+                                property_id=room['property_id']))
 
 
 @property_bp.route('/rooms/print-labels')
