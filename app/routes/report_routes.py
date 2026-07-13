@@ -3,10 +3,12 @@ from flask import render_template, request
 from flask_login import login_required, current_user
 from ..blueprints import report_bp
 from ..helpers import query_one, query_all
+from ..decorators import staff_required
 
 
 @report_bp.route('/')
 @login_required
+@staff_required
 def dashboard():
     pid = current_user.property_id
 

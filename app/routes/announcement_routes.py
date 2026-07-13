@@ -4,12 +4,14 @@ from flask_login import login_required, current_user
 from ..blueprints import announcement_bp
 from ..helpers import query_all, query_one, get_db
 from ..mail import _send
+from ..decorators import staff_required, resident_required
 
 
 # ── JURISTIC / STAFF ROUTES ─────────────────────────────────
 
 @announcement_bp.route('/')
 @login_required
+@staff_required
 def list_announcements():
     if current_user.is_resident:
         return redirect(url_for('announcement.resident_view'))
@@ -52,6 +54,7 @@ def list_announcements():
 
 @announcement_bp.route('/create', methods=['POST'])
 @login_required
+@staff_required
 def create():
     if current_user.is_resident:
         return redirect(url_for('announcement.resident_view'))
@@ -125,6 +128,7 @@ def create():
 
 @announcement_bp.route('/delete/<int:ann_id>', methods=['POST'])
 @login_required
+@staff_required
 def delete(ann_id):
     db  = get_db()
     cur = db.cursor()
@@ -141,6 +145,7 @@ def delete(ann_id):
 
 @announcement_bp.route('/my')
 @login_required
+@resident_required
 def resident_view():
     if not current_user.is_resident:
         return redirect(url_for('announcement.list_announcements'))
@@ -171,6 +176,7 @@ def resident_view():
 
 @announcement_bp.route('/read/<int:ann_id>', methods=['POST'])
 @login_required
+@resident_required
 def mark_read(ann_id):
     db  = get_db()
     cur = db.cursor()

@@ -3,6 +3,7 @@ from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from ..blueprints import facility_bp
 from ..helpers import query_one, query_all, get_db
+from ..decorators import staff_required, resident_required
 
 # ── DEFAULT FACILITIES ───────────────────────────────────────
 DEFAULT_FACILITIES = [
@@ -86,6 +87,7 @@ def get_slot_bookings(facility_id, booking_date):
 
 @facility_bp.route('/')
 @login_required
+@staff_required
 def dashboard():
     if current_user.is_resident:
         return redirect(url_for('facility.resident_facilities'))
@@ -121,6 +123,7 @@ def dashboard():
 
 @facility_bp.route('/toggle/<int:facility_id>', methods=['POST'])
 @login_required
+@staff_required
 def toggle_facility(facility_id):
     """Quick toggle active status from dashboard."""
     facility = query_one("""
@@ -153,6 +156,7 @@ def toggle_facility(facility_id):
 
 @facility_bp.route('/settings', methods=['GET', 'POST'])
 @login_required
+@staff_required
 def settings():
     """Staff manages facility settings."""
     if current_user.is_resident:
@@ -206,6 +210,7 @@ def settings():
 
 @facility_bp.route('/bookings')
 @login_required
+@staff_required
 def bookings():
     """Staff views all bookings."""
     if current_user.is_resident:
@@ -252,6 +257,7 @@ def bookings():
 
 @facility_bp.route('/approve/<int:booking_id>', methods=['POST'])
 @login_required
+@staff_required
 def approve_booking(booking_id):
     db  = get_db()
     cur = db.cursor()
@@ -266,6 +272,7 @@ def approve_booking(booking_id):
 
 @facility_bp.route('/cancel/<int:booking_id>', methods=['POST'])
 @login_required
+@staff_required
 def cancel_booking(booking_id):
     db  = get_db()
     cur = db.cursor()
@@ -283,6 +290,7 @@ def cancel_booking(booking_id):
 
 @facility_bp.route('/mark-paid/<int:booking_id>', methods=['POST'])
 @login_required
+@staff_required
 def mark_paid(booking_id):
     db  = get_db()
     cur = db.cursor()
@@ -299,6 +307,7 @@ def mark_paid(booking_id):
 
 @facility_bp.route('/book')
 @login_required
+@resident_required
 def resident_facilities():
     """Resident sees all active facilities."""
     if not current_user.is_resident:
@@ -431,6 +440,7 @@ def book(facility_id):
 
 @facility_bp.route('/my-bookings')
 @login_required
+@resident_required
 def my_bookings():
     """Resident views their own bookings."""
     if not current_user.is_resident:
@@ -457,6 +467,7 @@ def my_bookings():
 
 @facility_bp.route('/cancel-my/<int:booking_id>', methods=['POST'])
 @login_required
+@resident_required
 def cancel_my_booking(booking_id):
     """Resident cancels their own booking."""
     db  = get_db()
@@ -478,6 +489,7 @@ def cancel_my_booking(booking_id):
 
 @facility_bp.route('/booking-qr/<int:booking_id>')
 @login_required
+@resident_required
 def booking_qr(booking_id):
     """Show QR code for a confirmed booking."""
     # Allow both resident and staff to view

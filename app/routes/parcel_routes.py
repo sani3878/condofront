@@ -3,10 +3,12 @@ from flask import render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from ..blueprints import parcel_bp
 from ..helpers import query_one, query_all, get_db
+from ..decorators import staff_required
 
 @parcel_bp.route('/')
 @parcel_bp.route('/receive', methods=['GET', 'POST'])
 @login_required
+@staff_required
 def receive():
     if request.method == 'POST':
         room_id      = request.form.get('room_id')
@@ -113,6 +115,7 @@ def receive():
 
 @parcel_bp.route('/label/<int:parcel_id>')
 @login_required
+@staff_required
 def print_label(parcel_id):
     parcel = query_one("""
         SELECT p.*, r.room_no, r.building, r.floor,
@@ -133,6 +136,7 @@ def print_label(parcel_id):
 
 @parcel_bp.route('/list')
 @login_required
+@staff_required
 def list_parcels():
     status_id  = request.args.get('status', 0, type=int)
     search     = request.args.get('q', '').strip()
@@ -224,6 +228,7 @@ def list_parcels():
 
 @parcel_bp.route('/pickup/<int:parcel_id>', methods=['GET', 'POST'])
 @login_required
+@staff_required
 def pickup(parcel_id):
     parcel = query_one("""
         SELECT p.*, r.room_no, r.building
@@ -282,6 +287,7 @@ def pickup(parcel_id):
 
 @parcel_bp.route('/qr-pickup/<code>', methods=['GET', 'POST'])
 @login_required
+@staff_required
 def qr_pickup(code):
     """Staff confirms pickup via resident QR code — no signature needed."""
     parcel = query_one("""
@@ -334,6 +340,7 @@ def qr_pickup(code):
 
 @parcel_bp.route('/api/rooms')
 @login_required
+@staff_required
 def api_rooms():
     q    = request.args.get('q', '').strip()
     rows = query_all("""

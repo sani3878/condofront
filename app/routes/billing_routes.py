@@ -7,6 +7,7 @@ from flask_login import login_required, current_user
 from ..blueprints import billing_bp
 from ..helpers import query_all, query_one, get_db
 from ..mail import _send
+from ..decorators import staff_required, resident_required
 
 
 ANNUAL_DISCOUNT = Decimal('0.10')  # default fallback only
@@ -44,6 +45,7 @@ def calc_price(monthly_fee, plan_type, annual_discount=10):
 
 @billing_bp.route('/upgrade')
 @login_required
+@staff_required
 def upgrade():
     if current_user.is_resident or current_user.is_superadmin:
         return redirect(url_for('main.home'))
@@ -70,6 +72,7 @@ def upgrade():
 
 @billing_bp.route('/checkout', methods=['POST'])
 @login_required
+@staff_required
 def checkout():
     """Show payment QR + invoice preview."""
     package_id = request.form.get('package_id')
@@ -125,6 +128,7 @@ def checkout():
 
 @billing_bp.route('/submit-payment', methods=['POST'])
 @login_required
+@staff_required
 def submit_payment():
     """Customer submits payment slip."""
     package_id   = request.form.get('package_id')
@@ -193,6 +197,7 @@ def submit_payment():
 
 @billing_bp.route('/history')
 @login_required
+@staff_required
 def history():
     if current_user.is_resident or current_user.is_superadmin:
         return redirect(url_for('main.home'))
@@ -230,6 +235,7 @@ def history():
 
 @billing_bp.route('/promptpay-qr')
 @login_required
+@staff_required
 def promptpay_qr():
     """Generate a real EMVCo PromptPay QR code image."""
     import io, base64
@@ -280,6 +286,7 @@ def promptpay_qr():
 
 @billing_bp.route('/invoice/print/<int:invoice_id>')
 @login_required
+@staff_required
 def print_invoice(invoice_id):
     """Customer prints their own invoice."""
     invoice = query_one("""

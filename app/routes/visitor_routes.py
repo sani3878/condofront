@@ -4,6 +4,7 @@ from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from ..blueprints import visitor_bp
 from ..helpers import query_one, query_all, get_db
+from ..decorators import staff_required
 
 
 def generate_visitor_code():
@@ -20,6 +21,7 @@ def generate_visitor_code():
 
 @visitor_bp.route('/')
 @login_required
+@staff_required
 def log():
     today  = request.args.get('date', date.today().isoformat())
     search = request.args.get('q', '').strip()
@@ -90,6 +92,7 @@ def log():
 
 @visitor_bp.route('/checkin', methods=['POST'])
 @login_required
+@staff_required
 def checkin():
     """Staff manually checks in a walk-in visitor."""
     visitor_name = request.form.get('visitor_name', '').strip()
@@ -120,6 +123,7 @@ def checkin():
 
 @visitor_bp.route('/confirm/<code>', methods=['POST'])
 @login_required
+@staff_required
 def confirm_arrival(code):
     """Staff confirms arrival of a pre-registered visitor by QR/code."""
     visitor = query_one("""
@@ -153,6 +157,7 @@ def confirm_arrival(code):
 
 @visitor_bp.route('/checkout/<int:visitor_id>', methods=['POST'])
 @login_required
+@staff_required
 def checkout(visitor_id):
     db  = get_db()
     cur = db.cursor()
@@ -170,6 +175,7 @@ def checkout(visitor_id):
 
 @visitor_bp.route('/register', methods=['GET', 'POST'])
 @login_required
+@staff_required
 def register_visitor():
     """Resident pre-registers a visitor."""
     if not current_user.is_resident:
@@ -211,6 +217,7 @@ def register_visitor():
 
 @visitor_bp.route('/qr/<int:visitor_id>')
 @login_required
+@staff_required
 def visitor_qr(visitor_id):
     """Show QR code for a pre-registered visitor."""
     visitor = query_one("""
@@ -230,6 +237,7 @@ def visitor_qr(visitor_id):
 
 @visitor_bp.route('/my')
 @login_required
+@staff_required
 def my_visitors():
     """Resident sees their pre-registered visitors."""
     if not current_user.is_resident:

@@ -2,6 +2,7 @@ from flask import render_template, abort, flash, redirect, url_for, request, jso
 from flask_login import login_required, current_user
 from ..blueprints import resident_bp
 from ..helpers import query_all, query_one, get_db
+from ..decorators import resident_required
 
 
 def resident_required(f):

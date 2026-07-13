@@ -3,6 +3,7 @@ from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from ..blueprints import service_bp
 from ..helpers import query_one, query_all, get_db
+from ..decorators import staff_required
 
 # ── STATUS CONFIG ────────────────────────────────────────────
 STATUSES = [
@@ -76,6 +77,7 @@ def get_categories(property_id):
 
 @service_bp.route('/')
 @login_required
+@staff_required
 def list_requests():
     if current_user.is_resident:
         return redirect(url_for('service.my_requests'))
@@ -154,6 +156,7 @@ def list_requests():
 
 @service_bp.route('/create', methods=['POST'])
 @login_required
+@staff_required
 def create():
     title       = request.form.get('title', '').strip()
     description = request.form.get('description', '').strip() or None
@@ -189,6 +192,7 @@ def create():
 
 @service_bp.route('/update/<int:req_id>', methods=['POST'])
 @login_required
+@staff_required
 def update(req_id):
     new_status  = request.form.get('status')
     note        = request.form.get('note', '').strip() or None
@@ -229,6 +233,7 @@ def update(req_id):
 
 @service_bp.route('/my')
 @login_required
+@staff_required
 def my_requests():
     if not current_user.is_resident:
         return redirect(url_for('service.list_requests'))
@@ -261,6 +266,7 @@ def my_requests():
 
 @service_bp.route('/categories', methods=['GET', 'POST'])
 @login_required
+@staff_required
 def categories():
     if current_user.is_resident:
         return redirect(url_for('resident.home'))
@@ -291,6 +297,7 @@ def categories():
 
 @service_bp.route('/categories/delete/<int:cat_id>', methods=['POST'])
 @login_required
+@staff_required
 def delete_category(cat_id):
     db  = get_db()
     cur = db.cursor()

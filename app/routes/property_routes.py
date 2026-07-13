@@ -2,6 +2,7 @@ from flask import render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from ..blueprints import property_bp
 from ..helpers import query_one, query_all, get_db
+from ..decorators import staff_required
 
 def get_setup_status(user):
     """Check what's been set up for this user."""
@@ -41,6 +42,7 @@ def get_setup_status(user):
 
 @property_bp.route('/dashboard')
 @login_required
+@staff_required
 def dashboard():
     # Reception/Security → redirect straight to their property detail
     if current_user.role_id in (2, 3) and current_user.property_id:
@@ -81,6 +83,7 @@ def dashboard():
 
 @property_bp.route('/detail/<int:property_id>')
 @login_required
+@staff_required
 def detail(property_id):
     """Property detail — rooms + staff. All staff can see their own property."""
 
@@ -150,6 +153,7 @@ def detail(property_id):
 
 @property_bp.route('/edit/<int:property_id>', methods=['GET', 'POST'])
 @login_required
+@staff_required
 def edit_property(property_id):
     """Edit property name, code, address."""
     prop = query_one("""
@@ -188,6 +192,7 @@ def edit_property(property_id):
 
 
 @login_required
+@staff_required
 def setup():
     existing_property = None
     if current_user.property_id:
@@ -322,6 +327,7 @@ def setup():
 
 @property_bp.route('/rooms')
 @login_required
+@staff_required
 def rooms():
     status = get_setup_status(current_user)
     room_list = query_all("""
@@ -337,6 +343,7 @@ def rooms():
 
 @property_bp.route('/users')
 @login_required
+@staff_required
 def users():
     status = get_setup_status(current_user)
     staff = query_all("""
@@ -376,6 +383,7 @@ def users():
 
 @property_bp.route('/billing')
 @login_required
+@staff_required
 def billing():
     status = get_setup_status(current_user)
 
@@ -433,6 +441,7 @@ def billing():
 
 @property_bp.route('/users/add', methods=['POST'])
 @login_required
+@staff_required
 def add_user():
     from werkzeug.security import generate_password_hash
     import secrets
@@ -485,6 +494,7 @@ def add_user():
 
 @property_bp.route('/users/deactivate/<int:user_id>', methods=['POST'])
 @login_required
+@staff_required
 def deactivate_user(user_id):
     if user_id == current_user.id:
         flash('ไม่สามารถปิดใช้งานบัญชีตัวเองได้', 'danger')
@@ -504,6 +514,7 @@ def deactivate_user(user_id):
 
 @property_bp.route('/rooms/add', methods=['POST'])
 @login_required
+@staff_required
 def add_room():
     building = request.form.get('building', '').strip().upper()
     room_no  = request.form.get('room_no', '').strip()
@@ -554,6 +565,7 @@ def add_room():
 
 @property_bp.route('/rooms/download-template')
 @login_required
+@staff_required
 def download_template():
     import io
     import openpyxl
@@ -608,6 +620,7 @@ def download_template():
 
 @property_bp.route('/rooms/import', methods=['POST'])
 @login_required
+@staff_required
 def import_rooms():
     import openpyxl
 
@@ -682,6 +695,7 @@ def import_rooms():
 
 @property_bp.route('/switch/<int:property_id>')
 @login_required
+@staff_required
 def switch_property(property_id):
     """Switch active property for multi-property managers."""
     # Verify this property belongs to the same customer
@@ -710,6 +724,7 @@ def switch_property(property_id):
 
 @property_bp.route('/new', methods=['GET', 'POST'])
 @login_required
+@staff_required
 def new_property():
     """Create an additional property under same customer."""
     # Check limit first
@@ -777,6 +792,7 @@ def new_property():
 
 @property_bp.route('/room/add/<int:property_id>', methods=['POST'])
 @login_required
+@staff_required
 def add_room_detail(property_id):
     """Add single room from property detail page."""
     building    = request.form.get('building', '').strip() or None
@@ -812,6 +828,7 @@ def add_room_detail(property_id):
 
 @property_bp.route('/room/delete/<int:room_id>', methods=['POST'])
 @login_required
+@staff_required
 def delete_room(room_id):
     """Soft delete a room."""
     db  = get_db()
@@ -827,6 +844,7 @@ def delete_room(room_id):
 
 @property_bp.route('/user/delete/<int:user_id>', methods=['POST'])
 @login_required
+@staff_required
 def delete_user(user_id):
     """Deactivate a staff user."""
     db  = get_db()
@@ -845,6 +863,7 @@ def delete_user(user_id):
 
 @property_bp.route('/room/reset-code/<int:room_id>', methods=['POST'])
 @login_required
+@staff_required
 def reset_invite_code(room_id):
     """Reset invite code for a room — old code instantly invalid."""
     import secrets as _s
@@ -881,6 +900,7 @@ def reset_invite_code(room_id):
 
 @property_bp.route('/rooms/print-labels')
 @login_required
+@staff_required
 def print_room_labels():
     """Print room reference labels for all rooms."""
     rooms = query_all("""

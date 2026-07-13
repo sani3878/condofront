@@ -856,3 +856,73 @@ def stop_impersonate():
         login_user(User(admin))
 
     return redirect(url_for('admin.dashboard'))
+
+
+# ── REGISTRATION TOKENS ──────────────────────────────────────
+
+@admin_bp.route('/tokens')
+@login_required
+@admin_required
+def tokens():
+    token_list = query_all("""
+        SELECT t.*, pkg.package_name,
+               u.fullname AS created_by_name,
+               c.customer_name AS used_by_name,
+               CASE
+                   WHEN t.used_at IS NOT NULL THEN 'used'
+                   WHEN t.expires_at < NOW()  THEN 'expired'
+                   ELSE 'active'
+               END AS status
+        FROM tblregister_token t
+        LEFT JOIN tblpackage  pkg ON t.plan_id    = pkg.idno
+        LEFT JOIN tbluser     u   ON t.created_by = u.idno
+        LEFT JOIN tblcustomer c   ON t.used_by    = c.idno
+        ORDER BY t.created_at DESC
+        LIMIT 50
+    """)
+    packages = query_all("""
+        SELECT * FROM tblpackage
+        WHERE is_active = TRUE ORDER BY monthly_fee
+    """)
+    return render_template('admin/tokens.html',
+        active_page='tokens',
+        tokens=token_list,
+        packages=packages)
+
+
+@admin_bp.route('/tokens/generate', methods=['POST'])
+@login_required
+@admin_required
+def generate_token():
+    import secrets
+    from datetime import datetime, timedelta
+    plan_id = request.form.get('plan_id') or None
+    note    = request.form.get('note', '').strip() or None
+    hours   = int(request.form.get('expires_hours', 48))
+    token   = secrets.token_urlsafe(24)[:32]
+    expires = datetime.now() + timedelta(hours=hours)
+    db  = get_db()
+    cur = db.cursor()
+    cur.execute("""
+        INSERT INTO tblregister_token
+            (token, plan_id, created_by, expires_at, note)
+        VALUES (%s, %s, %s, %s, %s)
+    """, [token, plan_id, current_user.id, expires, note])
+    db.commit()
+    flash(f'✅ Invite link generated! Expires in {hours}hrs', 'success')
+    return redirect(url_for('admin.tokens'))
+
+
+@admin_bp.route('/tokens/revoke/<int:token_id>', methods=['POST'])
+@login_required
+@admin_required
+def revoke_token(token_id):
+    db  = get_db()
+    cur = db.cursor()
+    cur.execute("""
+        UPDATE tblregister_token SET expires_at = NOW()
+        WHERE idno = %s AND used_at IS NULL
+    """, [token_id])
+    db.commit()
+    flash('Token revoked', 'success')
+    return redirect(url_for('admin.tokens'))

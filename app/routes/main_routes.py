@@ -2,10 +2,12 @@ from flask import render_template
 from flask_login import login_required, current_user
 from ..blueprints import main_bp
 from ..helpers import query_one
+from ..decorators import staff_required
 
 
 @main_bp.route('/')
 @login_required
+@staff_required
 def home():
     # Quick stats for the home screen
     waiting = 0

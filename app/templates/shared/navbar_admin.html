@@ -112,6 +112,11 @@
            class="admin-link {{ 'active' if ap == 'announcements' }}">
             📢 Announcements
         </a>
+        
+        <a href="{{ url_for('admin.tokens') }}"
+            class="admin-link {{ 'active' if ap == 'tokens' }}">
+            🔗 Invite Links
+        </a>
     </div>
 
     <!-- Right side -->

@@ -89,6 +89,24 @@ def login():
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
+    """Juristic registration — requires valid invite token."""
+    token_str = request.args.get('token') or request.form.get('token', '')
+
+    token = None
+    if token_str:
+        token = query_one("""
+            SELECT t.*, pkg.package_name, pkg.idno AS pkg_id
+            FROM tblregister_token t
+            LEFT JOIN tblpackage pkg ON t.plan_id = pkg.idno
+            WHERE t.token = %s
+              AND t.used_at IS NULL
+              AND t.expires_at > NOW()
+        """, [token_str])
+
+    if not token:
+        flash('ลิงก์ลงทะเบียนไม่ถูกต้องหรือหมดอายุแล้ว กรุณาติดต่อทีมงาน CondoFront', 'warning')
+        return redirect(url_for('auth.login'))
+
     if request.method == 'POST':
         customer_name = request.form.get('customer_name', '').strip()
         property_name = request.form.get('property_name', '').strip()
@@ -165,6 +183,15 @@ def register():
 
             db.commit()
 
+            # Mark invite token as used
+            if token_str:
+                cur.execute("""
+                    UPDATE tblregister_token
+                    SET used_at = NOW(), used_by = %s
+                    WHERE token = %s
+                """, [customer_id, token_str])
+                db.commit()
+
             # 5. Send verification email to user
             verify_url = url_for('auth.verify_email', token=verify_token, _external=True)
             success, error = send_verification_email(email, fullname, verify_url)
@@ -197,7 +224,10 @@ def register():
         WHERE is_active = TRUE
         ORDER BY monthly_fee
     """)
-    return render_template('auth/register.html', packages=packages)
+    return render_template('auth/register.html',
+        packages=packages,
+        token=token_str,
+        preselect_pkg=token['pkg_id'] if token else None)
 
 
 @auth_bp.route('/verify/<token>')
