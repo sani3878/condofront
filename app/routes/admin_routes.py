@@ -275,8 +275,8 @@ def customer_detail(customer_id):
     """, [customer_id])
 
     rooms = query_all("""
-        SELECT r.idno, r.building, r.room_no, r.owner_name,
-               r.is_active,
+        SELECT r.idno, r.building, r.room_no,
+               r.invite_code, r.is_active,
                (SELECT COUNT(*) FROM tblparcel p
                 WHERE p.room_id = r.idno AND p.status_id = 0) AS waiting_parcels
         FROM tblroom r

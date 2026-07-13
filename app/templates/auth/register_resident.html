@@ -101,7 +101,8 @@ body { background: #f0f4f8; }
         <div class="page-title">🏠 สมัครสมาชิกลูกบ้าน</div>
         <p class="page-sub">ใช้รหัสเชิญที่ได้รับจากนิติบุคคลของคุณ</p>
 
-        <form method="POST" action="{{ url_for('auth.register_resident') }}">
+        <form method="POST" action="{{ url_for('auth.register_resident') }}"
+              id="regForm">
 
             <label class="form-label">รหัสเชิญ (Invite Code) *</label>
             <input type="text" name="invite_code" class="form-control invite-input"
@@ -111,26 +112,47 @@ body { background: #f0f4f8; }
             <div class="form-hint">รหัส 8 ตัวอักษร ได้รับจากนิติบุคคลหรือแอดมินของโครงการ</div>
 
             <label class="form-label">ชื่อ-นามสกุล *</label>
-            <input type="text" name="fullname" class="form-control"
+            <input type="text" name="fullname" class="form-control" id="fullnameField"
                    placeholder="ชื่อ นามสกุล" required>
 
             <label class="form-label">อีเมล *</label>
-            <input type="email" name="email" class="form-control"
-                   placeholder="your@email.com" required>
+            <input type="email" name="email" class="form-control" id="emailField"
+                   placeholder="your@email.com" required
+                   onblur="checkEmail(this.value)">
+
+            <!-- Existing email notice -->
+            <div id="existingNotice" style="display:none;
+                 background:#f0fdf4; border:1.5px solid #86efac;
+                 border-radius:12px; padding:1rem; margin-bottom:.75rem;">
+                <div style="font-weight:800; color:#166534; font-size:.92rem;
+                            margin-bottom:.35rem;">
+                    ✅ อีเมลนี้มีบัญชีอยู่แล้ว!
+                </div>
+                <div style="font-size:.82rem; color:#166534;" id="existingName"></div>
+                <div style="font-size:.82rem; color:#64748b; margin-top:.35rem;">
+                    ระบบจะเพิ่มโครงการใหม่เข้าบัญชีของคุณโดยอัตโนมัติ<br>
+                    <strong>ไม่ต้องกรอกรหัสผ่านใหม่</strong> — ใช้รหัสผ่านเดิมของคุณ
+                </div>
+            </div>
 
             <label class="form-label">เบอร์โทร</label>
             <input type="tel" name="mobile" class="form-control"
                    placeholder="08x-xxx-xxxx">
 
-            <label class="form-label">รหัสผ่าน *</label>
-            <input type="password" name="password" class="form-control"
-                   placeholder="อย่างน้อย 8 ตัวอักษร" required minlength="8">
+            <!-- Password fields — hidden for existing users -->
+            <div id="passwordSection">
+                <label class="form-label">รหัสผ่าน *</label>
+                <input type="password" name="password" class="form-control"
+                       id="passwordField"
+                       placeholder="อย่างน้อย 8 ตัวอักษร" minlength="8">
 
-            <label class="form-label">ยืนยันรหัสผ่าน *</label>
-            <input type="password" name="confirm_password" class="form-control"
-                   placeholder="พิมพ์รหัสผ่านอีกครั้ง" required minlength="8">
+                <label class="form-label">ยืนยันรหัสผ่าน *</label>
+                <input type="password" name="confirm_password" class="form-control"
+                       id="confirmField"
+                       placeholder="พิมพ์รหัสผ่านอีกครั้ง" minlength="8">
+            </div>
 
-            <button type="submit" class="btn-register">
+            <button type="submit" class="btn-register" id="submitBtn">
                 🏠 สมัครสมาชิกลูกบ้าน
             </button>
         </form>
@@ -140,4 +162,58 @@ body { background: #f0f4f8; }
         </div>
     </div>
 </div>
+
+<script>
+let emailExists = false;
+
+function checkEmail(email) {
+    if (!email || !email.includes('@')) return;
+
+    fetch('/auth/check-email?email=' + encodeURIComponent(email))
+        .then(r => r.json())
+        .then(data => {
+            emailExists = data.exists;
+            const notice   = document.getElementById('existingNotice');
+            const pwSection = document.getElementById('passwordSection');
+            const pwField  = document.getElementById('passwordField');
+            const cfField  = document.getElementById('confirmField');
+            const nameField = document.getElementById('fullnameField');
+            const submitBtn = document.getElementById('submitBtn');
+            const nameEl   = document.getElementById('existingName');
+
+            if (data.exists) {
+                // Show notice, hide password fields
+                notice.style.display    = 'block';
+                pwSection.style.display = 'none';
+                nameEl.textContent      = '👤 ' + data.name;
+
+                // Remove required from password fields
+                pwField.required = false;
+                cfField.required = false;
+                pwField.value    = 'EXISTING_USER';
+                cfField.value    = 'EXISTING_USER';
+
+                // Update button
+                submitBtn.textContent = '🔗 เพิ่มโครงการนี้เข้าบัญชีของฉัน';
+                submitBtn.style.background = '#22c55e';
+
+                // Pre-fill name if empty
+                if (!nameField.value) nameField.value = data.name;
+
+            } else {
+                // New user — show password fields
+                notice.style.display    = 'none';
+                pwSection.style.display = 'block';
+                pwField.required        = true;
+                cfField.required        = true;
+                if (pwField.value === 'EXISTING_USER') {
+                    pwField.value = '';
+                    cfField.value = '';
+                }
+                submitBtn.textContent  = '🏠 สมัครสมาชิกลูกบ้าน';
+                submitBtn.style.background = '';
+            }
+        });
+}
+</script>
 {% endblock %}

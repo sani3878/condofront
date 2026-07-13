@@ -267,7 +267,7 @@ body { background: #f0f4f8; }
         {% for r in rooms %}
         <div class="room-row">
             <div class="room-no">{{ r.building or '' }}{{ r.room_no }}</div>
-            <div class="room-owner">{{ r.owner_name or 'No owner' }}</div>
+            <div class="room-owner">{{ r.invite_code or '-' }}</div>
             {% if r.waiting_parcels > 0 %}
             <span class="waiting-badge">📦 {{ r.waiting_parcels }}</span>
             {% endif %}

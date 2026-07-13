@@ -76,7 +76,29 @@ body { background: #f0f4f8; }
             <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:.5rem;">
                 <div style="flex:1;">
                     <div class="ann-title">{{ a.title }}</div>
-                    <div class="ann-body">{{ a.body[:150] }}{% if a.body|length > 150 %}...{% endif %}</div>
+                    <!-- Preview -->
+                    <div class="ann-body" id="preview-{{ a.idno }}">
+                        {{ a.body[:150] }}{% if a.body|length > 150 %}...
+                        <button onclick="toggleAnn({{ a.idno }}, this)"
+                                style="background:none; border:none; color:#ff7a00;
+                                       font-weight:700; cursor:pointer; font-size:.82rem;
+                                       padding:0; margin-left:.25rem;">
+                            {{ 'More ▾' if lang == 'en' else 'เพิ่มเติม ▾' }}
+                        </button>
+                        {% endif %}
+                    </div>
+                    <!-- Full body -->
+                    {% if a.body|length > 150 %}
+                    <div class="ann-body" id="full-{{ a.idno }}" style="display:none;">
+                        {{ a.body }}
+                        <button onclick="toggleAnn({{ a.idno }}, this)"
+                                style="background:none; border:none; color:#ff7a00;
+                                       font-weight:700; cursor:pointer; font-size:.82rem;
+                                       padding:0; margin-left:.25rem;">
+                            {{ 'Less ▴' if lang == 'en' else 'ย่อ ▴' }}
+                        </button>
+                    </div>
+                    {% endif %}
                     <div class="ann-meta">
                         <span>{{ a.created_at.strftime('%d/%m/%y %H:%M') if a.created_at else '-' }}</span>
                         <span>{{ a.created_by_name or '-' }}</span>
@@ -196,6 +218,16 @@ body { background: #f0f4f8; }
 function toggleResident(val) {
     document.getElementById('residentSelect').style.display =
         val === 'resident' ? 'block' : 'none';
+}
+</script>
+<script>
+function toggleAnn(annId, btn) {
+    const preview = document.getElementById('preview-' + annId);
+    const full    = document.getElementById('full-' + annId);
+    if (!full) return;
+    const isOpen  = full.style.display !== 'none';
+    preview.style.display = isOpen ? 'block' : 'none';
+    full.style.display    = isOpen ? 'none'  : 'block';
 }
 </script>
 {% endblock %}

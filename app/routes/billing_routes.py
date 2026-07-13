@@ -276,3 +276,26 @@ def promptpay_qr():
 
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500
+
+
+@billing_bp.route('/invoice/print/<int:invoice_id>')
+@login_required
+def print_invoice(invoice_id):
+    """Customer prints their own invoice."""
+    invoice = query_one("""
+        SELECT i.*, c.customer_name, c.email AS customer_email,
+               p.property_name, p.address,
+               pkg.package_name
+        FROM tblinvoice i
+        JOIN tblcustomer c  ON i.customer_id = c.idno
+        LEFT JOIN tblproperty p  ON i.property_id = p.idno
+        LEFT JOIN tblpackage pkg ON i.package_id  = pkg.idno
+        WHERE i.idno = %s AND i.customer_id = %s
+    """, [invoice_id, current_user.customer_id])
+
+    if not invoice:
+        flash('ไม่พบใบแจ้งหนี้', 'danger')
+        return redirect(url_for('billing.history'))
+
+    return render_template('admin/invoice_print.html',
+        invoice=invoice, hide_navbar=True)

@@ -245,7 +245,8 @@ body { background: #f0f4f8; }
         </div>
 
         <form method="POST" action="{{ url_for('billing.submit_payment') }}"
-              enctype="multipart/form-data" id="paymentForm">
+              enctype="multipart/form-data" id="paymentForm"
+              onsubmit="return validateSlip(event)">
             <input type="hidden" name="package_id"   value="{{ pkg.idno }}">
             <input type="hidden" name="plan_type"     value="{{ plan_type }}">
             <input type="hidden" name="amount"        value="{{ price_info.amount }}">
@@ -254,18 +255,26 @@ body { background: #f0f4f8; }
             <input type="hidden" name="period_end"    value="{{ period_end }}">
             <input type="hidden" name="due_date"      value="{{ due_date }}">
 
-            <div class="upload-zone" id="dropZone" onclick="document.getElementById('slipFile').click()">
+            <div class="upload-zone" id="dropZone"
+                 onclick="document.getElementById('slipFile').click()">
                 <div class="upload-icon">📷</div>
-                <div class="upload-text">
-                    {{ 'Tap to upload slip (JPG, PNG, PDF)' if lang == 'en' else 'แตะเพื่ออัปโหลดสลิป (JPG, PNG, PDF)' }}
+                <div class="upload-text" id="uploadText">
+                    {{ 'Tap to upload payment slip (JPG, PNG, PDF)' if lang == 'en' else 'แตะเพื่ออัปโหลดสลิปการโอนเงิน (JPG, PNG, PDF)' }}
                 </div>
                 <div class="upload-file-name" id="fileName"></div>
             </div>
             <input type="file" id="slipFile" name="slip"
                    accept=".jpg,.jpeg,.png,.pdf"
-                   onchange="showFileName(this)" style="display:none;">
+                   onchange="showFileName(this)" style="display:none;" required>
 
-            <button type="submit" class="btn-submit">
+            <!-- Validation error -->
+            <div id="slipError" style="display:none; color:#dc2626; font-size:.82rem;
+                 font-weight:700; text-align:center; margin-bottom:.5rem;">
+                ⚠️ {{ 'Please upload your payment slip before submitting' if lang == 'en' else 'กรุณาอัปโหลดสลิปการโอนเงินก่อนส่ง' }}
+            </div>
+
+            <button type="submit" class="btn-submit" id="submitBtn" disabled
+                    style="opacity:.5; cursor:not-allowed;">
                 ✅ {{ 'Submit Payment' if lang == 'en' else 'ส่งหลักฐานการชำระเงิน' }}
             </button>
         </form>
@@ -332,7 +341,25 @@ function showFileName(input) {
         const name = input.files[0].name;
         document.getElementById('fileName').textContent = '✅ ' + name;
         document.getElementById('dropZone').classList.add('has-file');
+        document.getElementById('uploadText').style.display = 'none';
+        document.getElementById('slipError').style.display = 'none';
+        // Enable submit button
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
     }
+}
+
+function validateSlip(e) {
+    const file = document.getElementById('slipFile');
+    if (!file.files || !file.files[0]) {
+        e.preventDefault();
+        document.getElementById('slipError').style.display = 'block';
+        document.getElementById('dropZone').style.borderColor = '#ef4444';
+        return false;
+    }
+    return true;
 }
 </script>
 {% endblock %}

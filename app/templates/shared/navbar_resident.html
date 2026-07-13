@@ -161,6 +161,9 @@
            class="{% if lang == 'en' %}active{% endif %}">🇬🇧 English</a>
     </div>
     <div class="res-mobile-divider"></div>
+    <a href="{{ url_for('resident.switch_unit') }}" class="res-mobile-link">
+        🏢 {{ 'Switch Unit' if lang == 'en' else 'เปลี่ยนห้อง' }}
+    </a>
     <a href="{{ url_for('auth.profile') }}" class="res-mobile-link">
         👤 {{ 'My Profile' if lang == 'en' else 'โปรไฟล์ของฉัน' }}
     </a>

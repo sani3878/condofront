@@ -1,13 +1,12 @@
-from flask import render_template, abort
+from flask import render_template, abort, flash, redirect, url_for, request, jsonify
 from flask_login import login_required, current_user
 from ..blueprints import resident_bp
-from ..helpers import query_all, query_one
+from ..helpers import query_all, query_one, get_db
 
 
 def resident_required(f):
     """Decorator to ensure only residents can access resident pages."""
     from functools import wraps
-    from flask import redirect, url_for, flash
     @wraps(f)
     def decorated(*args, **kwargs):
         if not current_user.is_authenticated:
@@ -147,3 +146,66 @@ def parcel_qr(parcel_id):
         return redirect(url_for('resident.parcels'))
 
     return render_template('resident/parcel_qr.html', parcel=parcel)
+
+
+@resident_bp.route('/switch-unit')
+@login_required
+def switch_unit():
+    """Show unit picker for multi-property residents."""
+    if not current_user.is_resident:
+        return redirect(url_for('main.home'))
+
+    units = query_all("""
+        SELECT ru.unit_id, ru.property_id, ru.is_primary,
+               r.room_no, r.building,
+               p.property_name,
+               (SELECT COUNT(*) FROM tblparcel par
+                WHERE par.room_id = r.idno
+                AND par.status_id = 0
+                AND par.deleted_at IS NULL) AS waiting
+        FROM tblresident_unit ru
+        JOIN tblroom r     ON ru.unit_id     = r.idno
+        JOIN tblproperty p ON ru.property_id = p.idno
+        WHERE ru.user_id = %s
+        ORDER BY ru.is_primary DESC, ru.joined_at
+    """, [current_user.id])
+
+    return render_template('resident/switch_unit.html', units=units)
+
+
+@resident_bp.route('/switch-unit/<int:unit_id>', methods=['POST'])
+@login_required
+def do_switch_unit(unit_id):
+    """Switch active unit for multi-property resident."""
+    # Verify this unit belongs to this user
+    unit = query_one("""
+        SELECT ru.*, r.room_no, r.building, p.property_name,
+               p.idno AS property_id
+        FROM tblresident_unit ru
+        JOIN tblroom r ON ru.unit_id = r.idno
+        JOIN tblproperty p ON ru.property_id = p.idno
+        WHERE ru.user_id = %s AND ru.unit_id = %s
+    """, [current_user.id, unit_id])
+
+    if not unit:
+        flash('ไม่พบห้องนี้', 'danger')
+        return redirect(url_for('resident.switch_unit'))
+
+    db  = get_db()
+    cur = db.cursor()
+    # Update user's active unit and property
+    cur.execute("""
+        UPDATE tbluser SET
+            unit_id     = %s,
+            property_id = %s
+        WHERE idno = %s
+    """, [unit_id, unit['property_id'], current_user.id])
+    db.commit()
+
+    # Update current_user object
+    current_user.unit_id     = unit_id
+    current_user.property_id = unit['property_id']
+
+    flash(f'เปลี่ยนเป็นห้อง {unit["building"] or ""}{unit["room_no"]} '
+          f'— {unit["property_name"]} แล้ว', 'success')
+    return redirect(url_for('resident.home'))

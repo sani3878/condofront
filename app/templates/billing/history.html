@@ -136,18 +136,26 @@ body { background: #f0f4f8; }
                 ⏳ {{ 'Verifying Slip' if lang == 'en' else 'กำลังตรวจสอบ' }}
             </span>
             {% elif inv.payment_status == 'verified' or inv.status == 'paid' %}
-            <span class="status-pill s-paid">
-                ✅ {{ 'Paid' if lang == 'en' else 'ชำระแล้ว' }}
-            </span>
+            <span class="status-pill s-paid">✅ {{ 'Paid' if lang == 'en' else 'ชำระแล้ว' }}</span>
             {% elif inv.payment_status == 'rejected' %}
-            <span class="status-pill s-rejected">
-                ❌ {{ 'Rejected' if lang == 'en' else 'ปฏิเสธ' }}
-            </span>
+            <div style="text-align:right;">
+                <span class="status-pill s-rejected" style="display:block; margin-bottom:.3rem;">
+                    ❌ {{ 'Rejected' if lang == 'en' else 'ปฏิเสธ' }}
+                </span>
+                {% if inv.rejected_reason %}
+                <div style="font-size:.7rem; color:#dc2626;">{{ inv.rejected_reason }}</div>
+                {% endif %}
+                <a href="{{ url_for('billing.upgrade') }}"
+                   style="font-size:.75rem; font-weight:700; color:#ff7a00;
+                          text-decoration:none;">
+                    📎 {{ 'Resubmit →' if lang == 'en' else 'ส่งใหม่ →' }}
+                </a>
+            </div>
             {% elif inv.status == 'unpaid' and not inv.slip_path %}
             <a href="{{ url_for('billing.upgrade') }}"
                class="status-pill"
                style="background:#fff3cd; color:#856404;
-                      text-decoration:none; cursor:pointer;">
+                      text-decoration:none; cursor:pointer; display:block;">
                 📎 {{ 'Upload Receipt' if lang == 'en' else 'อัปโหลดสลิป' }}
             </a>
             {% elif inv.status == 'unpaid' %}
@@ -156,6 +164,18 @@ body { background: #f0f4f8; }
             </span>
             {% else %}
             <span class="status-pill s-cancelled">-</span>
+            {% endif %}
+
+            <!-- Print invoice — only when invoice exists -->
+            {% if inv.status in ('paid', 'unpaid', 'cancelled') %}
+            <a href="{{ url_for('billing.print_invoice', invoice_id=inv.idno) }}"
+               target="_blank"
+               style="background:#1e3a5f; color:white; border-radius:8px;
+                      padding:.25rem .65rem; font-size:.72rem; font-weight:700;
+                      text-decoration:none; white-space:nowrap; display:inline-block;
+                      margin-top:.25rem;">
+                🖨 {{ 'Print' if lang == 'en' else 'พิมพ์' }}
+            </a>
             {% endif %}
 
             <!-- Slip thumbnail -->

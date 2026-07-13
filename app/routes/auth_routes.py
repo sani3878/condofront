@@ -15,8 +15,23 @@ def get_next_page(user):
     if user.is_superadmin:
         return url_for('admin.dashboard')
 
-    # Residents go to their own home
+    # Residents — check if multi-unit
     if user.is_resident:
+        units = query_all("""
+            SELECT ru.unit_id, ru.property_id, ru.is_primary,
+                   r.room_no, r.building,
+                   p.property_name
+            FROM tblresident_unit ru
+            JOIN tblroom r     ON ru.unit_id     = r.idno
+            JOIN tblproperty p ON ru.property_id = p.idno
+            WHERE ru.user_id = %s
+            ORDER BY ru.is_primary DESC, ru.joined_at
+        """, [user.id])
+
+        if len(units) > 1:
+            # Multiple units — show picker
+            return url_for('resident.switch_unit')
+
         return url_for('resident.home')
 
     # Staff — check property setup
@@ -281,7 +296,9 @@ def register_resident():
             flash('รหัสผ่านไม่ตรงกัน', 'danger')
             return redirect(url_for('auth.register_resident'))
 
-        if len(password) < 8:
+        # Skip password validation for existing users
+        is_existing = (password == 'EXISTING_USER')
+        if not is_existing and len(password) < 8:
             flash('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร', 'danger')
             return redirect(url_for('auth.register_resident'))
 
@@ -297,39 +314,80 @@ def register_resident():
             flash('รหัสเชิญไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง', 'danger')
             return redirect(url_for('auth.register_resident'))
 
-        if query_one('SELECT idno FROM tbluser WHERE email = %s', [email]):
-            flash('อีเมลนี้ถูกใช้งานแล้ว', 'danger')
-            return redirect(url_for('auth.register_resident'))
-
         db  = get_db()
         cur = db.cursor()
 
+        # Check if email already exists
+        existing_user = query_one("""
+            SELECT idno, fullname, email FROM tbluser
+            WHERE email = %s AND role_id = 4
+        """, [email])
+
         try:
-            verify_token = _secrets.token_urlsafe(32)
+            if existing_user:
+                # ── EXISTING RESIDENT — link new unit ──────────────
+                # Check not already linked to this unit
+                already = query_one("""
+                    SELECT idno FROM tblresident_unit
+                    WHERE user_id = %s AND unit_id = %s
+                """, [existing_user['idno'], room['idno']])
 
-            cur.execute("""
-                INSERT INTO tbluser
-                    (customer_id, property_id, unit_id, role_id,
-                     email, password_hash, fullname, mobile, is_active,
-                     email_verified, verify_token, verify_sent_at)
-                VALUES (NULL, %s, %s, 4, %s, %s, %s, %s, TRUE,
-                        FALSE, %s, NOW())
-            """, [room['property_id'], room['idno'],
-                  email, generate_password_hash(password),
-                  fullname, mobile or None, verify_token])
+                if already:
+                    flash('คุณได้ลงทะเบียนห้องนี้แล้ว กรุณาเข้าสู่ระบบ', 'warning')
+                    return redirect(url_for('auth.login'))
 
-            db.commit()
+                # Link new unit to existing account
+                cur.execute("""
+                    INSERT INTO tblresident_unit
+                        (user_id, unit_id, property_id, is_primary)
+                    VALUES (%s, %s, %s, FALSE)
+                    ON CONFLICT DO NOTHING
+                """, [existing_user['idno'], room['idno'], room['property_id']])
 
-            # Send verification email
-            verify_url = url_for('auth.verify_email',
-                                 token=verify_token, _external=True)
-            success, error = send_verification_email(email, fullname, verify_url)
-            if not success:
-                print(f"EMAIL ERROR: {error}", flush=True)
+                db.commit()
 
-            flash(f'สมัครสมาชิกสำเร็จ! ห้อง {room["building"] or ""}{room["room_no"]} — {room["property_name"]} '
-                  f'กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ', 'success')
-            return redirect(url_for('auth.login'))
+                flash(f'✅ เพิ่มห้อง {room["building"] or ""}{room["room_no"]} '
+                      f'— {room["property_name"]} เข้าบัญชีของคุณแล้ว! '
+                      f'กรุณาเข้าสู่ระบบเพื่อเลือกห้อง', 'success')
+                return redirect(url_for('auth.login'))
+
+            else:
+                # ── NEW RESIDENT — create account ──────────────────
+                verify_token = _secrets.token_urlsafe(32)
+
+                cur.execute("""
+                    INSERT INTO tbluser
+                        (customer_id, property_id, unit_id, role_id,
+                         email, password_hash, fullname, mobile, is_active,
+                         email_verified, verify_token, verify_sent_at)
+                    VALUES (NULL, %s, %s, 4, %s, %s, %s, %s, TRUE,
+                            FALSE, %s, NOW())
+                    RETURNING idno
+                """, [room['property_id'], room['idno'],
+                      email, generate_password_hash(password),
+                      fullname, mobile or None, verify_token])
+                user_id = cur.fetchone()['idno']
+
+                # Link to unit in tblresident_unit
+                cur.execute("""
+                    INSERT INTO tblresident_unit
+                        (user_id, unit_id, property_id, is_primary)
+                    VALUES (%s, %s, %s, TRUE)
+                    ON CONFLICT DO NOTHING
+                """, [user_id, room['idno'], room['property_id']])
+
+                db.commit()
+
+                # Send verification email
+                verify_url = url_for('auth.verify_email',
+                                     token=verify_token, _external=True)
+                success, error = send_verification_email(email, fullname, verify_url)
+                if not success:
+                    print(f"EMAIL ERROR: {error}", flush=True)
+
+                flash(f'สมัครสมาชิกสำเร็จ! ห้อง {room["building"] or ""}{room["room_no"]} '
+                      f'— {room["property_name"]} กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ', 'success')
+                return redirect(url_for('auth.login'))
 
         except Exception as e:
             db.rollback()
@@ -547,3 +605,20 @@ def profile():
         return redirect(url_for('auth.profile'))
 
     return render_template('auth/profile.html')
+
+
+@auth_bp.route('/check-email')
+def check_email():
+    """AJAX endpoint — check if email already registered as resident."""
+    from flask import jsonify
+    email = request.args.get('email', '').strip().lower()
+    if not email:
+        return jsonify({'exists': False})
+    exists = query_one("""
+        SELECT idno, fullname FROM tbluser
+        WHERE email = %s AND role_id = 4 AND is_active = TRUE
+    """, [email])
+    return jsonify({
+        'exists': bool(exists),
+        'name':   exists['fullname'] if exists else None
+    })
